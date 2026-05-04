@@ -3,20 +3,40 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: RISE 성과관리 시스템 API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: projects
+    description: 프로젝트 관리
+  - name: tasks
+    description: 단위과제 관리
+  - name: indicators
+    description: 지표 관리
+  - name: targets
+    description: 목표값 관리
+  - name: results
+    description: 실적 입력
+  - name: evidence
+    description: 증빙자료 관리
+  - name: reviews
+    description: 검토 관리
+  - name: feedback
+    description: 자체평가/환류
+  - name: users
+    description: 사용자 관리
+  - name: dashboard
+    description: 대시보드
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +44,785 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── Projects ──────────────────────────────────────────────
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: 프로젝트 목록
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: 프로젝트 생성
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: 프로젝트 조회
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          description: Not Found
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: 프로젝트 수정
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: 프로젝트 삭제
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+
+  # ── Tasks ─────────────────────────────────────────────────
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: 단위과제 목록
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: 단위과제 생성
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: 단위과제 조회
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not Found
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: 단위과제 수정
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: 단위과제 삭제
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+
+  # ── Indicators ────────────────────────────────────────────
+  /indicators:
+    get:
+      operationId: listIndicators
+      tags: [indicators]
+      summary: 지표 목록
+      parameters:
+        - name: taskId
+          in: query
+          schema:
+            type: integer
+        - name: parentId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: indicatorType
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Indicator"
+    post:
+      operationId: createIndicator
+      tags: [indicators]
+      summary: 지표 생성
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateIndicatorBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Indicator"
+
+  /indicators/{id}:
+    get:
+      operationId: getIndicator
+      tags: [indicators]
+      summary: 지표 조회
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Indicator"
+        "404":
+          description: Not Found
+    patch:
+      operationId: updateIndicator
+      tags: [indicators]
+      summary: 지표 수정
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateIndicatorBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Indicator"
+    delete:
+      operationId: deleteIndicator
+      tags: [indicators]
+      summary: 지표 삭제
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+
+  # ── Indicator Targets ─────────────────────────────────────
+  /targets:
+    get:
+      operationId: listTargets
+      tags: [targets]
+      summary: 목표값 목록
+      parameters:
+        - name: indicatorId
+          in: query
+          schema:
+            type: integer
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IndicatorTarget"
+    post:
+      operationId: createTarget
+      tags: [targets]
+      summary: 목표값 등록
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTargetBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndicatorTarget"
+
+  /targets/{id}:
+    patch:
+      operationId: updateTarget
+      tags: [targets]
+      summary: 목표값 수정
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTargetBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndicatorTarget"
+    delete:
+      operationId: deleteTarget
+      tags: [targets]
+      summary: 목표값 삭제
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+
+  # ── Indicator Results ─────────────────────────────────────
+  /results:
+    get:
+      operationId: listResults
+      tags: [results]
+      summary: 실적 목록
+      parameters:
+        - name: indicatorId
+          in: query
+          schema:
+            type: integer
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IndicatorResult"
+    post:
+      operationId: createResult
+      tags: [results]
+      summary: 실적 입력
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResultBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndicatorResult"
+
+  /results/{id}:
+    get:
+      operationId: getResult
+      tags: [results]
+      summary: 실적 조회
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndicatorResult"
+        "404":
+          description: Not Found
+    patch:
+      operationId: updateResult
+      tags: [results]
+      summary: 실적 수정
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateResultBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndicatorResult"
+    delete:
+      operationId: deleteResult
+      tags: [results]
+      summary: 실적 삭제
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+
+  /results/{id}/submit:
+    post:
+      operationId: submitResult
+      tags: [results]
+      summary: 실적 제출
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndicatorResult"
+
+  # ── Evidence Files ─────────────────────────────────────────
+  /evidence:
+    get:
+      operationId: listEvidence
+      tags: [evidence]
+      summary: 증빙자료 목록
+      parameters:
+        - name: resultId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EvidenceFile"
+    post:
+      operationId: createEvidence
+      tags: [evidence]
+      summary: 증빙자료 등록
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEvidenceBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceFile"
+
+  /evidence/{id}:
+    delete:
+      operationId: deleteEvidence
+      tags: [evidence]
+      summary: 증빙자료 삭제
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+
+  # ── Reviews ───────────────────────────────────────────────
+  /reviews:
+    get:
+      operationId: listReviews
+      tags: [reviews]
+      summary: 검토 목록
+      parameters:
+        - name: resultId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+    post:
+      operationId: createReview
+      tags: [reviews]
+      summary: 검토 등록
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+
+  # ── Feedback Actions ───────────────────────────────────────
+  /feedback:
+    get:
+      operationId: listFeedback
+      tags: [feedback]
+      summary: 자체평가/환류 목록
+      parameters:
+        - name: taskId
+          in: query
+          schema:
+            type: integer
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FeedbackAction"
+    post:
+      operationId: createFeedback
+      tags: [feedback]
+      summary: 자체평가/환류 등록
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFeedbackBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackAction"
+
+  /feedback/{id}:
+    patch:
+      operationId: updateFeedback
+      tags: [feedback]
+      summary: 자체평가/환류 수정
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFeedbackBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackAction"
+
+  # ── Users ──────────────────────────────────────────────────
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: 사용자 목록
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: 사용자 생성
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # ── Dashboard ──────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: 대시보드 전체 요약
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/projects:
+    get:
+      operationId: getDashboardProjects
+      tags: [dashboard]
+      summary: 프로젝트별 진척도
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProjectProgress"
+
+  /dashboard/tasks:
+    get:
+      operationId: getDashboardTasks
+      tags: [dashboard]
+      summary: 단위과제별 진척도
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskProgress"
+
+  /dashboard/alerts:
+    get:
+      operationId: getDashboardAlerts
+      tags: [dashboard]
+      summary: 위험/누락/보완요청 지표 목록
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardAlerts"
+
+  /dashboard/trend:
+    get:
+      operationId: getDashboardTrend
+      tags: [dashboard]
+      summary: 연차별 목표 대비 실적 추이
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendDataPoint"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +833,639 @@ components:
       required:
         - status
 
+    # ── Projects ───────────────────────────────────────────
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        startYear:
+          type: integer
+        endYear:
+          type: integer
+        status:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - name
+        - startYear
+        - endYear
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateProjectBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        startYear:
+          type: integer
+        endYear:
+          type: integer
+        status:
+          type: string
+      required:
+        - name
+        - startYear
+        - endYear
+
+    UpdateProjectBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        startYear:
+          type: integer
+        endYear:
+          type: integer
+        status:
+          type: string
+
+    # ── Tasks ──────────────────────────────────────────────
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        managerName:
+          type: ["string", "null"]
+        status:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - projectId
+        - name
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateTaskBody:
+      type: object
+      properties:
+        projectId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        managerName:
+          type: ["string", "null"]
+        status:
+          type: string
+      required:
+        - projectId
+        - name
+
+    UpdateTaskBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        managerName:
+          type: ["string", "null"]
+        status:
+          type: string
+
+    # ── Indicators ─────────────────────────────────────────
+    Indicator:
+      type: object
+      properties:
+        id:
+          type: integer
+        taskId:
+          type: integer
+        parentId:
+          type: ["integer", "null"]
+        indicatorType:
+          type: string
+          description: "parent | child"
+        name:
+          type: string
+        unit:
+          type: ["string", "null"]
+        formula:
+          type: ["string", "null"]
+        weight:
+          type: ["number", "null"]
+        description:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - taskId
+        - indicatorType
+        - name
+        - createdAt
+        - updatedAt
+
+    CreateIndicatorBody:
+      type: object
+      properties:
+        taskId:
+          type: integer
+        parentId:
+          type: ["integer", "null"]
+        indicatorType:
+          type: string
+        name:
+          type: string
+        unit:
+          type: ["string", "null"]
+        formula:
+          type: ["string", "null"]
+        weight:
+          type: ["number", "null"]
+        description:
+          type: ["string", "null"]
+      required:
+        - taskId
+        - indicatorType
+        - name
+
+    UpdateIndicatorBody:
+      type: object
+      properties:
+        parentId:
+          type: ["integer", "null"]
+        indicatorType:
+          type: string
+        name:
+          type: string
+        unit:
+          type: ["string", "null"]
+        formula:
+          type: ["string", "null"]
+        weight:
+          type: ["number", "null"]
+        description:
+          type: ["string", "null"]
+
+    # ── Indicator Targets ──────────────────────────────────
+    IndicatorTarget:
+      type: object
+      properties:
+        id:
+          type: integer
+        indicatorId:
+          type: integer
+        year:
+          type: integer
+        targetValue:
+          type: ["number", "null"]
+        note:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - indicatorId
+        - year
+        - createdAt
+
+    CreateTargetBody:
+      type: object
+      properties:
+        indicatorId:
+          type: integer
+        year:
+          type: integer
+        targetValue:
+          type: ["number", "null"]
+        note:
+          type: ["string", "null"]
+      required:
+        - indicatorId
+        - year
+
+    UpdateTargetBody:
+      type: object
+      properties:
+        targetValue:
+          type: ["number", "null"]
+        note:
+          type: ["string", "null"]
+
+    # ── Indicator Results ──────────────────────────────────
+    IndicatorResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        indicatorId:
+          type: integer
+        year:
+          type: integer
+        actualValue:
+          type: ["number", "null"]
+        calculatedValue:
+          type: ["number", "null"]
+        progressRate:
+          type: ["number", "null"]
+        status:
+          type: string
+          description: "draft | submitted | reviewing | revision_requested | approved | rejected"
+        selfEvaluation:
+          type: ["string", "null"]
+        submittedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - indicatorId
+        - year
+        - status
+        - createdAt
+        - updatedAt
+
+    CreateResultBody:
+      type: object
+      properties:
+        indicatorId:
+          type: integer
+        year:
+          type: integer
+        actualValue:
+          type: ["number", "null"]
+        selfEvaluation:
+          type: ["string", "null"]
+      required:
+        - indicatorId
+        - year
+
+    UpdateResultBody:
+      type: object
+      properties:
+        actualValue:
+          type: ["number", "null"]
+        selfEvaluation:
+          type: ["string", "null"]
+        status:
+          type: string
+
+    # ── Evidence Files ─────────────────────────────────────
+    EvidenceFile:
+      type: object
+      properties:
+        id:
+          type: integer
+        resultId:
+          type: integer
+        fileName:
+          type: string
+        fileUrl:
+          type: string
+        fileSize:
+          type: ["integer", "null"]
+        mimeType:
+          type: ["string", "null"]
+        uploadedBy:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - resultId
+        - fileName
+        - fileUrl
+        - createdAt
+
+    CreateEvidenceBody:
+      type: object
+      properties:
+        resultId:
+          type: integer
+        fileName:
+          type: string
+        fileUrl:
+          type: string
+        fileSize:
+          type: ["integer", "null"]
+        mimeType:
+          type: ["string", "null"]
+        uploadedBy:
+          type: ["string", "null"]
+      required:
+        - resultId
+        - fileName
+        - fileUrl
+
+    # ── Reviews ────────────────────────────────────────────
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        resultId:
+          type: integer
+        reviewerName:
+          type: string
+        reviewStatus:
+          type: string
+          description: "approved | revision_requested | rejected"
+        comment:
+          type: ["string", "null"]
+        reviewedAt:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - resultId
+        - reviewerName
+        - reviewStatus
+        - reviewedAt
+        - createdAt
+
+    CreateReviewBody:
+      type: object
+      properties:
+        resultId:
+          type: integer
+        reviewerName:
+          type: string
+        reviewStatus:
+          type: string
+        comment:
+          type: ["string", "null"]
+      required:
+        - resultId
+        - reviewerName
+        - reviewStatus
+
+    # ── Feedback Actions ───────────────────────────────────
+    FeedbackAction:
+      type: object
+      properties:
+        id:
+          type: integer
+        taskId:
+          type: integer
+        year:
+          type: integer
+        evaluationContent:
+          type: ["string", "null"]
+        improvementPlan:
+          type: ["string", "null"]
+        actionStatus:
+          type: string
+          description: "planned | in_progress | completed"
+        dueDate:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - taskId
+        - year
+        - actionStatus
+        - createdAt
+        - updatedAt
+
+    CreateFeedbackBody:
+      type: object
+      properties:
+        taskId:
+          type: integer
+        year:
+          type: integer
+        evaluationContent:
+          type: ["string", "null"]
+        improvementPlan:
+          type: ["string", "null"]
+        actionStatus:
+          type: string
+        dueDate:
+          type: ["string", "null"]
+      required:
+        - taskId
+        - year
+
+    UpdateFeedbackBody:
+      type: object
+      properties:
+        evaluationContent:
+          type: ["string", "null"]
+        improvementPlan:
+          type: ["string", "null"]
+        actionStatus:
+          type: string
+        dueDate:
+          type: ["string", "null"]
+
+    # ── Users ──────────────────────────────────────────────
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          description: "admin | manager | reviewer | viewer"
+        department:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - email
+        - role
+        - createdAt
+
+    CreateUserBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        department:
+          type: ["string", "null"]
+      required:
+        - name
+        - email
+        - role
+
+    # ── Dashboard ──────────────────────────────────────────
+    DashboardSummary:
+      type: object
+      properties:
+        totalProjects:
+          type: integer
+        totalTasks:
+          type: integer
+        totalIndicators:
+          type: integer
+        overallProgress:
+          type: number
+        approvedCount:
+          type: integer
+        pendingCount:
+          type: integer
+        revisionCount:
+          type: integer
+        year:
+          type: integer
+      required:
+        - totalProjects
+        - totalTasks
+        - totalIndicators
+        - overallProgress
+        - approvedCount
+        - pendingCount
+        - revisionCount
+        - year
+
+    ProjectProgress:
+      type: object
+      properties:
+        projectId:
+          type: integer
+        projectName:
+          type: string
+        progress:
+          type: number
+        taskCount:
+          type: integer
+        indicatorCount:
+          type: integer
+        approvedCount:
+          type: integer
+        isOverTarget:
+          type: boolean
+      required:
+        - projectId
+        - projectName
+        - progress
+        - taskCount
+        - indicatorCount
+        - approvedCount
+        - isOverTarget
+
+    TaskProgress:
+      type: object
+      properties:
+        taskId:
+          type: integer
+        taskName:
+          type: string
+        projectId:
+          type: integer
+        projectName:
+          type: string
+        progress:
+          type: number
+        indicatorCount:
+          type: integer
+        approvedCount:
+          type: integer
+        missingEvidenceCount:
+          type: integer
+        isOverTarget:
+          type: boolean
+      required:
+        - taskId
+        - taskName
+        - projectId
+        - projectName
+        - progress
+        - indicatorCount
+        - approvedCount
+        - missingEvidenceCount
+        - isOverTarget
+
+    DashboardAlerts:
+      type: object
+      properties:
+        atRiskIndicators:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlertIndicator"
+        missingEvidenceIndicators:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlertIndicator"
+        revisionRequestedIndicators:
+          type: array
+          items:
+            $ref: "#/components/schemas/AlertIndicator"
+      required:
+        - atRiskIndicators
+        - missingEvidenceIndicators
+        - revisionRequestedIndicators
+
+    AlertIndicator:
+      type: object
+      properties:
+        indicatorId:
+          type: integer
+        indicatorName:
+          type: string
+        taskName:
+          type: string
+        projectName:
+          type: string
+        progress:
+          type: ["number", "null"]
+        status:
+          type: ["string", "null"]
+      required:
+        - indicatorId
+        - indicatorName
+        - taskName
+        - projectName
+
+    TrendDataPoint:
+      type: object
+      properties:
+        year:
+          type: integer
+        targetValue:
+          type: ["number", "null"]
+        actualValue:
+          type: ["number", "null"]
+        progress:
+          type: ["number", "null"]
+        projectName:
+          type: ["string", "null"]
+      required:
+        - year

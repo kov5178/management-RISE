@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "RISE 성과관리 시스템"
+version = "1.0.0"
+id = "artifacts/rise"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24368
+
+[services.development]
+run = "pnpm --filter @workspace/rise run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/rise", "run", "build" ]
+publicDir = "artifacts/rise/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24368"
+BASE_PATH = "/"
