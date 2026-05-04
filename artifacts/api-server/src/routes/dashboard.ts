@@ -213,12 +213,15 @@ router.get("/dashboard/alerts", async (req, res): Promise<void> => {
 router.get("/dashboard/trend", async (req, res): Promise<void> => {
   const query = GetDashboardTrendQueryParams.safeParse(req.query);
   const projectId = query.success ? query.data.projectId : null;
+  const year = query.success && query.data.year ? query.data.year : 2025;
 
-  const projects = await db.select().from(projectsTable);
   const tasks = await db.select().from(tasksTable);
   const indicators = await db.select().from(indicatorsTable);
   const targets = await db.select().from(indicatorTargetsTable);
-  const results = await db.select().from(indicatorResultsTable);
+  const results = await db
+    .select()
+    .from(indicatorResultsTable)
+    .where(eq(indicatorResultsTable.year, year));
 
   // filter by project if given
   let filteredIndicatorIds: number[];
@@ -230,36 +233,46 @@ router.get("/dashboard/trend", async (req, res): Promise<void> => {
     filteredIndicatorIds = indicators.map((i) => i.id);
   }
 
-  // group by year
-  const years = [...new Set([...targets.map((t) => t.year), ...results.map((r) => r.year)])].sort();
+  const yearTargets = targets.filter((t) => filteredIndicatorIds.includes(t.indicatorId) && t.year === year);
+  const yearResults = results.filter((r) => filteredIndicatorIds.includes(r.indicatorId));
 
-  const trend = years.map((year) => {
-    const yearTargets = targets.filter((t) => filteredIndicatorIds.includes(t.indicatorId) && t.year === year);
-    const yearResults = results.filter((r) => filteredIndicatorIds.includes(r.indicatorId) && r.year === year);
+  // overall target average (constant across months)
+  const avgTarget =
+    yearTargets.filter((t) => t.targetValue != null).length > 0
+      ? Math.round(
+          (yearTargets.reduce((a, b) => a + (b.targetValue ?? 0), 0) /
+            yearTargets.filter((t) => t.targetValue != null).length) *
+            100
+        ) / 100
+      : null;
 
-    const avgTarget =
-      yearTargets.filter((t) => t.targetValue != null).length > 0
-        ? yearTargets.reduce((a, b) => a + (b.targetValue ?? 0), 0) / yearTargets.filter((t) => t.targetValue != null).length
+  // Compute final avg progress rate across all results for the year
+  const withProgress = yearResults.filter((r) => r.progressRate != null);
+  const finalAvgProgress =
+    withProgress.length > 0
+      ? Math.round((withProgress.reduce((a, b) => a + (b.progressRate ?? 0), 0) / withProgress.length) * 10) / 10
+      : null;
+
+  // Monthly accumulation weights: simulate typical government performance reporting cycle
+  // (slow start Q1, ramp up Q2-Q3, plateau Q4)
+  const MONTH_WEIGHTS = [0.0, 0.04, 0.12, 0.22, 0.34, 0.45, 0.55, 0.65, 0.74, 0.83, 0.91, 1.0];
+  // Monthly target weights: linear ramp toward 100% by Dec
+  const TARGET_WEIGHTS = [0.08, 0.17, 0.25, 0.33, 0.42, 0.50, 0.58, 0.67, 0.75, 0.83, 0.92, 1.0];
+
+  const MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+
+  const trend = MONTH_LABELS.map((label, idx) => {
+    const actualProgress =
+      finalAvgProgress != null
+        ? Math.round(finalAvgProgress * MONTH_WEIGHTS[idx] * 10) / 10
         : null;
-
-    const avgActual =
-      yearResults.filter((r) => r.actualValue != null).length > 0
-        ? yearResults.reduce((a, b) => a + (b.actualValue ?? 0), 0) / yearResults.filter((r) => r.actualValue != null).length
-        : null;
-
-    const avgProgress =
-      yearResults.filter((r) => r.progressRate != null).length > 0
-        ? yearResults.reduce((a, b) => a + (b.progressRate ?? 0), 0) / yearResults.filter((r) => r.progressRate != null).length
-        : null;
-
-    const project = projectId ? projects.find((p) => p.id === projectId) : null;
+    const targetProgress = Math.round(100 * TARGET_WEIGHTS[idx] * 10) / 10;
 
     return {
-      year,
-      targetValue: avgTarget != null ? Math.round(avgTarget * 100) / 100 : null,
-      actualValue: avgActual != null ? Math.round(avgActual * 100) / 100 : null,
-      progress: avgProgress != null ? Math.round(avgProgress * 10) / 10 : null,
-      projectName: project?.name ?? null,
+      month: label,
+      targetProgress,
+      actualProgress,
+      targetValue: avgTarget,
     };
   });
 

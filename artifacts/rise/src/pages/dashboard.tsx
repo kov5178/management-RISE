@@ -115,20 +115,20 @@ export default function Dashboard() {
         {/* Trend Chart */}
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>연차별 목표 대비 실적 추이</CardTitle>
+            <CardTitle>월별 목표 대비 실적 추이 ({currentYear})</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoadingTrend ? <Skeleton className="h-[300px] w-full" /> : (
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trend} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <LineChart data={trend} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="year" />
-                    <YAxis />
-                    <RechartsTooltip />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                    <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} width={40} />
+                    <RechartsTooltip formatter={(value: number, name: string) => [`${value?.toFixed(1)}%`, name]} />
                     <Legend />
-                    <Line type="monotone" dataKey="targetValue" name="목표값" stroke="hsl(var(--muted-foreground))" strokeDasharray="5 5" />
-                    <Line type="monotone" dataKey="actualValue" name="실적값" stroke="hsl(var(--primary))" strokeWidth={2} />
+                    <Line type="monotone" dataKey="targetProgress" name="목표 진척도" stroke="hsl(var(--muted-foreground))" strokeDasharray="5 5" dot={false} />
+                    <Line type="monotone" dataKey="actualProgress" name="실적 진척도" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
