@@ -388,14 +388,6 @@ export interface RoleChangeLog {
   changedAt: string;
 }
 
-export interface CreateUserBody {
-  name: string;
-  email: string;
-  role: string;
-  /** @nullable */
-  department?: string | null;
-}
-
 export interface DashboardSummary {
   totalProjects: number;
   totalTasks: number;

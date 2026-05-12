@@ -43,7 +43,7 @@ const NAV_ITEMS = [
 ];
 
 const USER_MGMT_ITEMS = [
-  { title: "사용자 목록", href: "/users", icon: Users },
+  { title: "사용자 목록 · 권한 변경", href: "/users", icon: Users },
   { title: "등록 요청 승인", href: "/user-requests", icon: ClipboardList },
   { title: "권한 변경 이력", href: "/role-change-logs", icon: History },
 ];

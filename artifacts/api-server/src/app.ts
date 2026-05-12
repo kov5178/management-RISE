@@ -7,6 +7,27 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+const isProd = process.env["NODE_ENV"] === "production";
+
+const allowedOrigins = process.env["ALLOWED_ORIGINS"]
+  ? process.env["ALLOWED_ORIGINS"].split(",").map((o) => o.trim())
+  : null;
+
+app.use(
+  cors({
+    origin: allowedOrigins
+      ? (origin, cb) => {
+          if (!origin || allowedOrigins.includes(origin)) {
+            cb(null, true);
+          } else {
+            cb(new Error("Not allowed by CORS"));
+          }
+        }
+      : true,
+    credentials: true,
+  }),
+);
+
 app.use(
   pinoHttp({
     logger,
@@ -26,13 +47,17 @@ app.use(
     },
   }),
 );
-app.use(cors({ origin: true, credentials: true }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const sessionSecret = process.env["SESSION_SECRET"];
 if (!sessionSecret) {
   throw new Error("SESSION_SECRET environment variable is required");
+}
+
+if (isProd) {
+  app.set("trust proxy", 1);
 }
 
 app.use(
@@ -42,7 +67,8 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: false,
+      secure: isProd,
+      sameSite: isProd ? "strict" : "lax",
       maxAge: 1000 * 60 * 60 * 24 * 7,
     },
   }),

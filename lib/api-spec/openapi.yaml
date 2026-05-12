@@ -1711,21 +1711,6 @@ components:
         - changerRole
         - changedAt
 
-    CreateUserBody:
-      type: object
-      properties:
-        name:
-          type: string
-        email:
-          type: string
-        role:
-          type: string
-        department:
-          type: ["string", "null"]
-      required:
-        - name
-        - email
-        - role
 
     # ── Dashboard ──────────────────────────────────────────
     DashboardSummary:
