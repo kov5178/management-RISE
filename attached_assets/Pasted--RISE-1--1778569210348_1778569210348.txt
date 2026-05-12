@@ -1,0 +1,68 @@
+기존 RISE 성과관리 시스템의 로그인 및 사용자 관리 기능을 다음 기준으로 수정해줘.
+
+수정 요구사항:
+1. 사용자 등록은 관리자가 직접 생성하는 방식이 아니라, 사용자가 직접 등록 요청하는 방식으로 구현한다.
+2. 사용자 등록 요청 시 이메일과 직번/사번 입력을 필수로 요구한다.
+3. 로그인 ID는 이메일이 아니라 직번/사번(employee_no)으로 구성한다.
+4. 로그인은 직번/사번 + 비밀번호 방식으로 처리한다.
+5. 이메일은 가입 승인 알림, 비밀번호 초기화, 사용자 식별 보조 용도로 사용한다.
+6. 사용자 등록 요청 승인권한은 사업단 관리자(ADMIN)에게 부여한다.
+7. 권한 변경은 최고관리자(SUPER_ADMIN)와 사업단 관리자(ADMIN)가 가능하도록 수정한다.
+8. 권한 변경 시 변경 전 권한, 변경 후 권한, 변경자, 변경자 권한, 변경일시, 변경 사유를 반드시 저장한다.
+9. 사용자는 승인 전까지 pending 상태이며 로그인할 수 없다.
+10. 승인 완료 시 active 상태가 되고 로그인할 수 있다.
+11. 반려된 사용자는 로그인할 수 없다.
+12. 좌측 하단에는 비로그인 상태에서 [로그인], [사용자 등록 요청] 버튼을 표시한다.
+13. 로그인 상태에서는 사용자명, 권한명, [로그아웃] 버튼을 표시한다.
+14. 사이드바에 [사용자 관리] 메뉴를 추가하고, 하위 메뉴로 [사용자 목록], [등록 요청 승인], [사용자 권한 변경], [권한 변경 이력]을 구성한다.
+
+권한 체계:
+- SUPER_ADMIN: 최고관리자
+- ADMIN: 사업단 관리자
+- PROJECT_MANAGER: 프로젝트 관리자
+- TASK_MANAGER: 단위과제 담당자
+- REVIEWER: 검토자/평가위원
+- VIEWER: 조회자
+
+DB 수정:
+1. users 테이블에 employee_no 필드를 추가하고 unique 처리한다.
+2. users 테이블에서 email도 unique 처리한다.
+3. registration_requests 테이블을 생성한다.
+4. registration_requests에는 employee_no, email, name, department, position, password_hash, request_reason, status, reviewed_by, reviewed_at, review_comment를 포함한다.
+5. role_change_logs 테이블을 생성하거나 수정하여 권한 변경 이력을 저장한다.
+6. login_logs에는 employee_no를 함께 저장한다.
+
+검증 규칙:
+- employee_no는 필수이며 중복 불가
+- email은 필수이며 중복 불가
+- 동일 employee_no 또는 email로 pending 요청이 있으면 추가 요청 불가
+- 비밀번호와 비밀번호 확인은 일치해야 함
+- pending, rejected, inactive, locked 사용자는 로그인 불가
+
+API:
+- POST /api/auth/login
+- POST /api/auth/logout
+- GET /api/auth/me
+- POST /api/registration-requests
+- GET /api/registration-requests
+- PATCH /api/registration-requests/:id/approve
+- PATCH /api/registration-requests/:id/reject
+- GET /api/users
+- PATCH /api/users/:id/status
+- PATCH /api/users/:id/role
+- GET /api/role-change-logs
+
+UI:
+- 로그인 페이지: 직번/사번, 비밀번호 입력
+- 사용자 등록 요청 페이지: 이름, 이메일, 직번/사번, 비밀번호, 비밀번호 확인, 소속, 직위, 요청 사유 입력
+- 등록 요청 승인 페이지: pending 요청 목록, 상세보기, 승인, 반려
+- 사용자 목록 페이지: 이름, 직번/사번, 이메일, 소속, 권한, 상태, 마지막 로그인 표시
+- 권한 변경 모달: 변경 권한 선택, 변경 사유 입력
+- 권한 변경 이력 페이지: 변경 대상, 이전 권한, 변경 권한, 변경자, 변경일시, 변경 사유 표시
+
+보안:
+- 비밀번호는 해시 저장
+- 로그인 실패 이력 저장
+- 마지막 로그인 시간 저장
+- 권한 변경 이력 저장
+- 사용자는 물리 삭제하지 않고 inactive 처리
