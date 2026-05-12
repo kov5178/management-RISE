@@ -12,12 +12,16 @@ import usersRouter from "./users";
 import dashboardRouter from "./dashboard";
 import authRouter from "./auth";
 import registrationRequestsRouter from "./registration-requests";
+import { requireAuth } from "../middlewares/auth.js";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(authRouter);
 router.use(registrationRequestsRouter);
+
+router.use(requireAuth);
+
 router.use(projectsRouter);
 router.use(tasksRouter);
 router.use(indicatorsRouter);

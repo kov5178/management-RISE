@@ -96,38 +96,40 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 );
               })}
 
-              {/* 사용자 관리 collapsible */}
-              <SidebarMenuItem>
-                <Collapsible open={userMgmtOpen} onOpenChange={setUserMgmtOpen}>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      isActive={USER_MGMT_ITEMS.some(i => location.startsWith(i.href))}
-                      className="flex items-center gap-3 w-full"
-                    >
-                      <ShieldCheck className="w-4 h-4" />
-                      <span className="font-medium flex-1">사용자 관리</span>
-                      <ChevronRight className={`w-3 h-3 transition-transform ${userMgmtOpen ? "rotate-90" : ""}`} />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {USER_MGMT_ITEMS.map((item) => {
-                        const isActive = location === item.href || location.startsWith(item.href);
-                        return (
-                          <SidebarMenuSubItem key={item.href}>
-                            <SidebarMenuSubButton asChild isActive={isActive}>
-                              <Link href={item.href} className="flex items-center gap-2 w-full">
-                                <item.icon className="w-3 h-3" />
-                                <span>{item.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        );
-                      })}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </Collapsible>
-              </SidebarMenuItem>
+              {/* 사용자 관리 collapsible — admin/super_admin 전용 */}
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <Collapsible open={userMgmtOpen} onOpenChange={setUserMgmtOpen}>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                        isActive={USER_MGMT_ITEMS.some(i => location.startsWith(i.href))}
+                        className="flex items-center gap-3 w-full"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span className="font-medium flex-1">사용자 관리</span>
+                        <ChevronRight className={`w-3 h-3 transition-transform ${userMgmtOpen ? "rotate-90" : ""}`} />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {USER_MGMT_ITEMS.map((item) => {
+                          const isActive = location === item.href || location.startsWith(item.href);
+                          return (
+                            <SidebarMenuSubItem key={item.href}>
+                              <SidebarMenuSubButton asChild isActive={isActive}>
+                                <Link href={item.href} className="flex items-center gap-2 w-full">
+                                  <item.icon className="w-3 h-3" />
+                                  <span>{item.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarContent>
 

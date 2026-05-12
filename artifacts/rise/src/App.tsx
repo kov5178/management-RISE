@@ -1,9 +1,11 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AdminLayout } from "@/components/layout";
+import { useAuth } from "@/hooks/use-auth";
 import NotFound from "@/pages/not-found";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import Dashboard from "@/pages/dashboard";
 import Projects from "@/pages/projects";
@@ -28,30 +30,54 @@ const queryClient = new QueryClient({
   },
 });
 
+function PrivateRoutes() {
+  const [location] = useLocation();
+  const { isLoggedIn, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="space-y-3 w-64">
+          <Skeleton className="h-6 w-full" />
+          <Skeleton className="h-6 w-3/4" />
+          <Skeleton className="h-6 w-1/2" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    const redirect = location !== "/" ? `?redirect=${encodeURIComponent(location)}` : "";
+    return <Redirect to={`/login${redirect}`} />;
+  }
+
+  return (
+    <AdminLayout>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/projects" component={Projects} />
+        <Route path="/tasks" component={Tasks} />
+        <Route path="/indicators" component={Indicators} />
+        <Route path="/targets" component={Targets} />
+        <Route path="/results" component={Results} />
+        <Route path="/evidence" component={Evidence} />
+        <Route path="/reviews" component={Reviews} />
+        <Route path="/feedback" component={Feedback} />
+        <Route path="/users" component={Users} />
+        <Route path="/user-requests" component={UserRequests} />
+        <Route path="/role-change-logs" component={RoleChangeLogs} />
+        <Route component={NotFound} />
+      </Switch>
+    </AdminLayout>
+  );
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      <Route>
-        <AdminLayout>
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/projects" component={Projects} />
-            <Route path="/tasks" component={Tasks} />
-            <Route path="/indicators" component={Indicators} />
-            <Route path="/targets" component={Targets} />
-            <Route path="/results" component={Results} />
-            <Route path="/evidence" component={Evidence} />
-            <Route path="/reviews" component={Reviews} />
-            <Route path="/feedback" component={Feedback} />
-            <Route path="/users" component={Users} />
-            <Route path="/user-requests" component={UserRequests} />
-            <Route path="/role-change-logs" component={RoleChangeLogs} />
-            <Route component={NotFound} />
-          </Switch>
-        </AdminLayout>
-      </Route>
+      <Route component={PrivateRoutes} />
     </Switch>
   );
 }

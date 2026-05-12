@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { useLogin } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,9 @@ import { useAuth } from "@/hooks/use-auth";
 
 export default function Login() {
   const [, navigate] = useLocation();
+  const search = useSearch();
+  const params = new URLSearchParams(search);
+  const redirectTo = params.get("redirect") ?? "/";
   const { refetch } = useAuth();
   const login = useLogin();
   const [employeeNo, setEmployeeNo] = useState("");
@@ -22,7 +25,7 @@ export default function Login() {
     try {
       await login.mutateAsync({ data: { employeeNo, password } });
       await refetch();
-      navigate("/");
+      navigate(redirectTo);
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
       setError(msg ?? "로그인에 실패했습니다.");

@@ -9,7 +9,7 @@ export const usersTable = pgTable("users", {
   employeeNo: text("employee_no").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   role: text("role").notNull().default("viewer"),
-  status: text("status").notNull().default("active"),
+  status: text("status").notNull().default("pending"),
   department: text("department"),
   position: text("position"),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
