@@ -17,15 +17,16 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AuthUser,
   CreateEvidenceBody,
   CreateFeedbackBody,
   CreateIndicatorBody,
   CreateProjectBody,
+  CreateRegistrationRequestBody,
   CreateResultBody,
   CreateReviewBody,
   CreateTargetBody,
   CreateTaskBody,
-  CreateUserBody,
   DashboardAlerts,
   DashboardSummary,
   EvidenceFile,
@@ -42,13 +43,18 @@ import type {
   ListEvidenceParams,
   ListFeedbackParams,
   ListIndicatorsParams,
+  ListRegistrationRequestsParams,
   ListResultsParams,
   ListReviewsParams,
   ListTargetsParams,
   ListTasksParams,
+  LoginBody,
   Project,
   ProjectProgress,
+  RegistrationRequest,
   Review,
+  ReviewRequestBody,
+  RoleChangeLog,
   Task,
   TaskProgress,
   TrendDataPoint,
@@ -58,7 +64,9 @@ import type {
   UpdateResultBody,
   UpdateTargetBody,
   UpdateTaskBody,
-  User,
+  UpdateUserRoleBody,
+  UpdateUserStatusBody,
+  UserDetail,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -144,6 +152,599 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary 로그인 (직번/사번 + 비밀번호)
+ */
+export const getLoginUrl = () => {
+  return `/api/auth/login`;
+};
+
+export const login = async (
+  loginBody: LoginBody,
+  options?: RequestInit,
+): Promise<AuthUser> => {
+  return customFetch<AuthUser>(getLoginUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(loginBody),
+  });
+};
+
+export const getLoginMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof login>>,
+    TError,
+    { data: BodyType<LoginBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof login>>,
+  TError,
+  { data: BodyType<LoginBody> },
+  TContext
+> => {
+  const mutationKey = ["login"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof login>>,
+    { data: BodyType<LoginBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return login(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LoginMutationResult = NonNullable<
+  Awaited<ReturnType<typeof login>>
+>;
+export type LoginMutationBody = BodyType<LoginBody>;
+export type LoginMutationError = ErrorType<void>;
+
+/**
+ * @summary 로그인 (직번/사번 + 비밀번호)
+ */
+export const useLogin = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof login>>,
+    TError,
+    { data: BodyType<LoginBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof login>>,
+  TError,
+  { data: BodyType<LoginBody> },
+  TContext
+> => {
+  return useMutation(getLoginMutationOptions(options));
+};
+
+/**
+ * @summary 로그아웃
+ */
+export const getLogoutUrl = () => {
+  return `/api/auth/logout`;
+};
+
+export const logout = async (options?: RequestInit): Promise<void> => {
+  return customFetch<void>(getLogoutUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getLogoutMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logout>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logout>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["logout"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof logout>>,
+    void
+  > = () => {
+    return logout(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LogoutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logout>>
+>;
+
+export type LogoutMutationError = ErrorType<unknown>;
+
+/**
+ * @summary 로그아웃
+ */
+export const useLogout = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logout>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof logout>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getLogoutMutationOptions(options));
+};
+
+/**
+ * @summary 현재 로그인 사용자 조회
+ */
+export const getGetMeUrl = () => {
+  return `/api/auth/me`;
+};
+
+export const getMe = async (options?: RequestInit): Promise<AuthUser> => {
+  return customFetch<AuthUser>(getGetMeUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetMeQueryKey = () => {
+  return [`/api/auth/me`] as const;
+};
+
+export const getGetMeQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMe>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getMe>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMeQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMe>>> = ({
+    signal,
+  }) => getMe({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMe>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetMeQueryResult = NonNullable<Awaited<ReturnType<typeof getMe>>>;
+export type GetMeQueryError = ErrorType<void>;
+
+/**
+ * @summary 현재 로그인 사용자 조회
+ */
+
+export function useGetMe<
+  TData = Awaited<ReturnType<typeof getMe>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getMe>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetMeQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary 사용자 등록 요청
+ */
+export const getCreateRegistrationRequestUrl = () => {
+  return `/api/registration-requests`;
+};
+
+export const createRegistrationRequest = async (
+  createRegistrationRequestBody: CreateRegistrationRequestBody,
+  options?: RequestInit,
+): Promise<RegistrationRequest> => {
+  return customFetch<RegistrationRequest>(getCreateRegistrationRequestUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createRegistrationRequestBody),
+  });
+};
+
+export const getCreateRegistrationRequestMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createRegistrationRequest>>,
+    TError,
+    { data: BodyType<CreateRegistrationRequestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createRegistrationRequest>>,
+  TError,
+  { data: BodyType<CreateRegistrationRequestBody> },
+  TContext
+> => {
+  const mutationKey = ["createRegistrationRequest"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createRegistrationRequest>>,
+    { data: BodyType<CreateRegistrationRequestBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createRegistrationRequest(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateRegistrationRequestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createRegistrationRequest>>
+>;
+export type CreateRegistrationRequestMutationBody =
+  BodyType<CreateRegistrationRequestBody>;
+export type CreateRegistrationRequestMutationError = ErrorType<void>;
+
+/**
+ * @summary 사용자 등록 요청
+ */
+export const useCreateRegistrationRequest = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createRegistrationRequest>>,
+    TError,
+    { data: BodyType<CreateRegistrationRequestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createRegistrationRequest>>,
+  TError,
+  { data: BodyType<CreateRegistrationRequestBody> },
+  TContext
+> => {
+  return useMutation(getCreateRegistrationRequestMutationOptions(options));
+};
+
+/**
+ * @summary 등록 요청 목록 (ADMIN 이상)
+ */
+export const getListRegistrationRequestsUrl = (
+  params?: ListRegistrationRequestsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/registration-requests?${stringifiedParams}`
+    : `/api/registration-requests`;
+};
+
+export const listRegistrationRequests = async (
+  params?: ListRegistrationRequestsParams,
+  options?: RequestInit,
+): Promise<RegistrationRequest[]> => {
+  return customFetch<RegistrationRequest[]>(
+    getListRegistrationRequestsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListRegistrationRequestsQueryKey = (
+  params?: ListRegistrationRequestsParams,
+) => {
+  return [`/api/registration-requests`, ...(params ? [params] : [])] as const;
+};
+
+export const getListRegistrationRequestsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listRegistrationRequests>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListRegistrationRequestsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listRegistrationRequests>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListRegistrationRequestsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listRegistrationRequests>>
+  > = ({ signal }) =>
+    listRegistrationRequests(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listRegistrationRequests>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListRegistrationRequestsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listRegistrationRequests>>
+>;
+export type ListRegistrationRequestsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary 등록 요청 목록 (ADMIN 이상)
+ */
+
+export function useListRegistrationRequests<
+  TData = Awaited<ReturnType<typeof listRegistrationRequests>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListRegistrationRequestsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listRegistrationRequests>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListRegistrationRequestsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary 등록 요청 승인
+ */
+export const getApproveRegistrationRequestUrl = (id: number) => {
+  return `/api/registration-requests/${id}/approve`;
+};
+
+export const approveRegistrationRequest = async (
+  id: number,
+  reviewRequestBody?: ReviewRequestBody,
+  options?: RequestInit,
+): Promise<UserDetail> => {
+  return customFetch<UserDetail>(getApproveRegistrationRequestUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(reviewRequestBody),
+  });
+};
+
+export const getApproveRegistrationRequestMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof approveRegistrationRequest>>,
+    TError,
+    { id: number; data: BodyType<ReviewRequestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof approveRegistrationRequest>>,
+  TError,
+  { id: number; data: BodyType<ReviewRequestBody> },
+  TContext
+> => {
+  const mutationKey = ["approveRegistrationRequest"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof approveRegistrationRequest>>,
+    { id: number; data: BodyType<ReviewRequestBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return approveRegistrationRequest(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ApproveRegistrationRequestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof approveRegistrationRequest>>
+>;
+export type ApproveRegistrationRequestMutationBody =
+  BodyType<ReviewRequestBody>;
+export type ApproveRegistrationRequestMutationError = ErrorType<unknown>;
+
+/**
+ * @summary 등록 요청 승인
+ */
+export const useApproveRegistrationRequest = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof approveRegistrationRequest>>,
+    TError,
+    { id: number; data: BodyType<ReviewRequestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof approveRegistrationRequest>>,
+  TError,
+  { id: number; data: BodyType<ReviewRequestBody> },
+  TContext
+> => {
+  return useMutation(getApproveRegistrationRequestMutationOptions(options));
+};
+
+/**
+ * @summary 등록 요청 반려
+ */
+export const getRejectRegistrationRequestUrl = (id: number) => {
+  return `/api/registration-requests/${id}/reject`;
+};
+
+export const rejectRegistrationRequest = async (
+  id: number,
+  reviewRequestBody?: ReviewRequestBody,
+  options?: RequestInit,
+): Promise<RegistrationRequest> => {
+  return customFetch<RegistrationRequest>(getRejectRegistrationRequestUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(reviewRequestBody),
+  });
+};
+
+export const getRejectRegistrationRequestMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof rejectRegistrationRequest>>,
+    TError,
+    { id: number; data: BodyType<ReviewRequestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof rejectRegistrationRequest>>,
+  TError,
+  { id: number; data: BodyType<ReviewRequestBody> },
+  TContext
+> => {
+  const mutationKey = ["rejectRegistrationRequest"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof rejectRegistrationRequest>>,
+    { id: number; data: BodyType<ReviewRequestBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return rejectRegistrationRequest(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RejectRegistrationRequestMutationResult = NonNullable<
+  Awaited<ReturnType<typeof rejectRegistrationRequest>>
+>;
+export type RejectRegistrationRequestMutationBody = BodyType<ReviewRequestBody>;
+export type RejectRegistrationRequestMutationError = ErrorType<unknown>;
+
+/**
+ * @summary 등록 요청 반려
+ */
+export const useRejectRegistrationRequest = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof rejectRegistrationRequest>>,
+    TError,
+    { id: number; data: BodyType<ReviewRequestBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof rejectRegistrationRequest>>,
+  TError,
+  { id: number; data: BodyType<ReviewRequestBody> },
+  TContext
+> => {
+  return useMutation(getRejectRegistrationRequestMutationOptions(options));
+};
 
 /**
  * @summary 프로젝트 목록
@@ -3019,8 +3620,10 @@ export const getListUsersUrl = () => {
   return `/api/users`;
 };
 
-export const listUsers = async (options?: RequestInit): Promise<User[]> => {
-  return customFetch<User[]>(getListUsersUrl(), {
+export const listUsers = async (
+  options?: RequestInit,
+): Promise<UserDetail[]> => {
+  return customFetch<UserDetail[]>(getListUsersUrl(), {
     ...options,
     method: "GET",
   });
@@ -3078,42 +3681,43 @@ export function useListUsers<
 }
 
 /**
- * @summary 사용자 생성
+ * @summary 사용자 상태 변경
  */
-export const getCreateUserUrl = () => {
-  return `/api/users`;
+export const getUpdateUserStatusUrl = (id: number) => {
+  return `/api/users/${id}/status`;
 };
 
-export const createUser = async (
-  createUserBody: CreateUserBody,
+export const updateUserStatus = async (
+  id: number,
+  updateUserStatusBody: UpdateUserStatusBody,
   options?: RequestInit,
-): Promise<User> => {
-  return customFetch<User>(getCreateUserUrl(), {
+): Promise<UserDetail> => {
+  return customFetch<UserDetail>(getUpdateUserStatusUrl(id), {
     ...options,
-    method: "POST",
+    method: "PATCH",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(createUserBody),
+    body: JSON.stringify(updateUserStatusBody),
   });
 };
 
-export const getCreateUserMutationOptions = <
+export const getUpdateUserStatusMutationOptions = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createUser>>,
+    Awaited<ReturnType<typeof updateUserStatus>>,
     TError,
-    { data: BodyType<CreateUserBody> },
+    { id: number; data: BodyType<UpdateUserStatusBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof createUser>>,
+  Awaited<ReturnType<typeof updateUserStatus>>,
   TError,
-  { data: BodyType<CreateUserBody> },
+  { id: number; data: BodyType<UpdateUserStatusBody> },
   TContext
 > => {
-  const mutationKey = ["createUser"];
+  const mutationKey = ["updateUserStatus"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -3123,45 +3727,207 @@ export const getCreateUserMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof createUser>>,
-    { data: BodyType<CreateUserBody> }
+    Awaited<ReturnType<typeof updateUserStatus>>,
+    { id: number; data: BodyType<UpdateUserStatusBody> }
   > = (props) => {
-    const { data } = props ?? {};
+    const { id, data } = props ?? {};
 
-    return createUser(data, requestOptions);
+    return updateUserStatus(id, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type CreateUserMutationResult = NonNullable<
-  Awaited<ReturnType<typeof createUser>>
+export type UpdateUserStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateUserStatus>>
 >;
-export type CreateUserMutationBody = BodyType<CreateUserBody>;
-export type CreateUserMutationError = ErrorType<unknown>;
+export type UpdateUserStatusMutationBody = BodyType<UpdateUserStatusBody>;
+export type UpdateUserStatusMutationError = ErrorType<unknown>;
 
 /**
- * @summary 사용자 생성
+ * @summary 사용자 상태 변경
  */
-export const useCreateUser = <
+export const useUpdateUserStatus = <
   TError = ErrorType<unknown>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof createUser>>,
+    Awaited<ReturnType<typeof updateUserStatus>>,
     TError,
-    { data: BodyType<CreateUserBody> },
+    { id: number; data: BodyType<UpdateUserStatusBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
-  Awaited<ReturnType<typeof createUser>>,
+  Awaited<ReturnType<typeof updateUserStatus>>,
   TError,
-  { data: BodyType<CreateUserBody> },
+  { id: number; data: BodyType<UpdateUserStatusBody> },
   TContext
 > => {
-  return useMutation(getCreateUserMutationOptions(options));
+  return useMutation(getUpdateUserStatusMutationOptions(options));
 };
+
+/**
+ * @summary 사용자 권한 변경
+ */
+export const getUpdateUserRoleUrl = (id: number) => {
+  return `/api/users/${id}/role`;
+};
+
+export const updateUserRole = async (
+  id: number,
+  updateUserRoleBody: UpdateUserRoleBody,
+  options?: RequestInit,
+): Promise<UserDetail> => {
+  return customFetch<UserDetail>(getUpdateUserRoleUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateUserRoleBody),
+  });
+};
+
+export const getUpdateUserRoleMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUserRole>>,
+    TError,
+    { id: number; data: BodyType<UpdateUserRoleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateUserRole>>,
+  TError,
+  { id: number; data: BodyType<UpdateUserRoleBody> },
+  TContext
+> => {
+  const mutationKey = ["updateUserRole"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateUserRole>>,
+    { id: number; data: BodyType<UpdateUserRoleBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateUserRole(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateUserRoleMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateUserRole>>
+>;
+export type UpdateUserRoleMutationBody = BodyType<UpdateUserRoleBody>;
+export type UpdateUserRoleMutationError = ErrorType<unknown>;
+
+/**
+ * @summary 사용자 권한 변경
+ */
+export const useUpdateUserRole = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateUserRole>>,
+    TError,
+    { id: number; data: BodyType<UpdateUserRoleBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateUserRole>>,
+  TError,
+  { id: number; data: BodyType<UpdateUserRoleBody> },
+  TContext
+> => {
+  return useMutation(getUpdateUserRoleMutationOptions(options));
+};
+
+/**
+ * @summary 권한 변경 이력
+ */
+export const getListRoleChangeLogsUrl = () => {
+  return `/api/role-change-logs`;
+};
+
+export const listRoleChangeLogs = async (
+  options?: RequestInit,
+): Promise<RoleChangeLog[]> => {
+  return customFetch<RoleChangeLog[]>(getListRoleChangeLogsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListRoleChangeLogsQueryKey = () => {
+  return [`/api/role-change-logs`] as const;
+};
+
+export const getListRoleChangeLogsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listRoleChangeLogs>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listRoleChangeLogs>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListRoleChangeLogsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listRoleChangeLogs>>
+  > = ({ signal }) => listRoleChangeLogs({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listRoleChangeLogs>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListRoleChangeLogsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listRoleChangeLogs>>
+>;
+export type ListRoleChangeLogsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary 권한 변경 이력
+ */
+
+export function useListRoleChangeLogs<
+  TData = Awaited<ReturnType<typeof listRoleChangeLogs>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listRoleChangeLogs>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListRoleChangeLogsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary 대시보드 전체 요약
@@ -3558,7 +4324,7 @@ export function useGetDashboardAlerts<
 }
 
 /**
- * @summary 연차별 목표 대비 실적 추이
+ * @summary 월별 목표 대비 실적 추이
  */
 export const getGetDashboardTrendUrl = (params?: GetDashboardTrendParams) => {
   const normalizedParams = new URLSearchParams();
@@ -3628,7 +4394,7 @@ export type GetDashboardTrendQueryResult = NonNullable<
 export type GetDashboardTrendQueryError = ErrorType<unknown>;
 
 /**
- * @summary 연차별 목표 대비 실적 추이
+ * @summary 월별 목표 대비 실적 추이
  */
 
 export function useGetDashboardTrend<

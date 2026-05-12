@@ -10,7 +10,7 @@ export function exportToCsv(filename: string, rows: object[]) {
     rows.map(row => {
       return keys.map(k => {
         let cell = row[k as keyof typeof row] === null || row[k as keyof typeof row] === undefined ? '' : row[k as keyof typeof row];
-        cell = cell instanceof Date ? cell.toLocaleString() : cell.toString().replace(/"/g, '""');
+        cell = (cell as unknown) instanceof Date ? ((cell as unknown) as Date).toLocaleString() : String(cell).replace(/"/g, '""');
         if (cell.search(/("|,|\n)/g) >= 0) {
           cell = `"${cell}"`;
         }

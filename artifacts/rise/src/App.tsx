@@ -15,26 +15,44 @@ import Evidence from "@/pages/evidence";
 import Reviews from "@/pages/reviews";
 import Feedback from "@/pages/feedback";
 import Users from "@/pages/users";
+import UserRequests from "@/pages/user-requests";
+import RoleChangeLogs from "@/pages/role-change-logs";
+import Login from "@/pages/login";
+import Register from "@/pages/register";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    },
+  },
+});
 
 function Router() {
   return (
-    <AdminLayout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/projects" component={Projects} />
-        <Route path="/tasks" component={Tasks} />
-        <Route path="/indicators" component={Indicators} />
-        <Route path="/targets" component={Targets} />
-        <Route path="/results" component={Results} />
-        <Route path="/evidence" component={Evidence} />
-        <Route path="/reviews" component={Reviews} />
-        <Route path="/feedback" component={Feedback} />
-        <Route path="/users" component={Users} />
-        <Route component={NotFound} />
-      </Switch>
-    </AdminLayout>
+    <Switch>
+      <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
+      <Route>
+        <AdminLayout>
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            <Route path="/projects" component={Projects} />
+            <Route path="/tasks" component={Tasks} />
+            <Route path="/indicators" component={Indicators} />
+            <Route path="/targets" component={Targets} />
+            <Route path="/results" component={Results} />
+            <Route path="/evidence" component={Evidence} />
+            <Route path="/reviews" component={Reviews} />
+            <Route path="/feedback" component={Feedback} />
+            <Route path="/users" component={Users} />
+            <Route path="/user-requests" component={UserRequests} />
+            <Route path="/role-change-logs" component={RoleChangeLogs} />
+            <Route component={NotFound} />
+          </Switch>
+        </AdminLayout>
+      </Route>
+    </Switch>
   );
 }
 

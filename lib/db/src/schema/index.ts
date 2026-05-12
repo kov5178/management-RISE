@@ -7,3 +7,5 @@ export * from "./evidence";
 export * from "./reviews";
 export * from "./feedback";
 export * from "./users";
+export * from "./registration-requests";
+export * from "./role-change-logs";

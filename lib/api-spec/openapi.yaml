@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: 인증
+  - name: registration
+    description: 사용자 등록 요청
   - name: projects
     description: 프로젝트 관리
   - name: tasks
@@ -44,6 +48,146 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── Auth ───────────────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: 로그인 (직번/사번 + 비밀번호)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (pending/rejected/inactive)
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: 로그아웃
+      responses:
+        "200":
+          description: OK
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: 현재 로그인 사용자 조회
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Unauthorized
+
+  # ── Registration Requests ─────────────────────────────────
+  /registration-requests:
+    post:
+      operationId: createRegistrationRequest
+      tags: [registration]
+      summary: 사용자 등록 요청
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRegistrationRequestBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationRequest"
+        "400":
+          description: Validation Error
+        "409":
+          description: Duplicate employeeNo or email
+    get:
+      operationId: listRegistrationRequests
+      tags: [registration]
+      summary: 등록 요청 목록 (ADMIN 이상)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RegistrationRequest"
+
+  /registration-requests/{id}/approve:
+    patch:
+      operationId: approveRegistrationRequest
+      tags: [registration]
+      summary: 등록 요청 승인
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewRequestBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetail"
+
+  /registration-requests/{id}/reject:
+    patch:
+      operationId: rejectRegistrationRequest
+      tags: [registration]
+      summary: 등록 요청 반려
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewRequestBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationRequest"
 
   # ── Projects ──────────────────────────────────────────────
   /projects:
@@ -707,24 +851,72 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/User"
-    post:
-      operationId: createUser
+                  $ref: "#/components/schemas/UserDetail"
+
+  /users/{id}/status:
+    patch:
+      operationId: updateUserStatus
       tags: [users]
-      summary: 사용자 생성
+      summary: 사용자 상태 변경
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateUserBody"
+              $ref: "#/components/schemas/UpdateUserStatusBody"
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/UserDetail"
+
+  /users/{id}/role:
+    patch:
+      operationId: updateUserRole
+      tags: [users]
+      summary: 사용자 권한 변경
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRoleBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetail"
+
+  /role-change-logs:
+    get:
+      operationId: listRoleChangeLogs
+      tags: [users]
+      summary: 권한 변경 이력
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleChangeLog"
 
   # ── Dashboard ──────────────────────────────────────────────
   /dashboard/summary:
@@ -807,12 +999,16 @@ paths:
     get:
       operationId: getDashboardTrend
       tags: [dashboard]
-      summary: 연차별 목표 대비 실적 추이
+      summary: 월별 목표 대비 실적 추이
       parameters:
         - name: projectId
           in: query
           schema:
             type: ["integer", "null"]
+        - name: year
+          in: query
+          schema:
+            type: integer
       responses:
         "200":
           description: OK
@@ -1285,6 +1481,118 @@ components:
         dueDate:
           type: ["string", "null"]
 
+    # ── Auth ───────────────────────────────────────────────
+    LoginBody:
+      type: object
+      properties:
+        employeeNo:
+          type: string
+        password:
+          type: string
+      required:
+        - employeeNo
+        - password
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        employeeNo:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          description: "super_admin | admin | project_manager | task_manager | reviewer | viewer"
+        department:
+          type: ["string", "null"]
+        status:
+          type: string
+        lastLoginAt:
+          type: ["string", "null"]
+      required:
+        - id
+        - name
+        - employeeNo
+        - email
+        - role
+        - status
+
+    # ── Registration Requests ──────────────────────────────
+    CreateRegistrationRequestBody:
+      type: object
+      properties:
+        employeeNo:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        department:
+          type: ["string", "null"]
+        position:
+          type: ["string", "null"]
+        password:
+          type: string
+        passwordConfirm:
+          type: string
+        requestReason:
+          type: ["string", "null"]
+      required:
+        - employeeNo
+        - email
+        - name
+        - password
+        - passwordConfirm
+
+    RegistrationRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        employeeNo:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        department:
+          type: ["string", "null"]
+        position:
+          type: ["string", "null"]
+        requestReason:
+          type: ["string", "null"]
+        status:
+          type: string
+          description: "pending | approved | rejected"
+        reviewedBy:
+          type: ["integer", "null"]
+        reviewedAt:
+          type: ["string", "null"]
+        reviewComment:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - employeeNo
+        - email
+        - name
+        - status
+        - createdAt
+        - updatedAt
+
+    ReviewRequestBody:
+      type: object
+      properties:
+        reviewComment:
+          type: ["string", "null"]
+
     # ── Users ──────────────────────────────────────────────
     User:
       type: object
@@ -1297,7 +1605,7 @@ components:
           type: string
         role:
           type: string
-          description: "admin | manager | reviewer | viewer"
+          description: "super_admin | admin | project_manager | task_manager | reviewer | viewer"
         department:
           type: ["string", "null"]
         createdAt:
@@ -1308,6 +1616,100 @@ components:
         - email
         - role
         - createdAt
+
+    UserDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        employeeNo:
+          type: string
+        role:
+          type: string
+          description: "super_admin | admin | project_manager | task_manager | reviewer | viewer"
+        status:
+          type: string
+          description: "active | inactive | pending | rejected | locked"
+        department:
+          type: ["string", "null"]
+        position:
+          type: ["string", "null"]
+        lastLoginAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - email
+        - employeeNo
+        - role
+        - status
+        - createdAt
+
+    UpdateUserStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          description: "active | inactive | locked"
+      required:
+        - status
+
+    UpdateUserRoleBody:
+      type: object
+      properties:
+        role:
+          type: string
+          description: "super_admin | admin | project_manager | task_manager | reviewer | viewer"
+        reason:
+          type: ["string", "null"]
+      required:
+        - role
+
+    RoleChangeLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: string
+        userEmployeeNo:
+          type: string
+        oldRole:
+          type: string
+        newRole:
+          type: string
+        changedBy:
+          type: integer
+        changerName:
+          type: string
+        changerEmployeeNo:
+          type: string
+        changerRole:
+          type: string
+        reason:
+          type: ["string", "null"]
+        changedAt:
+          type: string
+      required:
+        - id
+        - userId
+        - userName
+        - userEmployeeNo
+        - oldRole
+        - newRole
+        - changedBy
+        - changerName
+        - changerEmployeeNo
+        - changerRole
+        - changedAt
 
     CreateUserBody:
       type: object

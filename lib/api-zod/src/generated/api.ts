@@ -15,6 +15,144 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary 로그인 (직번/사번 + 비밀번호)
+ */
+export const LoginBody = zod.object({
+  employeeNo: zod.string(),
+  password: zod.string(),
+});
+
+export const LoginResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  employeeNo: zod.string(),
+  email: zod.string(),
+  role: zod
+    .string()
+    .describe(
+      "super_admin | admin | project_manager | task_manager | reviewer | viewer",
+    ),
+  department: zod.string().nullish(),
+  status: zod.string(),
+  lastLoginAt: zod.string().nullish(),
+});
+
+/**
+ * @summary 현재 로그인 사용자 조회
+ */
+export const GetMeResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  employeeNo: zod.string(),
+  email: zod.string(),
+  role: zod
+    .string()
+    .describe(
+      "super_admin | admin | project_manager | task_manager | reviewer | viewer",
+    ),
+  department: zod.string().nullish(),
+  status: zod.string(),
+  lastLoginAt: zod.string().nullish(),
+});
+
+/**
+ * @summary 사용자 등록 요청
+ */
+export const CreateRegistrationRequestBody = zod.object({
+  employeeNo: zod.string(),
+  email: zod.string(),
+  name: zod.string(),
+  department: zod.string().nullish(),
+  position: zod.string().nullish(),
+  password: zod.string(),
+  passwordConfirm: zod.string(),
+  requestReason: zod.string().nullish(),
+});
+
+/**
+ * @summary 등록 요청 목록 (ADMIN 이상)
+ */
+export const ListRegistrationRequestsQueryParams = zod.object({
+  status: zod.coerce.string().optional(),
+});
+
+export const ListRegistrationRequestsResponseItem = zod.object({
+  id: zod.number(),
+  employeeNo: zod.string(),
+  email: zod.string(),
+  name: zod.string(),
+  department: zod.string().nullish(),
+  position: zod.string().nullish(),
+  requestReason: zod.string().nullish(),
+  status: zod.string().describe("pending | approved | rejected"),
+  reviewedBy: zod.number().nullish(),
+  reviewedAt: zod.string().nullish(),
+  reviewComment: zod.string().nullish(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+export const ListRegistrationRequestsResponse = zod.array(
+  ListRegistrationRequestsResponseItem,
+);
+
+/**
+ * @summary 등록 요청 승인
+ */
+export const ApproveRegistrationRequestParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ApproveRegistrationRequestBody = zod.object({
+  reviewComment: zod.string().nullish(),
+});
+
+export const ApproveRegistrationRequestResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  email: zod.string(),
+  employeeNo: zod.string(),
+  role: zod
+    .string()
+    .describe(
+      "super_admin | admin | project_manager | task_manager | reviewer | viewer",
+    ),
+  status: zod
+    .string()
+    .describe("active | inactive | pending | rejected | locked"),
+  department: zod.string().nullish(),
+  position: zod.string().nullish(),
+  lastLoginAt: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary 등록 요청 반려
+ */
+export const RejectRegistrationRequestParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const RejectRegistrationRequestBody = zod.object({
+  reviewComment: zod.string().nullish(),
+});
+
+export const RejectRegistrationRequestResponse = zod.object({
+  id: zod.number(),
+  employeeNo: zod.string(),
+  email: zod.string(),
+  name: zod.string(),
+  department: zod.string().nullish(),
+  position: zod.string().nullish(),
+  requestReason: zod.string().nullish(),
+  status: zod.string().describe("pending | approved | rejected"),
+  reviewedBy: zod.number().nullish(),
+  reviewedAt: zod.string().nullish(),
+  reviewComment: zod.string().nullish(),
+  createdAt: zod.string(),
+  updatedAt: zod.string(),
+});
+
+/**
  * @summary 프로젝트 목록
  */
 export const ListProjectsResponseItem = zod.object({
@@ -584,21 +722,107 @@ export const ListUsersResponseItem = zod.object({
   id: zod.number(),
   name: zod.string(),
   email: zod.string(),
-  role: zod.string().describe("admin | manager | reviewer | viewer"),
+  employeeNo: zod.string(),
+  role: zod
+    .string()
+    .describe(
+      "super_admin | admin | project_manager | task_manager | reviewer | viewer",
+    ),
+  status: zod
+    .string()
+    .describe("active | inactive | pending | rejected | locked"),
   department: zod.string().nullish(),
+  position: zod.string().nullish(),
+  lastLoginAt: zod.string().nullish(),
   createdAt: zod.string(),
 });
 export const ListUsersResponse = zod.array(ListUsersResponseItem);
 
 /**
- * @summary 사용자 생성
+ * @summary 사용자 상태 변경
  */
-export const CreateUserBody = zod.object({
+export const UpdateUserStatusParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateUserStatusBody = zod.object({
+  status: zod.string().describe("active | inactive | locked"),
+});
+
+export const UpdateUserStatusResponse = zod.object({
+  id: zod.number(),
   name: zod.string(),
   email: zod.string(),
-  role: zod.string(),
+  employeeNo: zod.string(),
+  role: zod
+    .string()
+    .describe(
+      "super_admin | admin | project_manager | task_manager | reviewer | viewer",
+    ),
+  status: zod
+    .string()
+    .describe("active | inactive | pending | rejected | locked"),
   department: zod.string().nullish(),
+  position: zod.string().nullish(),
+  lastLoginAt: zod.string().nullish(),
+  createdAt: zod.string(),
 });
+
+/**
+ * @summary 사용자 권한 변경
+ */
+export const UpdateUserRoleParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateUserRoleBody = zod.object({
+  role: zod
+    .string()
+    .describe(
+      "super_admin | admin | project_manager | task_manager | reviewer | viewer",
+    ),
+  reason: zod.string().nullish(),
+});
+
+export const UpdateUserRoleResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  email: zod.string(),
+  employeeNo: zod.string(),
+  role: zod
+    .string()
+    .describe(
+      "super_admin | admin | project_manager | task_manager | reviewer | viewer",
+    ),
+  status: zod
+    .string()
+    .describe("active | inactive | pending | rejected | locked"),
+  department: zod.string().nullish(),
+  position: zod.string().nullish(),
+  lastLoginAt: zod.string().nullish(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary 권한 변경 이력
+ */
+export const ListRoleChangeLogsResponseItem = zod.object({
+  id: zod.number(),
+  userId: zod.number(),
+  userName: zod.string(),
+  userEmployeeNo: zod.string(),
+  oldRole: zod.string(),
+  newRole: zod.string(),
+  changedBy: zod.number(),
+  changerName: zod.string(),
+  changerEmployeeNo: zod.string(),
+  changerRole: zod.string(),
+  reason: zod.string().nullish(),
+  changedAt: zod.string(),
+});
+export const ListRoleChangeLogsResponse = zod.array(
+  ListRoleChangeLogsResponseItem,
+);
 
 /**
  * @summary 대시보드 전체 요약
@@ -701,10 +925,11 @@ export const GetDashboardAlertsResponse = zod.object({
 });
 
 /**
- * @summary 연차별 목표 대비 실적 추이
+ * @summary 월별 목표 대비 실적 추이
  */
 export const GetDashboardTrendQueryParams = zod.object({
   projectId: zod.coerce.number().nullish(),
+  year: zod.coerce.number().optional(),
 });
 
 export const GetDashboardTrendResponseItem = zod.object({

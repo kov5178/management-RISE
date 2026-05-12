@@ -10,10 +10,14 @@ import reviewsRouter from "./reviews";
 import feedbackRouter from "./feedback";
 import usersRouter from "./users";
 import dashboardRouter from "./dashboard";
+import authRouter from "./auth";
+import registrationRequestsRouter from "./registration-requests";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(authRouter);
+router.use(registrationRequestsRouter);
 router.use(projectsRouter);
 router.use(tasksRouter);
 router.use(indicatorsRouter);

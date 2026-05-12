@@ -270,15 +270,122 @@ export interface UpdateFeedbackBody {
   dueDate?: string | null;
 }
 
+export interface LoginBody {
+  employeeNo: string;
+  password: string;
+}
+
+export interface AuthUser {
+  id: number;
+  name: string;
+  employeeNo: string;
+  email: string;
+  /** super_admin | admin | project_manager | task_manager | reviewer | viewer */
+  role: string;
+  /** @nullable */
+  department?: string | null;
+  status: string;
+  /** @nullable */
+  lastLoginAt?: string | null;
+}
+
+export interface CreateRegistrationRequestBody {
+  employeeNo: string;
+  email: string;
+  name: string;
+  /** @nullable */
+  department?: string | null;
+  /** @nullable */
+  position?: string | null;
+  password: string;
+  passwordConfirm: string;
+  /** @nullable */
+  requestReason?: string | null;
+}
+
+export interface RegistrationRequest {
+  id: number;
+  employeeNo: string;
+  email: string;
+  name: string;
+  /** @nullable */
+  department?: string | null;
+  /** @nullable */
+  position?: string | null;
+  /** @nullable */
+  requestReason?: string | null;
+  /** pending | approved | rejected */
+  status: string;
+  /** @nullable */
+  reviewedBy?: number | null;
+  /** @nullable */
+  reviewedAt?: string | null;
+  /** @nullable */
+  reviewComment?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReviewRequestBody {
+  /** @nullable */
+  reviewComment?: string | null;
+}
+
 export interface User {
   id: number;
   name: string;
   email: string;
-  /** admin | manager | reviewer | viewer */
+  /** super_admin | admin | project_manager | task_manager | reviewer | viewer */
   role: string;
   /** @nullable */
   department?: string | null;
   createdAt: string;
+}
+
+export interface UserDetail {
+  id: number;
+  name: string;
+  email: string;
+  employeeNo: string;
+  /** super_admin | admin | project_manager | task_manager | reviewer | viewer */
+  role: string;
+  /** active | inactive | pending | rejected | locked */
+  status: string;
+  /** @nullable */
+  department?: string | null;
+  /** @nullable */
+  position?: string | null;
+  /** @nullable */
+  lastLoginAt?: string | null;
+  createdAt: string;
+}
+
+export interface UpdateUserStatusBody {
+  /** active | inactive | locked */
+  status: string;
+}
+
+export interface UpdateUserRoleBody {
+  /** super_admin | admin | project_manager | task_manager | reviewer | viewer */
+  role: string;
+  /** @nullable */
+  reason?: string | null;
+}
+
+export interface RoleChangeLog {
+  id: number;
+  userId: number;
+  userName: string;
+  userEmployeeNo: string;
+  oldRole: string;
+  newRole: string;
+  changedBy: number;
+  changerName: string;
+  changerEmployeeNo: string;
+  changerRole: string;
+  /** @nullable */
+  reason?: string | null;
+  changedAt: string;
 }
 
 export interface CreateUserBody {
@@ -351,6 +458,10 @@ export interface TrendDataPoint {
   projectName?: string | null;
 }
 
+export type ListRegistrationRequestsParams = {
+  status?: string;
+};
+
 export type ListTasksParams = {
   projectId?: number;
 };
@@ -409,4 +520,5 @@ export type GetDashboardTrendParams = {
    * @nullable
    */
   projectId?: number | null;
+  year?: number;
 };
