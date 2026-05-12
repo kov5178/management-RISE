@@ -11,5 +11,6 @@ export function useAuth() {
     role: user?.role ?? null,
     isSuperAdmin: user?.role === "super_admin",
     isAdmin: user?.role === "admin" || user?.role === "super_admin",
+    mustChangePassword: user?.mustChangePassword ?? false,
   };
 }

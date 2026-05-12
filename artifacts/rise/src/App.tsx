@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +23,7 @@ import UserRequests from "@/pages/user-requests";
 import RoleChangeLogs from "@/pages/role-change-logs";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ChangePassword from "@/pages/change-password";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,17 +60,38 @@ function AccessDenied() {
   );
 }
 
+function MustChangePasswordGuard() {
+  const [, navigate] = useLocation();
+  const { mustChangePassword, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (mustChangePassword) {
+    navigate("/change-password");
+    return null;
+  }
+  return null;
+}
+
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn, isLoading } = useAuth();
+  const { isLoggedIn, isLoading, mustChangePassword } = useAuth();
+  const [, navigate] = useLocation();
   if (isLoading) return null;
   if (!isLoggedIn) return <LoginRequired />;
+  if (mustChangePassword) {
+    navigate("/change-password");
+    return null;
+  }
   return <>{children}</>;
 }
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn, isAdmin, isLoading } = useAuth();
+  const { isLoggedIn, isAdmin, isLoading, mustChangePassword } = useAuth();
+  const [, navigate] = useLocation();
   if (isLoading) return null;
   if (!isLoggedIn) return <LoginRequired />;
+  if (mustChangePassword) {
+    navigate("/change-password");
+    return null;
+  }
   if (!isAdmin) return <AccessDenied />;
   return <>{children}</>;
 }
@@ -77,6 +99,7 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   return (
     <AdminLayout>
+      <MustChangePasswordGuard />
       <Switch>
         <Route path="/">
           <RequireAuth><Dashboard /></RequireAuth>
@@ -125,6 +148,7 @@ function Router() {
     <Switch>
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/change-password" component={ChangePassword} />
       <Route component={AppRoutes} />
     </Switch>
   );

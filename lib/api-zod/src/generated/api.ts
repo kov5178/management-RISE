@@ -34,6 +34,7 @@ export const LoginResponse = zod.object({
     ),
   department: zod.string().nullish(),
   status: zod.string(),
+  mustChangePassword: zod.boolean(),
   lastLoginAt: zod.string().nullish(),
 });
 
@@ -52,7 +53,17 @@ export const GetMeResponse = zod.object({
     ),
   department: zod.string().nullish(),
   status: zod.string(),
+  mustChangePassword: zod.boolean(),
   lastLoginAt: zod.string().nullish(),
+});
+
+/**
+ * @summary 비밀번호 변경
+ */
+export const ChangePasswordBody = zod.object({
+  currentPassword: zod.string(),
+  newPassword: zod.string(),
+  newPasswordConfirm: zod.string(),
 });
 
 /**

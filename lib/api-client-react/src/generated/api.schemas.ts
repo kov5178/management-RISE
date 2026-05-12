@@ -285,8 +285,15 @@ export interface AuthUser {
   /** @nullable */
   department?: string | null;
   status: string;
+  mustChangePassword: boolean;
   /** @nullable */
   lastLoginAt?: string | null;
+}
+
+export interface ChangePasswordBody {
+  currentPassword: string;
+  newPassword: string;
+  newPasswordConfirm: string;
 }
 
 export interface CreateRegistrationRequestBody {

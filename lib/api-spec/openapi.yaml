@@ -97,6 +97,25 @@ paths:
         "401":
           description: Unauthorized
 
+  /auth/change-password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: 비밀번호 변경
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordBody"
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
   # ── Registration Requests ─────────────────────────────────
   /registration-requests:
     post:
@@ -1511,6 +1530,8 @@ components:
           type: ["string", "null"]
         status:
           type: string
+        mustChangePassword:
+          type: boolean
         lastLoginAt:
           type: ["string", "null"]
       required:
@@ -1520,6 +1541,21 @@ components:
         - email
         - role
         - status
+        - mustChangePassword
+
+    ChangePasswordBody:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+        newPasswordConfirm:
+          type: string
+      required:
+        - currentPassword
+        - newPassword
+        - newPasswordConfirm
 
     # ── Registration Requests ──────────────────────────────
     CreateRegistrationRequestBody:

@@ -23,9 +23,13 @@ export default function Login() {
     e.preventDefault();
     setError(null);
     try {
-      await login.mutateAsync({ data: { employeeNo, password } });
+      const result = await login.mutateAsync({ data: { employeeNo, password } });
       await refetch();
-      navigate(redirectTo);
+      if (result.mustChangePassword) {
+        navigate("/change-password");
+      } else {
+        navigate(redirectTo);
+      }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
       setError(msg ?? "로그인에 실패했습니다.");
