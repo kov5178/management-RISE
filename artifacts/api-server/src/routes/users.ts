@@ -6,7 +6,7 @@ import { serialize } from "../lib/serialize.js";
 
 const router: IRouter = Router();
 
-router.get("/users", requireAuth, async (req, res): Promise<void> => {
+router.get("/users", requireRole("super_admin", "admin"), async (req, res): Promise<void> => {
   const users = await db
     .select({
       id: usersTable.id,

@@ -9,8 +9,15 @@ export function exportToCsv(filename: string, rows: object[]) {
     '\n' +
     rows.map(row => {
       return keys.map(k => {
-        let cell = row[k as keyof typeof row] === null || row[k as keyof typeof row] === undefined ? '' : row[k as keyof typeof row];
-        cell = (cell as unknown) instanceof Date ? ((cell as unknown) as Date).toLocaleString() : String(cell).replace(/"/g, '""');
+        const raw: unknown = row[k as keyof typeof row];
+        let cell: string;
+        if (raw === null || raw === undefined) {
+          cell = '';
+        } else if (raw instanceof Date) {
+          cell = raw.toLocaleString();
+        } else {
+          cell = String(raw).replace(/"/g, '""');
+        }
         if (cell.search(/("|,|\n)/g) >= 0) {
           cell = `"${cell}"`;
         }
