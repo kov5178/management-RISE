@@ -15,6 +15,7 @@ function formatUser(user: typeof usersTable.$inferSelect) {
     email: user.email,
     role: user.role,
     department: user.department,
+    position: user.position,
     status: user.status,
     mustChangePassword: user.mustChangePassword,
     lastLoginAt: user.lastLoginAt,

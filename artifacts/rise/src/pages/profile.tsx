@@ -1,0 +1,320 @@
+import { useState, useEffect } from "react";
+import { useUpdateMyPassword, useUpdateMyProfile } from "@workspace/api-client-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { AlertCircle, CheckCircle2, KeyRound, User, Pencil } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useQueryClient } from "@tanstack/react-query";
+
+const ROLE_LABELS: Record<string, string> = {
+  super_admin: "최고관리자",
+  admin: "사업단 관리자",
+  project_manager: "프로젝트 관리자",
+  task_manager: "단위과제 담당자",
+  reviewer: "검토자",
+  viewer: "조회자",
+};
+
+export default function Profile() {
+  const { user, refetch } = useAuth();
+  const queryClient = useQueryClient();
+  const updateMyPassword = useUpdateMyPassword();
+  const updateMyProfile = useUpdateMyProfile();
+
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess] = useState(false);
+
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const [profileDept, setProfileDept] = useState("");
+  const [profilePosition, setProfilePosition] = useState("");
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSuccess, setProfileSuccess] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name ?? "");
+      setProfileDept(user.department ?? "");
+      setProfilePosition(user.position ?? "");
+    }
+  }, [user]);
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwError(null);
+    setPwSuccess(false);
+
+    if (next !== confirm) {
+      setPwError("새 비밀번호가 일치하지 않습니다.");
+      return;
+    }
+    if (next.length < 4) {
+      setPwError("비밀번호는 4자 이상이어야 합니다.");
+      return;
+    }
+
+    try {
+      await updateMyPassword.mutateAsync({
+        data: { currentPassword: current, newPassword: next, newPasswordConfirm: confirm },
+      });
+      setPwSuccess(true);
+      setCurrent("");
+      setNext("");
+      setConfirm("");
+      await queryClient.invalidateQueries();
+      await refetch();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      setPwError(msg ?? "비밀번호 변경에 실패했습니다.");
+    }
+  };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileError(null);
+    setProfileSuccess(false);
+
+    if (!profileName.trim()) {
+      setProfileError("이름을 입력하세요.");
+      return;
+    }
+
+    try {
+      await updateMyProfile.mutateAsync({
+        data: {
+          name: profileName.trim(),
+          department: profileDept.trim() || null,
+          position: profilePosition.trim() || null,
+        },
+      });
+      setProfileSuccess(true);
+      setEditingProfile(false);
+      await queryClient.invalidateQueries();
+      await refetch();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      setProfileError(msg ?? "프로필 수정에 실패했습니다.");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingProfile(false);
+    setProfileError(null);
+    if (user) {
+      setProfileName(user.name ?? "");
+      setProfileDept(user.department ?? "");
+      setProfilePosition(user.position ?? "");
+    }
+  };
+
+  if (!user) return null;
+
+  const userPosition = user.position;
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">내 정보</h1>
+        <p className="text-muted-foreground text-sm mt-1">계정 정보를 확인하고 프로필과 비밀번호를 변경할 수 있습니다.</p>
+      </div>
+
+      {/* 계정 정보 / 프로필 수정 */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <User className="w-4 h-4" />
+              계정 정보
+            </CardTitle>
+            {!editingProfile && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  setEditingProfile(true);
+                  setProfileSuccess(false);
+                  setProfileError(null);
+                }}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                수정
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {editingProfile ? (
+            <form onSubmit={handleProfileSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="profileName">이름</Label>
+                <Input
+                  id="profileName"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                  required
+                  className="max-w-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="profileDept">부서</Label>
+                <Input
+                  id="profileDept"
+                  value={profileDept}
+                  onChange={(e) => setProfileDept(e.target.value)}
+                  placeholder="부서명 (선택)"
+                  className="max-w-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="profilePosition">직위</Label>
+                <Input
+                  id="profilePosition"
+                  value={profilePosition}
+                  onChange={(e) => setProfilePosition(e.target.value)}
+                  placeholder="직위 (선택)"
+                  className="max-w-sm"
+                />
+              </div>
+
+              {profileError && (
+                <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-md p-3 max-w-sm">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{profileError}</span>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button type="submit" disabled={updateMyProfile.isPending}>
+                  {updateMyProfile.isPending ? "저장 중..." : "저장"}
+                </Button>
+                <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                  취소
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <>
+              {profileSuccess && (
+                <div className="flex items-center gap-3 p-3 mb-4 rounded-lg bg-green-50 text-green-700 border border-green-200">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span className="text-sm font-medium">프로필이 성공적으로 수정되었습니다.</span>
+                </div>
+              )}
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                <div>
+                  <dt className="text-muted-foreground mb-1">이름</dt>
+                  <dd className="font-medium">{user.name}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground mb-1">직번/사번</dt>
+                  <dd className="font-medium font-mono">{user.employeeNo}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground mb-1">이메일</dt>
+                  <dd className="font-medium">{user.email}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground mb-1">권한</dt>
+                  <dd>
+                    <Badge variant="secondary" className="font-medium">
+                      {ROLE_LABELS[user.role] ?? user.role}
+                    </Badge>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground mb-1">부서</dt>
+                  <dd className="font-medium">{user.department ?? <span className="text-muted-foreground">-</span>}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground mb-1">직위</dt>
+                  <dd className="font-medium">{userPosition ?? <span className="text-muted-foreground">-</span>}</dd>
+                </div>
+              </dl>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 비밀번호 변경 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <KeyRound className="w-4 h-4" />
+            비밀번호 변경
+          </CardTitle>
+          <CardDescription>현재 비밀번호를 확인한 후 새 비밀번호로 변경합니다.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {pwSuccess ? (
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-green-50 text-green-700 border border-green-200">
+              <CheckCircle2 className="w-5 h-5 shrink-0" />
+              <span className="text-sm font-medium">비밀번호가 성공적으로 변경되었습니다.</span>
+            </div>
+          ) : (
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current">현재 비밀번호</Label>
+                <Input
+                  id="current"
+                  type="password"
+                  autoComplete="current-password"
+                  value={current}
+                  onChange={(e) => setCurrent(e.target.value)}
+                  required
+                  className="max-w-sm"
+                />
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <Label htmlFor="next">새 비밀번호</Label>
+                <Input
+                  id="next"
+                  type="password"
+                  autoComplete="new-password"
+                  value={next}
+                  onChange={(e) => setNext(e.target.value)}
+                  required
+                  placeholder="4자 이상"
+                  className="max-w-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm">새 비밀번호 확인</Label>
+                <Input
+                  id="confirm"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  required
+                  className="max-w-sm"
+                />
+              </div>
+
+              {pwError && (
+                <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-md p-3 max-w-sm">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{pwError}</span>
+                </div>
+              )}
+
+              <Button type="submit" disabled={updateMyPassword.isPending}>
+                {updateMyPassword.isPending ? "변경 중..." : "비밀번호 변경"}
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

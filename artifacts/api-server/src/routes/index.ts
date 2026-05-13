@@ -11,6 +11,7 @@ import feedbackRouter from "./feedback";
 import usersRouter from "./users";
 import dashboardRouter from "./dashboard";
 import authRouter from "./auth";
+import profileRouter from "./profile";
 import registrationRequestsRouter from "./registration-requests";
 import { requireAuth } from "../middlewares/auth.js";
 
@@ -18,6 +19,7 @@ const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(authRouter);
+router.use(profileRouter);
 router.use(registrationRequestsRouter);
 
 router.use(requireAuth);

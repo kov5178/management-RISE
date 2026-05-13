@@ -33,6 +33,7 @@ export const LoginResponse = zod.object({
       "super_admin | admin | project_manager | task_manager | reviewer | viewer",
     ),
   department: zod.string().nullish(),
+  position: zod.string().nullish(),
   status: zod.string(),
   mustChangePassword: zod.boolean(),
   lastLoginAt: zod.string().nullish(),
@@ -52,6 +53,7 @@ export const GetMeResponse = zod.object({
       "super_admin | admin | project_manager | task_manager | reviewer | viewer",
     ),
   department: zod.string().nullish(),
+  position: zod.string().nullish(),
   status: zod.string(),
   mustChangePassword: zod.boolean(),
   lastLoginAt: zod.string().nullish(),
@@ -64,6 +66,41 @@ export const ChangePasswordBody = zod.object({
   currentPassword: zod.string(),
   newPassword: zod.string(),
   newPasswordConfirm: zod.string(),
+});
+
+/**
+ * @summary 내 비밀번호 변경 (현재 비밀번호 확인 후)
+ */
+export const UpdateMyPasswordBody = zod.object({
+  currentPassword: zod.string(),
+  newPassword: zod.string(),
+  newPasswordConfirm: zod.string(),
+});
+
+/**
+ * @summary 내 프로필 수정 (이름, 부서, 직위)
+ */
+export const UpdateMyProfileBody = zod.object({
+  name: zod.string().optional(),
+  department: zod.string().nullish(),
+  position: zod.string().nullish(),
+});
+
+export const UpdateMyProfileResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  employeeNo: zod.string(),
+  email: zod.string(),
+  role: zod
+    .string()
+    .describe(
+      "super_admin | admin | project_manager | task_manager | reviewer | viewer",
+    ),
+  department: zod.string().nullish(),
+  position: zod.string().nullish(),
+  status: zod.string(),
+  mustChangePassword: zod.boolean(),
+  lastLoginAt: zod.string().nullish(),
 });
 
 /**

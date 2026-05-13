@@ -61,6 +61,8 @@ import type {
   TrendDataPoint,
   UpdateFeedbackBody,
   UpdateIndicatorBody,
+  UpdateMyPasswordBody,
+  UpdateMyProfileBody,
   UpdateProjectBody,
   UpdateResultBody,
   UpdateTargetBody,
@@ -466,6 +468,178 @@ export const useChangePassword = <
   TContext
 > => {
   return useMutation(getChangePasswordMutationOptions(options));
+};
+
+/**
+ * @summary 내 비밀번호 변경 (현재 비밀번호 확인 후)
+ */
+export const getUpdateMyPasswordUrl = () => {
+  return `/api/auth/me/password`;
+};
+
+export const updateMyPassword = async (
+  updateMyPasswordBody: UpdateMyPasswordBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getUpdateMyPasswordUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateMyPasswordBody),
+  });
+};
+
+export const getUpdateMyPasswordMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMyPassword>>,
+    TError,
+    { data: BodyType<UpdateMyPasswordBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMyPassword>>,
+  TError,
+  { data: BodyType<UpdateMyPasswordBody> },
+  TContext
+> => {
+  const mutationKey = ["updateMyPassword"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMyPassword>>,
+    { data: BodyType<UpdateMyPasswordBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateMyPassword(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMyPasswordMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateMyPassword>>
+>;
+export type UpdateMyPasswordMutationBody = BodyType<UpdateMyPasswordBody>;
+export type UpdateMyPasswordMutationError = ErrorType<void>;
+
+/**
+ * @summary 내 비밀번호 변경 (현재 비밀번호 확인 후)
+ */
+export const useUpdateMyPassword = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMyPassword>>,
+    TError,
+    { data: BodyType<UpdateMyPasswordBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateMyPassword>>,
+  TError,
+  { data: BodyType<UpdateMyPasswordBody> },
+  TContext
+> => {
+  return useMutation(getUpdateMyPasswordMutationOptions(options));
+};
+
+/**
+ * @summary 내 프로필 수정 (이름, 부서, 직위)
+ */
+export const getUpdateMyProfileUrl = () => {
+  return `/api/auth/me/profile`;
+};
+
+export const updateMyProfile = async (
+  updateMyProfileBody: UpdateMyProfileBody,
+  options?: RequestInit,
+): Promise<AuthUser> => {
+  return customFetch<AuthUser>(getUpdateMyProfileUrl(), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateMyProfileBody),
+  });
+};
+
+export const getUpdateMyProfileMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMyProfile>>,
+    TError,
+    { data: BodyType<UpdateMyProfileBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateMyProfile>>,
+  TError,
+  { data: BodyType<UpdateMyProfileBody> },
+  TContext
+> => {
+  const mutationKey = ["updateMyProfile"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateMyProfile>>,
+    { data: BodyType<UpdateMyProfileBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return updateMyProfile(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMyProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateMyProfile>>
+>;
+export type UpdateMyProfileMutationBody = BodyType<UpdateMyProfileBody>;
+export type UpdateMyProfileMutationError = ErrorType<void>;
+
+/**
+ * @summary 내 프로필 수정 (이름, 부서, 직위)
+ */
+export const useUpdateMyProfile = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateMyProfile>>,
+    TError,
+    { data: BodyType<UpdateMyProfileBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateMyProfile>>,
+  TError,
+  { data: BodyType<UpdateMyProfileBody> },
+  TContext
+> => {
+  return useMutation(getUpdateMyProfileMutationOptions(options));
 };
 
 /**

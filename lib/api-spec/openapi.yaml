@@ -116,6 +116,48 @@ paths:
         "401":
           description: Unauthorized
 
+  /auth/me/password:
+    patch:
+      operationId: updateMyPassword
+      tags: [auth]
+      summary: 내 비밀번호 변경 (현재 비밀번호 확인 후)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMyPasswordBody"
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
+  /auth/me/profile:
+    patch:
+      operationId: updateMyProfile
+      tags: [auth]
+      summary: 내 프로필 수정 (이름, 부서, 직위)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMyProfileBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+
   # ── Registration Requests ─────────────────────────────────
   /registration-requests:
     post:
@@ -1528,6 +1570,8 @@ components:
           description: "super_admin | admin | project_manager | task_manager | reviewer | viewer"
         department:
           type: ["string", "null"]
+        position:
+          type: ["string", "null"]
         status:
           type: string
         mustChangePassword:
@@ -1557,6 +1601,74 @@ components:
         - newPassword
         - newPasswordConfirm
 
+    UpdateMyPasswordBody:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+        newPasswordConfirm:
+          type: string
+      required:
+        - currentPassword
+        - newPassword
+        - newPasswordConfirm
+
+    UpdateMyProfileBody:
+      type: object
+      properties:
+        name:
+          type: string
+        department:
+          type: ["string", "null"]
+        position:
+          type: ["string", "null"]
+
+    RequestPasswordResetBody:
+      type: object
+      properties:
+        employeeNo:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        currentPassword:
+          type: string
+      required:
+        - employeeNo
+        - name
+        - email
+        - currentPassword
+
+    RequestPasswordResetResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        maskedEmail:
+          type: string
+      required:
+        - ok
+        - maskedEmail
+
+    ConfirmPasswordResetBody:
+      type: object
+      properties:
+        employeeNo:
+          type: string
+        otp:
+          type: string
+        newPassword:
+          type: string
+        newPasswordConfirm:
+          type: string
+      required:
+        - employeeNo
+        - otp
+        - newPassword
+        - newPasswordConfirm
     # ── Registration Requests ──────────────────────────────
     CreateRegistrationRequestBody:
       type: object

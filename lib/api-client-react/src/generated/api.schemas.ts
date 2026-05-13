@@ -284,6 +284,8 @@ export interface AuthUser {
   role: string;
   /** @nullable */
   department?: string | null;
+  /** @nullable */
+  position?: string | null;
   status: string;
   mustChangePassword: boolean;
   /** @nullable */
@@ -292,6 +294,39 @@ export interface AuthUser {
 
 export interface ChangePasswordBody {
   currentPassword: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}
+
+export interface UpdateMyPasswordBody {
+  currentPassword: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}
+
+export interface UpdateMyProfileBody {
+  name?: string;
+  /** @nullable */
+  department?: string | null;
+  /** @nullable */
+  position?: string | null;
+}
+
+export interface RequestPasswordResetBody {
+  employeeNo: string;
+  name: string;
+  email: string;
+  currentPassword: string;
+}
+
+export interface RequestPasswordResetResponse {
+  ok: boolean;
+  maskedEmail: string;
+}
+
+export interface ConfirmPasswordResetBody {
+  employeeNo: string;
+  otp: string;
   newPassword: string;
   newPasswordConfirm: string;
 }
