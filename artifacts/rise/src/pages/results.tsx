@@ -8,16 +8,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit2, Send, Download } from "lucide-react";
+import { Edit2, Send, Download, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { exportToCsv } from "@/lib/export-excel";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Results() {
   const currentYear = 2025;
   const [filterYear, setFilterYear] = useState<string>(currentYear.toString());
+  const { canInputResults } = useAuth();
   
   const { data: indicators } = useListIndicators();
   const { data: targets } = useListTargets({ year: Number(filterYear) });
@@ -32,8 +34,8 @@ export default function Results() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingIndicator, setEditingIndicator] = useState<any>(null);
   const [existingResult, setExistingResult] = useState<any>(null);
+  const [viewOnly, setViewOnly] = useState(false);
 
-  // Form states
   const [actualValue, setActualValue] = useState<number | "">("");
   const [selfEvaluation, setSelfEvaluation] = useState("");
 
@@ -55,11 +57,12 @@ export default function Results() {
     exportToCsv(`results_${filterYear}`, exportData);
   };
 
-  const openEdit = (indicator: any, result: any) => {
+  const openEdit = (indicator: any, result: any, forceViewOnly = false) => {
     setEditingIndicator(indicator);
     setExistingResult(result);
     setActualValue(result && result.actualValue !== null ? result.actualValue : "");
     setSelfEvaluation(result ? (result.selfEvaluation || "") : "");
+    setViewOnly(forceViewOnly || !canInputResults);
     setIsEditOpen(true);
   };
 
@@ -192,7 +195,15 @@ export default function Results() {
                       {result ? <StatusBadge status={result.status} /> : <span className="text-xs text-muted-foreground">미입력</span>}
                     </TableCell>
                     <TableCell className="text-right">
-                      {isReadonly ? (
+                      {!canInputResults ? (
+                        result ? (
+                          <Button variant="outline" size="sm" onClick={() => openEdit(indicator, result, true)}>
+                            <Eye className="w-4 h-4 mr-2" />조회
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )
+                      ) : isReadonly ? (
                         <Button variant="outline" size="sm" onClick={() => openEdit(indicator, result)}>
                           조회
                         </Button>
@@ -214,7 +225,7 @@ export default function Results() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>실적 입력 ({filterYear}년도)</DialogTitle>
+            <DialogTitle>{viewOnly ? "실적 조회" : "실적 입력"} ({filterYear}년도)</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="p-3 bg-muted rounded-md border space-y-2">
@@ -232,7 +243,7 @@ export default function Results() {
                 type="number" 
                 value={actualValue} 
                 onChange={e => setActualValue(e.target.value === "" ? "" : Number(e.target.value))} 
-                disabled={existingResult && ["submitted", "reviewing", "approved"].includes(existingResult.status)}
+                disabled={viewOnly || (existingResult && ["submitted", "reviewing", "approved"].includes(existingResult.status))}
               />
             </div>
             
@@ -244,7 +255,7 @@ export default function Results() {
                 onChange={e => setSelfEvaluation(e.target.value)} 
                 rows={4}
                 placeholder="실적 달성 과정의 특이사항이나 부연 설명을 입력하세요."
-                disabled={existingResult && ["submitted", "reviewing", "approved"].includes(existingResult.status)}
+                disabled={viewOnly || (existingResult && ["submitted", "reviewing", "approved"].includes(existingResult.status))}
               />
             </div>
             
@@ -256,7 +267,7 @@ export default function Results() {
           </div>
           
           <DialogFooter className="gap-2 sm:gap-0">
-            {existingResult && ["submitted", "reviewing", "approved"].includes(existingResult.status) ? (
+            {viewOnly || (existingResult && ["submitted", "reviewing", "approved"].includes(existingResult.status)) ? (
               <Button onClick={() => setIsEditOpen(false)}>닫기</Button>
             ) : (
               <>

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Edit2, Trash2, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Tasks() {
   const [filterProjectId, setFilterProjectId] = useState<string>("all");
@@ -22,12 +23,12 @@ export default function Tasks() {
   const deleteTask = useDeleteTask();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { canManageProjects } = useAuth();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
 
-  // Form states
   const [projectId, setProjectId] = useState<string>("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -115,64 +116,66 @@ export default function Tasks() {
               </SelectContent>
             </Select>
           </div>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm} className="gap-2">
-                <Plus className="w-4 h-4" /> 과제 등록
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>새 단위과제 등록</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label>소속 프로젝트</Label>
-                  <Select value={projectId} onValueChange={setProjectId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="프로젝트를 선택하세요" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {projects?.map(p => (
-                        <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="name">과제명</Label>
-                  <Input id="name" value={name} onChange={e => setName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="desc">설명</Label>
-                  <Textarea id="desc" value={description} onChange={e => setDescription(e.target.value)} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+          {canManageProjects && (
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={resetForm} className="gap-2">
+                  <Plus className="w-4 h-4" /> 과제 등록
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>새 단위과제 등록</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="manager">담당자</Label>
-                    <Input id="manager" value={managerName} onChange={e => setManagerName(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>상태</Label>
-                    <Select value={status} onValueChange={setStatus}>
+                    <Label>소속 프로젝트</Label>
+                    <Select value={projectId} onValueChange={setProjectId}>
                       <SelectTrigger>
-                        <SelectValue />
+                        <SelectValue placeholder="프로젝트를 선택하세요" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="active">진행중 (Active)</SelectItem>
-                        <SelectItem value="completed">완료 (Completed)</SelectItem>
-                        <SelectItem value="planned">계획 (Planned)</SelectItem>
+                        {projects?.map(p => (
+                          <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">과제명</Label>
+                    <Input id="name" value={name} onChange={e => setName(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="desc">설명</Label>
+                    <Textarea id="desc" value={description} onChange={e => setDescription(e.target.value)} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="manager">담당자</Label>
+                      <Input id="manager" value={managerName} onChange={e => setManagerName(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>상태</Label>
+                      <Select value={status} onValueChange={setStatus}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">진행중 (Active)</SelectItem>
+                          <SelectItem value="completed">완료 (Completed)</SelectItem>
+                          <SelectItem value="planned">계획 (Planned)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>취소</Button>
-                <Button onClick={handleCreate} disabled={createTask.isPending || !name || !projectId}>등록</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsCreateOpen(false)}>취소</Button>
+                  <Button onClick={handleCreate} disabled={createTask.isPending || !name || !projectId}>등록</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 
@@ -185,7 +188,7 @@ export default function Tasks() {
               <TableHead>소속 프로젝트</TableHead>
               <TableHead>담당자</TableHead>
               <TableHead>상태</TableHead>
-              <TableHead className="text-right">관리</TableHead>
+              {canManageProjects && <TableHead className="text-right">관리</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -197,12 +200,12 @@ export default function Tasks() {
                   <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                  <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
+                  {canManageProjects && <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>}
                 </TableRow>
               ))
             ) : tasks?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">등록된 단위과제가 없습니다.</TableCell>
+                <TableCell colSpan={canManageProjects ? 6 : 5} className="text-center py-8 text-muted-foreground">등록된 단위과제가 없습니다.</TableCell>
               </TableRow>
             ) : (
               tasks?.map((task) => {
@@ -225,16 +228,18 @@ export default function Tasks() {
                         {task.status === 'active' ? '진행중' : task.status === 'completed' ? '완료' : '계획'}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(task)}>
-                          <Edit2 className="w-4 h-4 text-muted-foreground" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(task.id)}>
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    {canManageProjects && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(task)}>
+                            <Edit2 className="w-4 h-4 text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(task.id)}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })
@@ -243,59 +248,61 @@ export default function Tasks() {
         </Table>
       </div>
 
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>단위과제 수정</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label>소속 프로젝트</Label>
-              <Select value={projectId} onValueChange={setProjectId} disabled>
-                <SelectTrigger className="bg-muted">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects?.map(p => (
-                    <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">과제명</Label>
-              <Input id="edit-name" value={name} onChange={e => setName(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-desc">설명</Label>
-              <Textarea id="edit-desc" value={description} onChange={e => setDescription(e.target.value)} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+      {canManageProjects && (
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>단위과제 수정</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-manager">담당자</Label>
-                <Input id="edit-manager" value={managerName} onChange={e => setManagerName(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>상태</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger>
+                <Label>소속 프로젝트</Label>
+                <Select value={projectId} onValueChange={setProjectId} disabled>
+                  <SelectTrigger className="bg-muted">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">진행중 (Active)</SelectItem>
-                    <SelectItem value="completed">완료 (Completed)</SelectItem>
-                    <SelectItem value="planned">계획 (Planned)</SelectItem>
+                    {projects?.map(p => (
+                      <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">과제명</Label>
+                <Input id="edit-name" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-desc">설명</Label>
+                <Textarea id="edit-desc" value={description} onChange={e => setDescription(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-manager">담당자</Label>
+                  <Input id="edit-manager" value={managerName} onChange={e => setManagerName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>상태</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">진행중 (Active)</SelectItem>
+                      <SelectItem value="completed">완료 (Completed)</SelectItem>
+                      <SelectItem value="planned">계획 (Planned)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
-            <Button onClick={handleEdit} disabled={updateTask.isPending || !name}>저장</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
+              <Button onClick={handleEdit} disabled={updateTask.isPending || !name}>저장</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

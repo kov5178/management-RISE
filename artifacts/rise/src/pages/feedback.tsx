@@ -8,14 +8,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Edit2 } from "lucide-react";
+import { Edit2, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Feedback() {
   const currentYear = 2025;
   const [filterYear, setFilterYear] = useState<string>(currentYear.toString());
+  const { canWriteFeedback } = useAuth();
   
   const { data: tasks } = useListTasks();
   const { data: feedbacks, isLoading } = useListFeedback({ year: Number(filterYear) });
@@ -28,20 +30,21 @@ export default function Feedback() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
   const [existingFeedback, setExistingFeedback] = useState<any>(null);
+  const [viewOnly, setViewOnly] = useState(false);
 
-  // Form states
   const [evaluationContent, setEvaluationContent] = useState("");
   const [improvementPlan, setImprovementPlan] = useState("");
   const [actionStatus, setActionStatus] = useState("planned");
   const [dueDate, setDueDate] = useState("");
 
-  const openEdit = (task: any, feedback: any) => {
+  const openEdit = (task: any, feedback: any, forceViewOnly = false) => {
     setEditingTask(task);
     setExistingFeedback(feedback);
     setEvaluationContent(feedback ? (feedback.evaluationContent || "") : "");
     setImprovementPlan(feedback ? (feedback.improvementPlan || "") : "");
     setActionStatus(feedback ? (feedback.actionStatus || "planned") : "planned");
     setDueDate(feedback ? (feedback.dueDate || "") : "");
+    setViewOnly(forceViewOnly || !canWriteFeedback);
     setIsEditOpen(true);
   };
 
@@ -148,10 +151,18 @@ export default function Feedback() {
                     </TableCell>
                     <TableCell>{fb ? getStatusBadge(fb.actionStatus) : getStatusBadge('none')}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant={fb ? "outline" : "default"} size="sm" onClick={() => openEdit(task, fb)}>
-                        <Edit2 className="w-4 h-4 mr-2" />
-                        {fb ? "수정" : "작성"}
-                      </Button>
+                      {canWriteFeedback ? (
+                        <Button variant={fb ? "outline" : "default"} size="sm" onClick={() => openEdit(task, fb)}>
+                          <Edit2 className="w-4 h-4 mr-2" />
+                          {fb ? "수정" : "작성"}
+                        </Button>
+                      ) : fb ? (
+                        <Button variant="outline" size="sm" onClick={() => openEdit(task, fb, true)}>
+                          <Eye className="w-4 h-4 mr-2" />조회
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
@@ -164,7 +175,7 @@ export default function Feedback() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>자체평가 및 환류계획 작성</DialogTitle>
+            <DialogTitle>{viewOnly ? "자체평가 조회" : "자체평가 및 환류계획 작성"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="p-3 bg-muted rounded-md border text-sm font-medium">
@@ -179,6 +190,7 @@ export default function Feedback() {
                 onChange={e => setEvaluationContent(e.target.value)} 
                 rows={4}
                 placeholder="해당 연도의 과제 수행 결과, 우수사항 및 미흡사항 등 종합적인 자체평가 의견을 기재하세요."
+                disabled={viewOnly}
               />
             </div>
             
@@ -190,13 +202,14 @@ export default function Feedback() {
                 onChange={e => setImprovementPlan(e.target.value)} 
                 rows={4}
                 placeholder="미흡사항에 대한 구체적인 개선 계획, 다음 연도 사업 반영 계획 등을 기재하세요."
+                disabled={viewOnly}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>조치 상태</Label>
-                <Select value={actionStatus} onValueChange={setActionStatus}>
+                <Select value={actionStatus} onValueChange={setActionStatus} disabled={viewOnly}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -209,13 +222,15 @@ export default function Feedback() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="due">조치 완료 예정일</Label>
-                <Input id="due" type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+                <Input id="due" type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} disabled={viewOnly} />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
-            <Button onClick={handleSave} disabled={createFeedback.isPending || updateFeedback.isPending}>저장</Button>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>닫기</Button>
+            {!viewOnly && (
+              <Button onClick={handleSave} disabled={createFeedback.isPending || updateFeedback.isPending}>저장</Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

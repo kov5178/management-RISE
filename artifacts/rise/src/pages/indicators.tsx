@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Edit2, Trash2, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Indicators() {
   const [filterTaskId, setFilterTaskId] = useState<string>("all");
@@ -22,12 +23,12 @@ export default function Indicators() {
   const deleteIndicator = useDeleteIndicator();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { canManageProjects } = useAuth();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingIndicator, setEditingIndicator] = useState<any>(null);
 
-  // Form states
   const [taskId, setTaskId] = useState<string>("");
   const [parentId, setParentId] = useState<string>("none");
   const [indicatorType, setIndicatorType] = useState("parent");
@@ -143,89 +144,91 @@ export default function Indicators() {
               </SelectContent>
             </Select>
           </div>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm} className="gap-2">
-                <Plus className="w-4 h-4" /> 지표 등록
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>새 지표 등록</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4 grid-cols-2">
-                <div className="space-y-2 col-span-2 sm:col-span-1">
-                  <Label>단위과제</Label>
-                  <Select value={taskId} onValueChange={setTaskId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="과제를 선택하세요" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tasks?.map(t => (
-                        <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2 col-span-2 sm:col-span-1">
-                  <Label>지표 유형</Label>
-                  <Select value={indicatorType} onValueChange={setIndicatorType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="parent">상위지표</SelectItem>
-                      <SelectItem value="child">하위지표</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {indicatorType === "child" && (
-                  <div className="space-y-2 col-span-2">
-                    <Label>상위지표 선택</Label>
-                    <Select value={parentId} onValueChange={setParentId}>
+          {canManageProjects && (
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={resetForm} className="gap-2">
+                  <Plus className="w-4 h-4" /> 지표 등록
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>새 지표 등록</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4 grid-cols-2">
+                  <div className="space-y-2 col-span-2 sm:col-span-1">
+                    <Label>단위과제</Label>
+                    <Select value={taskId} onValueChange={setTaskId}>
                       <SelectTrigger>
-                        <SelectValue placeholder="상위지표를 선택하세요" />
+                        <SelectValue placeholder="과제를 선택하세요" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">없음</SelectItem>
-                        {parentIndicators.map(i => (
-                          <SelectItem key={i.id} value={i.id.toString()}>{i.name}</SelectItem>
+                        {tasks?.map(t => (
+                          <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                )}
+                  <div className="space-y-2 col-span-2 sm:col-span-1">
+                    <Label>지표 유형</Label>
+                    <Select value={indicatorType} onValueChange={setIndicatorType}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="parent">상위지표</SelectItem>
+                        <SelectItem value="child">하위지표</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {indicatorType === "child" && (
+                    <div className="space-y-2 col-span-2">
+                      <Label>상위지표 선택</Label>
+                      <Select value={parentId} onValueChange={setParentId}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="상위지표를 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">없음</SelectItem>
+                          {parentIndicators.map(i => (
+                            <SelectItem key={i.id} value={i.id.toString()}>{i.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="name">지표명</Label>
-                  <Input id="name" value={name} onChange={e => setName(e.target.value)} />
-                </div>
-                
-                <div className="space-y-2 col-span-2 sm:col-span-1">
-                  <Label htmlFor="unit">단위 (예: 건, 명, %)</Label>
-                  <Input id="unit" value={unit} onChange={e => setUnit(e.target.value)} />
-                </div>
-                <div className="space-y-2 col-span-2 sm:col-span-1">
-                  <Label htmlFor="weight">가중치 (%)</Label>
-                  <Input id="weight" type="number" value={weight} onChange={e => setWeight(e.target.value === "" ? "" : Number(e.target.value))} />
-                </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="name">지표명</Label>
+                    <Input id="name" value={name} onChange={e => setName(e.target.value)} />
+                  </div>
+                  
+                  <div className="space-y-2 col-span-2 sm:col-span-1">
+                    <Label htmlFor="unit">단위 (예: 건, 명, %)</Label>
+                    <Input id="unit" value={unit} onChange={e => setUnit(e.target.value)} />
+                  </div>
+                  <div className="space-y-2 col-span-2 sm:col-span-1">
+                    <Label htmlFor="weight">가중치 (%)</Label>
+                    <Input id="weight" type="number" value={weight} onChange={e => setWeight(e.target.value === "" ? "" : Number(e.target.value))} />
+                  </div>
 
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="formula">산출식</Label>
-                  <Input id="formula" value={formula} onChange={e => setFormula(e.target.value)} />
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="formula">산출식</Label>
+                    <Input id="formula" value={formula} onChange={e => setFormula(e.target.value)} />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="desc">설명</Label>
+                    <Textarea id="desc" value={description} onChange={e => setDescription(e.target.value)} />
+                  </div>
                 </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="desc">설명</Label>
-                  <Textarea id="desc" value={description} onChange={e => setDescription(e.target.value)} />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>취소</Button>
-                <Button onClick={handleCreate} disabled={createIndicator.isPending || !name || !taskId}>등록</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsCreateOpen(false)}>취소</Button>
+                  <Button onClick={handleCreate} disabled={createIndicator.isPending || !name || !taskId}>등록</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 
@@ -238,7 +241,7 @@ export default function Indicators() {
               <TableHead>단위과제</TableHead>
               <TableHead>단위</TableHead>
               <TableHead>가중치</TableHead>
-              <TableHead className="text-right">관리</TableHead>
+              {canManageProjects && <TableHead className="text-right">관리</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -250,12 +253,12 @@ export default function Indicators() {
                   <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-12" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-12" /></TableCell>
-                  <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
+                  {canManageProjects && <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>}
                 </TableRow>
               ))
             ) : indicators?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">등록된 지표가 없습니다.</TableCell>
+                <TableCell colSpan={canManageProjects ? 6 : 5} className="text-center py-8 text-muted-foreground">등록된 지표가 없습니다.</TableCell>
               </TableRow>
             ) : (
               indicators?.map((indicator) => {
@@ -277,16 +280,18 @@ export default function Indicators() {
                     <TableCell className="text-muted-foreground">{task?.name || '-'}</TableCell>
                     <TableCell>{indicator.unit || '-'}</TableCell>
                     <TableCell>{indicator.weight ? `${indicator.weight}%` : '-'}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(indicator)}>
-                          <Edit2 className="w-4 h-4 text-muted-foreground" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(indicator.id)}>
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    {canManageProjects && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(indicator)}>
+                            <Edit2 className="w-4 h-4 text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(indicator.id)}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })
@@ -295,84 +300,86 @@ export default function Indicators() {
         </Table>
       </div>
 
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>지표 수정</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4 grid-cols-2">
-            <div className="space-y-2 col-span-2 sm:col-span-1">
-              <Label>단위과제</Label>
-              <Select value={taskId} onValueChange={setTaskId} disabled>
-                <SelectTrigger className="bg-muted">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {tasks?.map(t => (
-                    <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 col-span-2 sm:col-span-1">
-              <Label>지표 유형</Label>
-              <Select value={indicatorType} onValueChange={setIndicatorType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="parent">상위지표</SelectItem>
-                  <SelectItem value="child">하위지표</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {indicatorType === "child" && (
-              <div className="space-y-2 col-span-2">
-                <Label>상위지표 선택</Label>
-                <Select value={parentId} onValueChange={setParentId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="상위지표를 선택하세요" />
+      {canManageProjects && (
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>지표 수정</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4 grid-cols-2">
+              <div className="space-y-2 col-span-2 sm:col-span-1">
+                <Label>단위과제</Label>
+                <Select value={taskId} onValueChange={setTaskId} disabled>
+                  <SelectTrigger className="bg-muted">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">없음</SelectItem>
-                    {parentIndicators.map(i => (
-                      <SelectItem key={i.id} value={i.id.toString()}>{i.name}</SelectItem>
+                    {tasks?.map(t => (
+                      <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            )}
+              <div className="space-y-2 col-span-2 sm:col-span-1">
+                <Label>지표 유형</Label>
+                <Select value={indicatorType} onValueChange={setIndicatorType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="parent">상위지표</SelectItem>
+                    <SelectItem value="child">하위지표</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {indicatorType === "child" && (
+                <div className="space-y-2 col-span-2">
+                  <Label>상위지표 선택</Label>
+                  <Select value={parentId} onValueChange={setParentId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="상위지표를 선택하세요" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">없음</SelectItem>
+                      {parentIndicators.map(i => (
+                        <SelectItem key={i.id} value={i.id.toString()}>{i.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-            <div className="space-y-2 col-span-2">
-              <Label htmlFor="edit-name">지표명</Label>
-              <Input id="edit-name" value={name} onChange={e => setName(e.target.value)} />
-            </div>
-            
-            <div className="space-y-2 col-span-2 sm:col-span-1">
-              <Label htmlFor="edit-unit">단위 (예: 건, 명, %)</Label>
-              <Input id="edit-unit" value={unit} onChange={e => setUnit(e.target.value)} />
-            </div>
-            <div className="space-y-2 col-span-2 sm:col-span-1">
-              <Label htmlFor="edit-weight">가중치 (%)</Label>
-              <Input id="edit-weight" type="number" value={weight} onChange={e => setWeight(e.target.value === "" ? "" : Number(e.target.value))} />
-            </div>
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="edit-name">지표명</Label>
+                <Input id="edit-name" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+              
+              <div className="space-y-2 col-span-2 sm:col-span-1">
+                <Label htmlFor="edit-unit">단위 (예: 건, 명, %)</Label>
+                <Input id="edit-unit" value={unit} onChange={e => setUnit(e.target.value)} />
+              </div>
+              <div className="space-y-2 col-span-2 sm:col-span-1">
+                <Label htmlFor="edit-weight">가중치 (%)</Label>
+                <Input id="edit-weight" type="number" value={weight} onChange={e => setWeight(e.target.value === "" ? "" : Number(e.target.value))} />
+              </div>
 
-            <div className="space-y-2 col-span-2">
-              <Label htmlFor="edit-formula">산출식</Label>
-              <Input id="edit-formula" value={formula} onChange={e => setFormula(e.target.value)} />
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="edit-formula">산출식</Label>
+                <Input id="edit-formula" value={formula} onChange={e => setFormula(e.target.value)} />
+              </div>
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="edit-desc">설명</Label>
+                <Textarea id="edit-desc" value={description} onChange={e => setDescription(e.target.value)} />
+              </div>
             </div>
-            <div className="space-y-2 col-span-2">
-              <Label htmlFor="edit-desc">설명</Label>
-              <Textarea id="edit-desc" value={description} onChange={e => setDescription(e.target.value)} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
-            <Button onClick={handleEdit} disabled={updateIndicator.isPending || !name}>저장</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
+              <Button onClick={handleEdit} disabled={updateIndicator.isPending || !name}>저장</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

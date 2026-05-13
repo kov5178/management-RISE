@@ -12,11 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Reviews() {
   const currentYear = 2025;
   const [filterYear, setFilterYear] = useState<string>(currentYear.toString());
   const [activeTab, setActiveTab] = useState<string>("pending");
+  const { canReview } = useAuth();
   
   const { data: indicators } = useListIndicators();
   const { data: allResults, isLoading } = useListResults({ year: Number(filterYear) });
@@ -27,19 +29,19 @@ export default function Reviews() {
 
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [selectedResult, setSelectedResult] = useState<any>(null);
+  const [viewOnly, setViewOnly] = useState(false);
   
-  // Form states
   const [reviewStatus, setReviewStatus] = useState<string>("approved");
   const [comment, setComment] = useState("");
 
-  // Filter results for tabs
   const pendingResults = allResults?.filter(r => r.status === "submitted" || r.status === "reviewing") || [];
   const completedResults = allResults?.filter(r => ["approved", "rejected", "revision_requested"].includes(r.status)) || [];
 
-  const openReview = (result: any) => {
+  const openReview = (result: any, forceViewOnly = false) => {
     setSelectedResult(result);
     setReviewStatus("approved");
     setComment("");
+    setViewOnly(forceViewOnly || !canReview);
     setIsReviewOpen(true);
   };
 
@@ -54,7 +56,6 @@ export default function Reviews() {
           comment
         }
       });
-      // The backend should update the result status automatically
       queryClient.invalidateQueries({ queryKey: getListResultsQueryKey() });
       toast({ title: "검토 처리 성공", description: "검토 의견이 등록되었습니다." });
       setIsReviewOpen(false);
@@ -69,7 +70,7 @@ export default function Reviews() {
     return indicators?.find(i => i.id === indicatorId)?.name || "알 수 없는 지표";
   };
 
-  const renderTable = (resultsList: any[]) => (
+  const renderTable = (resultsList: any[], isPending: boolean) => (
     <Table>
       <TableHeader>
         <TableRow>
@@ -97,9 +98,15 @@ export default function Reviews() {
               <TableCell className="text-muted-foreground text-sm">{res.submittedAt ? new Date(res.submittedAt).toLocaleString() : '-'}</TableCell>
               <TableCell><StatusBadge status={res.status} /></TableCell>
               <TableCell className="text-right">
-                <Button variant={activeTab === "pending" ? "default" : "outline"} size="sm" onClick={() => openReview(res)}>
-                  {activeTab === "pending" ? "검토하기" : <><Eye className="w-4 h-4 mr-2" /> 내역보기</>}
-                </Button>
+                {isPending && canReview ? (
+                  <Button variant="default" size="sm" onClick={() => openReview(res)}>
+                    검토하기
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => openReview(res, true)}>
+                    <Eye className="w-4 h-4 mr-2" /> 내역보기
+                  </Button>
+                )}
               </TableCell>
             </TableRow>
           ))
@@ -139,10 +146,10 @@ export default function Reviews() {
         </TabsList>
         <div className="mt-4 border rounded-md bg-card">
           <TabsContent value="pending" className="m-0">
-            {renderTable(pendingResults)}
+            {renderTable(pendingResults, true)}
           </TabsContent>
           <TabsContent value="completed" className="m-0">
-            {renderTable(completedResults)}
+            {renderTable(completedResults, false)}
           </TabsContent>
         </div>
       </Tabs>
@@ -150,7 +157,7 @@ export default function Reviews() {
       <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>실적 검토</DialogTitle>
+            <DialogTitle>{viewOnly ? "검토 내역" : "실적 검토"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="p-3 bg-muted rounded-md border space-y-2 text-sm">
@@ -163,7 +170,7 @@ export default function Reviews() {
               )}
             </div>
 
-            {activeTab === "pending" ? (
+            {!viewOnly && activeTab === "pending" ? (
               <>
                 <div className="space-y-2">
                   <Label>검토 결과 판정</Label>
@@ -207,13 +214,17 @@ export default function Reviews() {
               </>
             ) : (
               <div className="text-center py-4 text-muted-foreground">
-                이미 검토가 완료된 항목입니다.<br />상태: <StatusBadge status={selectedResult?.status} />
+                {activeTab === "completed" ? (
+                  <>이미 검토가 완료된 항목입니다.<br />상태: <StatusBadge status={selectedResult?.status} /></>
+                ) : (
+                  <>검토 권한이 없습니다. 현재 상태: <StatusBadge status={selectedResult?.status} /></>
+                )}
               </div>
             )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsReviewOpen(false)}>닫기</Button>
-            {activeTab === "pending" && (
+            {!viewOnly && activeTab === "pending" && canReview && (
               <Button onClick={handleReview} disabled={createReview.isPending || !comment.trim()}>
                 검토 완료
               </Button>
