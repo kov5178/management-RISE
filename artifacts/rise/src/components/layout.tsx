@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Folder, CheckSquare, BarChart, Target, FileText,
   Files, MessageSquare, RefreshCw, Users, LogOut, LogIn, UserPlus,
-  ClipboardList, ShieldCheck, History, ChevronRight
+  ClipboardList, ShieldCheck, History, ChevronRight, KeyRound
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem,
@@ -145,6 +145,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     {user.employeeNo}
                   </Badge>
                 </div>
+                <Link href="/profile">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                    <span>내 정보 · 비밀번호 변경</span>
+                  </Button>
+                </Link>
                 <Button
                   variant="ghost"
                   size="sm"

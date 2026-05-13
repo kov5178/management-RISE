@@ -22,6 +22,7 @@ import RoleChangeLogs from "@/pages/role-change-logs";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import ChangePassword from "@/pages/change-password";
+import Profile from "@/pages/profile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -127,6 +128,9 @@ function AppRoutes() {
         </Route>
         <Route path="/role-change-logs">
           <RequireAdmin><RoleChangeLogs /></RequireAdmin>
+        </Route>
+        <Route path="/profile">
+          <RequireAuth><Profile /></RequireAuth>
         </Route>
         <Route component={NotFound} />
       </Switch>
