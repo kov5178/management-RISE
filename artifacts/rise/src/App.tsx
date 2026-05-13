@@ -1,4 +1,5 @@
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -62,36 +63,40 @@ function AccessDenied() {
 
 function MustChangePasswordGuard() {
   const [, navigate] = useLocation();
-  const { mustChangePassword, isLoading } = useAuth();
-  if (isLoading) return null;
-  if (mustChangePassword) {
-    navigate("/change-password");
-    return null;
-  }
+  const { mustChangePassword, isLoading, isLoggedIn } = useAuth();
+  useEffect(() => {
+    if (!isLoading && isLoggedIn && mustChangePassword) {
+      navigate("/change-password");
+    }
+  }, [isLoading, isLoggedIn, mustChangePassword, navigate]);
   return null;
 }
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isLoggedIn, isLoading, mustChangePassword } = useAuth();
   const [, navigate] = useLocation();
+  useEffect(() => {
+    if (!isLoading && isLoggedIn && mustChangePassword) {
+      navigate("/change-password");
+    }
+  }, [isLoading, isLoggedIn, mustChangePassword, navigate]);
   if (isLoading) return null;
   if (!isLoggedIn) return <LoginRequired />;
-  if (mustChangePassword) {
-    navigate("/change-password");
-    return null;
-  }
+  if (mustChangePassword) return null;
   return <>{children}</>;
 }
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { isLoggedIn, isAdmin, isLoading, mustChangePassword } = useAuth();
   const [, navigate] = useLocation();
+  useEffect(() => {
+    if (!isLoading && isLoggedIn && mustChangePassword) {
+      navigate("/change-password");
+    }
+  }, [isLoading, isLoggedIn, mustChangePassword, navigate]);
   if (isLoading) return null;
   if (!isLoggedIn) return <LoginRequired />;
-  if (mustChangePassword) {
-    navigate("/change-password");
-    return null;
-  }
+  if (mustChangePassword) return null;
   if (!isAdmin) return <AccessDenied />;
   return <>{children}</>;
 }

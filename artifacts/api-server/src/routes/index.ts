@@ -13,11 +13,13 @@ import dashboardRouter from "./dashboard";
 import authRouter from "./auth";
 import profileRouter from "./profile";
 import registrationRequestsRouter from "./registration-requests";
+import replitAuthRouter from "./replit-auth";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(replitAuthRouter);   // OIDC login/callback/sso-logout (no auth required)
 router.use(authRouter);
 router.use(profileRouter);
 router.use(registrationRequestsRouter);
