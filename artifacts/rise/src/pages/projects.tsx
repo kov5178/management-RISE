@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Edit2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/hooks/use-auth";
 
 export default function Projects() {
   const { data: projects, isLoading } = useListProjects();
@@ -20,12 +19,12 @@ export default function Projects() {
   const deleteProject = useDeleteProject();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { canManageProjects } = useAuth();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<any>(null);
 
+  // Form states
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [startYear, setStartYear] = useState(new Date().getFullYear());
@@ -97,57 +96,55 @@ export default function Projects() {
           <h2 className="text-2xl font-bold tracking-tight">프로젝트 관리</h2>
           <p className="text-muted-foreground">최상위 RISE 프로젝트를 관리합니다.</p>
         </div>
-        {canManageProjects && (
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm} className="gap-2">
-                <Plus className="w-4 h-4" /> 프로젝트 등록
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>새 프로젝트 등록</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={resetForm} className="gap-2">
+              <Plus className="w-4 h-4" /> 프로젝트 등록
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>새 프로젝트 등록</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">프로젝트명</Label>
+                <Input id="name" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="desc">설명</Label>
+                <Textarea id="desc" value={description} onChange={e => setDescription(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">프로젝트명</Label>
-                  <Input id="name" value={name} onChange={e => setName(e.target.value)} />
+                  <Label htmlFor="start">시작 연도</Label>
+                  <Input id="start" type="number" value={startYear} onChange={e => setStartYear(Number(e.target.value))} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="desc">설명</Label>
-                  <Textarea id="desc" value={description} onChange={e => setDescription(e.target.value)} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start">시작 연도</Label>
-                    <Input id="start" type="number" value={startYear} onChange={e => setStartYear(Number(e.target.value))} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="end">종료 연도</Label>
-                    <Input id="end" type="number" value={endYear} onChange={e => setEndYear(Number(e.target.value))} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>상태</Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">진행중 (Active)</SelectItem>
-                      <SelectItem value="completed">완료 (Completed)</SelectItem>
-                      <SelectItem value="planned">계획 (Planned)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="end">종료 연도</Label>
+                  <Input id="end" type="number" value={endYear} onChange={e => setEndYear(Number(e.target.value))} />
                 </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>취소</Button>
-                <Button onClick={handleCreate} disabled={createProject.isPending || !name}>등록</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+              <div className="space-y-2">
+                <Label>상태</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">진행중 (Active)</SelectItem>
+                    <SelectItem value="completed">완료 (Completed)</SelectItem>
+                    <SelectItem value="planned">계획 (Planned)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateOpen(false)}>취소</Button>
+              <Button onClick={handleCreate} disabled={createProject.isPending || !name}>등록</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="border rounded-md bg-card">
@@ -158,7 +155,7 @@ export default function Projects() {
               <TableHead>프로젝트명</TableHead>
               <TableHead>기간</TableHead>
               <TableHead>상태</TableHead>
-              {canManageProjects && <TableHead className="text-right">관리</TableHead>}
+              <TableHead className="text-right">관리</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -169,12 +166,12 @@ export default function Projects() {
                   <TableCell><Skeleton className="h-4 w-40" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                  {canManageProjects && <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>}
+                  <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : projects?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={canManageProjects ? 5 : 4} className="text-center py-8 text-muted-foreground">등록된 프로젝트가 없습니다.</TableCell>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">등록된 프로젝트가 없습니다.</TableCell>
               </TableRow>
             ) : (
               projects?.map((project) => (
@@ -194,18 +191,16 @@ export default function Projects() {
                       {project.status === 'active' ? '진행중' : project.status === 'completed' ? '완료' : '계획'}
                     </span>
                   </TableCell>
-                  {canManageProjects && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(project)}>
-                          <Edit2 className="w-4 h-4 text-muted-foreground" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(project.id)}>
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  )}
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(project)}>
+                        <Edit2 className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(project.id)}>
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -213,52 +208,50 @@ export default function Projects() {
         </Table>
       </div>
 
-      {canManageProjects && (
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>프로젝트 수정</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>프로젝트 수정</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">프로젝트명</Label>
+              <Input id="edit-name" value={name} onChange={e => setName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-desc">설명</Label>
+              <Textarea id="edit-desc" value={description} onChange={e => setDescription(e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">프로젝트명</Label>
-                <Input id="edit-name" value={name} onChange={e => setName(e.target.value)} />
+                <Label htmlFor="edit-start">시작 연도</Label>
+                <Input id="edit-start" type="number" value={startYear} onChange={e => setStartYear(Number(e.target.value))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-desc">설명</Label>
-                <Textarea id="edit-desc" value={description} onChange={e => setDescription(e.target.value)} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-start">시작 연도</Label>
-                  <Input id="edit-start" type="number" value={startYear} onChange={e => setStartYear(Number(e.target.value))} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-end">종료 연도</Label>
-                  <Input id="edit-end" type="number" value={endYear} onChange={e => setEndYear(Number(e.target.value))} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>상태</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">진행중 (Active)</SelectItem>
-                    <SelectItem value="completed">완료 (Completed)</SelectItem>
-                    <SelectItem value="planned">계획 (Planned)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="edit-end">종료 연도</Label>
+                <Input id="edit-end" type="number" value={endYear} onChange={e => setEndYear(Number(e.target.value))} />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
-              <Button onClick={handleEdit} disabled={updateProject.isPending || !name}>저장</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+            <div className="space-y-2">
+              <Label>상태</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">진행중 (Active)</SelectItem>
+                  <SelectItem value="completed">완료 (Completed)</SelectItem>
+                  <SelectItem value="planned">계획 (Planned)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
+            <Button onClick={handleEdit} disabled={updateProject.isPending || !name}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

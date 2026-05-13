@@ -12,7 +12,6 @@ import usersRouter from "./users";
 import dashboardRouter from "./dashboard";
 import authRouter from "./auth";
 import registrationRequestsRouter from "./registration-requests";
-import passwordResetRouter from "./password-reset";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router: IRouter = Router();
@@ -20,7 +19,6 @@ const router: IRouter = Router();
 router.use(healthRouter);
 router.use(authRouter);
 router.use(registrationRequestsRouter);
-router.use(passwordResetRouter);
 
 router.use(requireAuth);
 

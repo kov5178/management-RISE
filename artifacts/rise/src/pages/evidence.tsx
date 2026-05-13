@@ -11,13 +11,11 @@ import { Link2, Trash2, File, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
-import { useAuth } from "@/hooks/use-auth";
 
 export default function Evidence() {
   const currentYear = 2025;
   const [filterYear, setFilterYear] = useState<string>(currentYear.toString());
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
-  const { canManageEvidence } = useAuth();
   
   const { data: indicators } = useListIndicators();
   const { data: results } = useListResults({ year: Number(filterYear) });
@@ -30,6 +28,7 @@ export default function Evidence() {
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
+  // Form states for mock upload
   const [fileName, setFileName] = useState("");
   const [fileUrl, setFileUrl] = useState("");
 
@@ -46,7 +45,7 @@ export default function Evidence() {
           resultId: selectedResultId,
           fileName,
           fileUrl,
-          fileSize: Math.floor(Math.random() * 5000) + 100,
+          fileSize: Math.floor(Math.random() * 5000) + 100, // mock size
           mimeType: "application/pdf",
           uploadedBy: "현재 사용자"
         }
@@ -73,6 +72,7 @@ export default function Evidence() {
 
   const years = [2023, 2024, 2025, 2026];
 
+  // Helper to get indicator name from resultId
   const getIndicatorInfo = (resId: number) => {
     const res = results?.find(r => r.id === resId);
     if (!res) return { name: "알 수 없는 지표", status: "draft" };
@@ -103,6 +103,7 @@ export default function Evidence() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-220px)] min-h-[500px]">
+        {/* Left pane: Results list */}
         <div className="border rounded-md bg-card col-span-1 flex flex-col overflow-hidden">
           <div className="p-3 border-b font-medium bg-muted/50">실적 목록 ({filterYear})</div>
           <div className="overflow-y-auto flex-1 p-2 space-y-1">
@@ -131,10 +132,11 @@ export default function Evidence() {
           </div>
         </div>
 
+        {/* Right pane: Evidence list */}
         <div className="border rounded-md bg-card col-span-1 md:col-span-2 flex flex-col overflow-hidden">
           <div className="p-3 border-b font-medium bg-muted/50 flex justify-between items-center">
             <span>증빙 자료 목록</span>
-            {selectedResultId && canManageEvidence && (
+            {selectedResultId && (
               <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm" onClick={resetForm} className="h-8 gap-2">
@@ -181,17 +183,17 @@ export default function Evidence() {
                     <TableHead>파일명</TableHead>
                     <TableHead>용량</TableHead>
                     <TableHead>등록일</TableHead>
-                    {canManageEvidence && <TableHead className="text-right">관리</TableHead>}
+                    <TableHead className="text-right">관리</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={canManageEvidence ? 4 : 3} className="text-center py-8"><Skeleton className="h-4 w-32 mx-auto" /></TableCell>
+                      <TableCell colSpan={4} className="text-center py-8"><Skeleton className="h-4 w-32 mx-auto" /></TableCell>
                     </TableRow>
                   ) : !evidenceList || evidenceList.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={canManageEvidence ? 4 : 3} className="text-center py-12 text-muted-foreground">등록된 증빙자료가 없습니다.</TableCell>
+                      <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">등록된 증빙자료가 없습니다.</TableCell>
                     </TableRow>
                   ) : (
                     evidenceList.map((file) => (
@@ -207,13 +209,11 @@ export default function Evidence() {
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">{(file.fileSize || 0) > 1024 ? `${((file.fileSize || 0)/1024).toFixed(1)}MB` : `${file.fileSize}KB`}</TableCell>
                         <TableCell className="text-muted-foreground text-sm">{new Date(file.createdAt).toLocaleDateString()}</TableCell>
-                        {canManageEvidence && (
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(file.id)}>
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </TableCell>
-                        )}
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(file.id)}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}

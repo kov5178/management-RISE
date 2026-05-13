@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Edit2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAuth } from "@/hooks/use-auth";
 
 export default function Targets() {
   const currentYear = 2025;
@@ -23,12 +22,12 @@ export default function Targets() {
   const updateTarget = useUpdateTarget();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { canManageTargets } = useAuth();
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingIndicator, setEditingIndicator] = useState<any>(null);
   const [existingTarget, setExistingTarget] = useState<any>(null);
 
+  // Form states
   const [targetValue, setTargetValue] = useState<number | "">("");
   const [note, setNote] = useState("");
 
@@ -102,7 +101,7 @@ export default function Targets() {
               <TableHead>연도</TableHead>
               <TableHead className="text-right">목표값</TableHead>
               <TableHead>비고</TableHead>
-              {canManageTargets && <TableHead className="text-right">관리</TableHead>}
+              <TableHead className="text-right">관리</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -114,12 +113,12 @@ export default function Targets() {
                   <TableCell><Skeleton className="h-4 w-12" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                  {canManageTargets && <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>}
+                  <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : indicators?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={canManageTargets ? 6 : 5} className="text-center py-8 text-muted-foreground">등록된 지표가 없습니다.</TableCell>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">등록된 지표가 없습니다.</TableCell>
               </TableRow>
             ) : (
               indicators?.map((indicator) => {
@@ -133,14 +132,12 @@ export default function Targets() {
                       {target?.targetValue !== null && target?.targetValue !== undefined ? target.targetValue.toLocaleString() : <span className="text-muted-foreground text-sm font-normal">미설정</span>}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">{target?.note || '-'}</TableCell>
-                    {canManageTargets && (
-                      <TableCell className="text-right">
-                        <Button variant={target ? "outline" : "default"} size="sm" onClick={() => openEdit(indicator, target)}>
-                          <Edit2 className="w-4 h-4 mr-2" />
-                          {target ? "수정" : "설정"}
-                        </Button>
-                      </TableCell>
-                    )}
+                    <TableCell className="text-right">
+                      <Button variant={target ? "outline" : "default"} size="sm" onClick={() => openEdit(indicator, target)}>
+                        <Edit2 className="w-4 h-4 mr-2" />
+                        {target ? "수정" : "설정"}
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 );
               })
@@ -149,33 +146,31 @@ export default function Targets() {
         </Table>
       </div>
 
-      {canManageTargets && (
-        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{filterYear}년도 목표값 설정</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label>지표명</Label>
-                <div className="p-2 bg-muted rounded border text-sm font-medium">{editingIndicator?.name}</div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="target">목표값 ({editingIndicator?.unit || "단위 없음"})</Label>
-                <Input id="target" type="number" value={targetValue} onChange={e => setTargetValue(e.target.value === "" ? "" : Number(e.target.value))} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="note">비고</Label>
-                <Input id="note" value={note} onChange={e => setNote(e.target.value)} placeholder="산출 근거 등 메모" />
-              </div>
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{filterYear}년도 목표값 설정</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>지표명</Label>
+              <div className="p-2 bg-muted rounded border text-sm font-medium">{editingIndicator?.name}</div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
-              <Button onClick={handleSave} disabled={createTarget.isPending || updateTarget.isPending}>저장</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+            <div className="space-y-2">
+              <Label htmlFor="target">목표값 ({editingIndicator?.unit || "단위 없음"})</Label>
+              <Input id="target" type="number" value={targetValue} onChange={e => setTargetValue(e.target.value === "" ? "" : Number(e.target.value))} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="note">비고</Label>
+              <Input id="note" value={note} onChange={e => setNote(e.target.value)} placeholder="산출 근거 등 메모" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
+            <Button onClick={handleSave} disabled={createTarget.isPending || updateTarget.isPending}>저장</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

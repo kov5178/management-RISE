@@ -12,8 +12,7 @@ export default function Login() {
   const [, navigate] = useLocation();
   const search = useSearch();
   const params = new URLSearchParams(search);
-  const rawRedirect = params.get("redirect") ?? "/";
-  const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/";
+  const redirectTo = params.get("redirect") ?? "/";
   const { refetch } = useAuth();
   const login = useLogin();
   const [employeeNo, setEmployeeNo] = useState("");
@@ -89,18 +88,11 @@ export default function Login() {
           </CardContent>
         </Card>
 
-        <div className="text-center space-y-2 text-sm text-muted-foreground">
-          <div>
-            계정이 없으신가요?{" "}
-            <a href="/register" className="text-primary underline hover:no-underline font-medium">
-              사용자 등록 요청
-            </a>
-          </div>
-          <div>
-            <a href="/reset-password" className="text-primary underline hover:no-underline font-medium">
-              초기 비밀번호 변경
-            </a>
-          </div>
+        <div className="text-center text-sm text-muted-foreground">
+          계정이 없으신가요?{" "}
+          <a href="/register" className="text-primary underline hover:no-underline font-medium">
+            사용자 등록 요청
+          </a>
         </div>
       </div>
     </div>

@@ -97,48 +97,6 @@ paths:
         "401":
           description: Unauthorized
 
-  /auth/request-password-reset:
-    post:
-      operationId: requestPasswordReset
-      tags: [auth]
-      summary: 신원 확인 후 OTP 발송 (비밀번호 재설정 1단계)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RequestPasswordResetBody"
-      responses:
-        "200":
-          description: OK — OTP 발송됨
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RequestPasswordResetResponse"
-        "400":
-          description: Bad Request
-        "403":
-          description: Forbidden (inactive/locked/pending account)
-
-  /auth/confirm-password-reset:
-    post:
-      operationId: confirmPasswordReset
-      tags: [auth]
-      summary: OTP 검증 후 새 비밀번호 설정 (비밀번호 재설정 2단계)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ConfirmPasswordResetBody"
-      responses:
-        "200":
-          description: OK
-        "400":
-          description: Bad Request (OTP 불일치·만료, 비밀번호 규칙 위반)
-        "403":
-          description: Forbidden
-
   /auth/change-password:
     post:
       operationId: changePassword
@@ -1596,51 +1554,6 @@ components:
           type: string
       required:
         - currentPassword
-        - newPassword
-        - newPasswordConfirm
-
-    RequestPasswordResetBody:
-      type: object
-      properties:
-        employeeNo:
-          type: string
-        name:
-          type: string
-        email:
-          type: string
-        currentPassword:
-          type: string
-      required:
-        - employeeNo
-        - name
-        - email
-        - currentPassword
-
-    RequestPasswordResetResponse:
-      type: object
-      properties:
-        ok:
-          type: boolean
-        maskedEmail:
-          type: string
-      required:
-        - ok
-        - maskedEmail
-
-    ConfirmPasswordResetBody:
-      type: object
-      properties:
-        employeeNo:
-          type: string
-        otp:
-          type: string
-        newPassword:
-          type: string
-        newPasswordConfirm:
-          type: string
-      required:
-        - employeeNo
-        - otp
         - newPassword
         - newPasswordConfirm
 

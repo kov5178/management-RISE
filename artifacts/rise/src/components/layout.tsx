@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Folder, CheckSquare, BarChart, Target, FileText,
   Files, MessageSquare, RefreshCw, Users, LogOut, LogIn, UserPlus,
-  ClipboardList, ShieldCheck, History, ChevronRight, KeyRound
+  ClipboardList, ShieldCheck, History, ChevronRight
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem,
@@ -30,45 +30,16 @@ const ROLE_LABELS: Record<string, string> = {
   viewer: "조회자",
 };
 
-type AuthState = ReturnType<typeof useAuth>;
-
-interface NavItem {
-  title: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  visible?: (auth: AuthState) => boolean;
-}
-
-const NAV_ITEMS: NavItem[] = [
+const NAV_ITEMS = [
   { title: "대시보드", href: "/", icon: LayoutDashboard },
   { title: "프로젝트 관리", href: "/projects", icon: Folder },
   { title: "단위과제 관리", href: "/tasks", icon: CheckSquare },
   { title: "지표 관리", href: "/indicators", icon: BarChart },
   { title: "목표값 관리", href: "/targets", icon: Target },
-  {
-    title: "실적 입력",
-    href: "/results",
-    icon: FileText,
-    visible: (auth) => auth.canInputResults,
-  },
-  {
-    title: "증빙관리",
-    href: "/evidence",
-    icon: Files,
-    visible: (auth) => auth.canManageEvidence,
-  },
-  {
-    title: "검토 관리",
-    href: "/reviews",
-    icon: MessageSquare,
-    visible: (auth) => auth.canReview,
-  },
-  {
-    title: "자체평가·환류",
-    href: "/feedback",
-    icon: RefreshCw,
-    visible: (auth) => auth.canWriteFeedback,
-  },
+  { title: "실적 입력", href: "/results", icon: FileText },
+  { title: "증빙관리", href: "/evidence", icon: Files },
+  { title: "검토 관리", href: "/reviews", icon: MessageSquare },
+  { title: "자체평가·환류", href: "/feedback", icon: RefreshCw },
 ];
 
 const USER_MGMT_ITEMS = [
@@ -79,8 +50,7 @@ const USER_MGMT_ITEMS = [
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [location, navigate] = useLocation();
-  const auth = useAuth();
-  const { user, isLoggedIn, isAdmin, refetch } = auth;
+  const { user, isLoggedIn, isAdmin, refetch } = useAuth();
   const logout = useLogout();
   const queryClient = useQueryClient();
   const [userMgmtOpen, setUserMgmtOpen] = useState(
@@ -93,10 +63,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     await refetch();
     navigate("/login");
   };
-
-  const visibleNavItems = NAV_ITEMS.filter(
-    (item) => !item.visible || item.visible(auth)
-  );
 
   return (
     <SidebarProvider>
@@ -116,7 +82,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
           <SidebarContent>
             <SidebarMenu className="px-2">
-              {visibleNavItems.map((item) => {
+              {NAV_ITEMS.map((item) => {
                 const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
                 return (
                   <SidebarMenuItem key={item.href}>
@@ -179,16 +145,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     {user.employeeNo}
                   </Badge>
                 </div>
-                <Link href="/profile">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:text-sidebar-foreground"
-                  >
-                    <KeyRound className="w-4 h-4" />
-                    <span>내 정보 · 비밀번호 변경</span>
-                  </Button>
-                </Link>
                 <Button
                   variant="ghost"
                   size="sm"
