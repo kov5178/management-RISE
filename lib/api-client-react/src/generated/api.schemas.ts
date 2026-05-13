@@ -296,6 +296,25 @@ export interface ChangePasswordBody {
   newPasswordConfirm: string;
 }
 
+export interface RequestPasswordResetBody {
+  employeeNo: string;
+  name: string;
+  email: string;
+  currentPassword: string;
+}
+
+export interface RequestPasswordResetResponse {
+  ok: boolean;
+  maskedEmail: string;
+}
+
+export interface ConfirmPasswordResetBody {
+  employeeNo: string;
+  otp: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}
+
 export interface CreateRegistrationRequestBody {
   employeeNo: string;
   email: string;

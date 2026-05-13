@@ -23,6 +23,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import ChangePassword from "@/pages/change-password";
 import Profile from "@/pages/profile";
+import ResetPassword from "@/pages/reset-password";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -144,6 +145,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/change-password" component={ChangePassword} />
+      <Route path="/reset-password" component={ResetPassword} />
       <Route component={AppRoutes} />
     </Switch>
   );

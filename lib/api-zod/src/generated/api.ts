@@ -58,6 +58,31 @@ export const GetMeResponse = zod.object({
 });
 
 /**
+ * @summary 신원 확인 후 OTP 발송 (비밀번호 재설정 1단계)
+ */
+export const RequestPasswordResetBody = zod.object({
+  employeeNo: zod.string(),
+  name: zod.string(),
+  email: zod.string(),
+  currentPassword: zod.string(),
+});
+
+export const RequestPasswordResetResponse = zod.object({
+  ok: zod.boolean(),
+  maskedEmail: zod.string(),
+});
+
+/**
+ * @summary OTP 검증 후 새 비밀번호 설정 (비밀번호 재설정 2단계)
+ */
+export const ConfirmPasswordResetBody = zod.object({
+  employeeNo: zod.string(),
+  otp: zod.string(),
+  newPassword: zod.string(),
+  newPasswordConfirm: zod.string(),
+});
+
+/**
  * @summary 비밀번호 변경
  */
 export const ChangePasswordBody = zod.object({

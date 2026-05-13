@@ -19,6 +19,7 @@ import type {
 import type {
   AuthUser,
   ChangePasswordBody,
+  ConfirmPasswordResetBody,
   CreateEvidenceBody,
   CreateFeedbackBody,
   CreateIndicatorBody,
@@ -53,6 +54,8 @@ import type {
   Project,
   ProjectProgress,
   RegistrationRequest,
+  RequestPasswordResetBody,
+  RequestPasswordResetResponse,
   Review,
   ReviewRequestBody,
   RoleChangeLog,
@@ -381,6 +384,183 @@ export function useGetMe<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary 신원 확인 후 OTP 발송 (비밀번호 재설정 1단계)
+ */
+export const getRequestPasswordResetUrl = () => {
+  return `/api/auth/request-password-reset`;
+};
+
+export const requestPasswordReset = async (
+  requestPasswordResetBody: RequestPasswordResetBody,
+  options?: RequestInit,
+): Promise<RequestPasswordResetResponse> => {
+  return customFetch<RequestPasswordResetResponse>(
+    getRequestPasswordResetUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(requestPasswordResetBody),
+    },
+  );
+};
+
+export const getRequestPasswordResetMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestPasswordReset>>,
+    TError,
+    { data: BodyType<RequestPasswordResetBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestPasswordReset>>,
+  TError,
+  { data: BodyType<RequestPasswordResetBody> },
+  TContext
+> => {
+  const mutationKey = ["requestPasswordReset"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestPasswordReset>>,
+    { data: BodyType<RequestPasswordResetBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return requestPasswordReset(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestPasswordResetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestPasswordReset>>
+>;
+export type RequestPasswordResetMutationBody =
+  BodyType<RequestPasswordResetBody>;
+export type RequestPasswordResetMutationError = ErrorType<void>;
+
+/**
+ * @summary 신원 확인 후 OTP 발송 (비밀번호 재설정 1단계)
+ */
+export const useRequestPasswordReset = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestPasswordReset>>,
+    TError,
+    { data: BodyType<RequestPasswordResetBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof requestPasswordReset>>,
+  TError,
+  { data: BodyType<RequestPasswordResetBody> },
+  TContext
+> => {
+  return useMutation(getRequestPasswordResetMutationOptions(options));
+};
+
+/**
+ * @summary OTP 검증 후 새 비밀번호 설정 (비밀번호 재설정 2단계)
+ */
+export const getConfirmPasswordResetUrl = () => {
+  return `/api/auth/confirm-password-reset`;
+};
+
+export const confirmPasswordReset = async (
+  confirmPasswordResetBody: ConfirmPasswordResetBody,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getConfirmPasswordResetUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(confirmPasswordResetBody),
+  });
+};
+
+export const getConfirmPasswordResetMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof confirmPasswordReset>>,
+    TError,
+    { data: BodyType<ConfirmPasswordResetBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof confirmPasswordReset>>,
+  TError,
+  { data: BodyType<ConfirmPasswordResetBody> },
+  TContext
+> => {
+  const mutationKey = ["confirmPasswordReset"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof confirmPasswordReset>>,
+    { data: BodyType<ConfirmPasswordResetBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return confirmPasswordReset(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ConfirmPasswordResetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof confirmPasswordReset>>
+>;
+export type ConfirmPasswordResetMutationBody =
+  BodyType<ConfirmPasswordResetBody>;
+export type ConfirmPasswordResetMutationError = ErrorType<void>;
+
+/**
+ * @summary OTP 검증 후 새 비밀번호 설정 (비밀번호 재설정 2단계)
+ */
+export const useConfirmPasswordReset = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof confirmPasswordReset>>,
+    TError,
+    { data: BodyType<ConfirmPasswordResetBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof confirmPasswordReset>>,
+  TError,
+  { data: BodyType<ConfirmPasswordResetBody> },
+  TContext
+> => {
+  return useMutation(getConfirmPasswordResetMutationOptions(options));
+};
 
 /**
  * @summary 비밀번호 변경

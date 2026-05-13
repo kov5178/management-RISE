@@ -9,3 +9,5 @@ export * from "./feedback";
 export * from "./users";
 export * from "./registration-requests";
 export * from "./role-change-logs";
+export * from "./password-reset-tokens";
+export * from "./password-change-logs";
