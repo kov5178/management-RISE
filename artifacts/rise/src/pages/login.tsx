@@ -12,7 +12,8 @@ export default function Login() {
   const [, navigate] = useLocation();
   const search = useSearch();
   const params = new URLSearchParams(search);
-  const redirectTo = params.get("redirect") ?? "/";
+  const rawRedirect = params.get("redirect") ?? "/";
+  const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/";
   const { refetch } = useAuth();
   const login = useLogin();
   const [employeeNo, setEmployeeNo] = useState("");
