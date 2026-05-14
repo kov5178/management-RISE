@@ -9,7 +9,8 @@ import {
   SidebarMenuButton, SidebarProvider, SidebarFooter, SidebarMenuSub,
   SidebarMenuSubItem, SidebarMenuSubButton
 } from "@/components/ui/sidebar";
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
+import { Clock } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLogout } from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,29 @@ const USER_MGMT_ITEMS = [
   { title: "권한 변경 이력", href: "/role-change-logs", icon: History },
 ];
 
+const SESSION_DURATION_MS = 30 * 60 * 1000;
+
+function useSessionCountdown(lastLoginAt: string | null | undefined) {
+  const [remaining, setRemaining] = useState<number>(SESSION_DURATION_MS);
+
+  useEffect(() => {
+    if (!lastLoginAt) return;
+    const tick = () => {
+      const elapsed = Date.now() - new Date(lastLoginAt).getTime();
+      setRemaining(Math.max(0, SESSION_DURATION_MS - elapsed));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [lastLoginAt]);
+
+  const minutes = Math.floor(remaining / 60000);
+  const seconds = Math.floor((remaining % 60000) / 1000);
+  const isWarning = remaining < 5 * 60 * 1000;
+  const display = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return { display, isWarning, remaining };
+}
+
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [location, navigate] = useLocation();
   const { user, isLoggedIn, isAdmin, refetch } = useAuth();
@@ -55,6 +79,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const queryClient = useQueryClient();
   const [userMgmtOpen, setUserMgmtOpen] = useState(
     location.startsWith("/users") || location.startsWith("/user-requests") || location.startsWith("/role-change-logs")
+  );
+  const { display: sessionDisplay, isWarning } = useSessionCountdown(
+    isLoggedIn && user ? user.lastLoginAt : null
   );
 
   const handleLogout = async () => {
@@ -136,6 +163,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <SidebarFooter className="p-4 border-t border-sidebar-border/50">
             {isLoggedIn && user ? (
               <div className="space-y-2">
+                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${isWarning ? "bg-red-500/15 text-red-400" : "bg-sidebar-accent/40 text-sidebar-foreground/60"}`}>
+                  <Clock className="w-3 h-3 shrink-0" />
+                  <span className="text-xs font-mono font-semibold tracking-widest">{sessionDisplay}</span>
+                  <span className="text-xs ml-0.5">남음</span>
+                </div>
                 <div className="flex items-center gap-2 px-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-sidebar-foreground truncate">{user.name}</p>
