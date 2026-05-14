@@ -123,7 +123,7 @@ function AppRoutes() {
       <MustChangePasswordGuard />
       <Switch>
         <Route path="/">
-          <RequireAuth><Dashboard /></RequireAuth>
+          <Dashboard />
         </Route>
         <Route path="/projects">
           <RequireAuth><Projects /></RequireAuth>

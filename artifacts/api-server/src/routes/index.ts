@@ -24,6 +24,8 @@ router.use(authRouter);
 router.use(profileRouter);
 router.use(registrationRequestsRouter);
 
+router.use(dashboardRouter);  // public: 비로그인 사용자도 대시보드 조회 가능
+
 router.use(requireAuth);
 
 router.use(projectsRouter);
@@ -35,6 +37,5 @@ router.use(evidenceRouter);
 router.use(reviewsRouter);
 router.use(feedbackRouter);
 router.use(usersRouter);
-router.use(dashboardRouter);
 
 export default router;

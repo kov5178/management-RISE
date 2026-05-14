@@ -675,6 +675,19 @@ export const DeleteEvidenceParams = zod.object({
 });
 
 /**
+ * @summary 증빙자료 다운로드 (로그인 및 권한 필요)
+ */
+export const DownloadEvidenceParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DownloadEvidenceResponse = zod.object({
+  id: zod.number(),
+  fileName: zod.string(),
+  fileUrl: zod.string(),
+});
+
+/**
  * @summary 검토 목록
  */
 export const ListReviewsQueryParams = zod.object({

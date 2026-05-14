@@ -212,6 +212,12 @@ export interface CreateEvidenceBody {
   uploadedBy?: string | null;
 }
 
+export interface EvidenceDownloadResponse {
+  id: number;
+  fileName: string;
+  fileUrl: string;
+}
+
 export interface Review {
   id: number;
   resultId: number;

@@ -203,9 +203,29 @@ export default function Evidence() {
                             <File className="w-4 h-4 text-blue-500" />
                             {file.fileName}
                           </div>
-                          <a href={file.fileUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-500 hover:underline flex items-center gap-1 mt-1 ml-6">
-                            <Link2 className="w-3 h-3" /> 링크 열기
-                          </a>
+                          <button
+                            type="button"
+                            className="text-xs text-blue-500 hover:underline flex items-center gap-1 mt-1 ml-6"
+                            onClick={async () => {
+                              const res = await fetch(`/api/evidence/${file.id}/download`);
+                              if (res.status === 401) {
+                                toast({ title: "로그인이 필요합니다.", variant: "destructive" });
+                                return;
+                              }
+                              if (res.status === 403) {
+                                toast({ title: "다운로드 권한이 없습니다.", variant: "destructive" });
+                                return;
+                              }
+                              if (!res.ok) {
+                                toast({ title: "파일을 열 수 없습니다.", variant: "destructive" });
+                                return;
+                              }
+                              const data = await res.json();
+                              window.open(data.fileUrl, "_blank", "noreferrer");
+                            }}
+                          >
+                            <Link2 className="w-3 h-3" /> 파일 열기
+                          </button>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">{(file.fileSize || 0) > 1024 ? `${((file.fileSize || 0)/1024).toFixed(1)}MB` : `${file.fileSize}KB`}</TableCell>
                         <TableCell className="text-muted-foreground text-sm">{new Date(file.createdAt).toLocaleDateString()}</TableCell>

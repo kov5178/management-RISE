@@ -30,6 +30,7 @@ import type {
   CreateTaskBody,
   DashboardAlerts,
   DashboardSummary,
+  EvidenceDownloadResponse,
   EvidenceFile,
   FeedbackAction,
   GetDashboardAlertsParams,
@@ -3426,6 +3427,93 @@ export const useDeleteEvidence = <
 > => {
   return useMutation(getDeleteEvidenceMutationOptions(options));
 };
+
+/**
+ * @summary 증빙자료 다운로드 (로그인 및 권한 필요)
+ */
+export const getDownloadEvidenceUrl = (id: number) => {
+  return `/api/evidence/${id}/download`;
+};
+
+export const downloadEvidence = async (
+  id: number,
+  options?: RequestInit,
+): Promise<EvidenceDownloadResponse> => {
+  return customFetch<EvidenceDownloadResponse>(getDownloadEvidenceUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getDownloadEvidenceQueryKey = (id: number) => {
+  return [`/api/evidence/${id}/download`] as const;
+};
+
+export const getDownloadEvidenceQueryOptions = <
+  TData = Awaited<ReturnType<typeof downloadEvidence>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof downloadEvidence>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getDownloadEvidenceQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof downloadEvidence>>
+  > = ({ signal }) => downloadEvidence(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof downloadEvidence>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type DownloadEvidenceQueryResult = NonNullable<
+  Awaited<ReturnType<typeof downloadEvidence>>
+>;
+export type DownloadEvidenceQueryError = ErrorType<void>;
+
+/**
+ * @summary 증빙자료 다운로드 (로그인 및 권한 필요)
+ */
+
+export function useDownloadEvidence<
+  TData = Awaited<ReturnType<typeof downloadEvidence>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof downloadEvidence>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getDownloadEvidenceQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary 검토 목록

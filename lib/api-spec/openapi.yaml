@@ -793,6 +793,31 @@ paths:
         "204":
           description: No Content
 
+  /evidence/{id}/download:
+    get:
+      operationId: downloadEvidence
+      tags: [evidence]
+      summary: 증빙자료 다운로드 (로그인 및 권한 필요)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceDownloadResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+
   # ── Reviews ───────────────────────────────────────────────
   /reviews:
     get:
@@ -1434,6 +1459,20 @@ components:
           type: ["string", "null"]
       required:
         - resultId
+        - fileName
+        - fileUrl
+
+    EvidenceDownloadResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        fileName:
+          type: string
+        fileUrl:
+          type: string
+      required:
+        - id
         - fileName
         - fileUrl
 
