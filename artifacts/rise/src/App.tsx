@@ -1,11 +1,12 @@
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AdminLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
 import { useIdleTimeout, performIdleLogout } from "@/hooks/use-idle-timeout";
+import { IdleWarningModal } from "@/components/idle-warning-modal";
 import NotFound from "@/pages/not-found";
 import { LogIn } from "lucide-react";
 import { Link } from "wouter";
@@ -76,16 +77,37 @@ function MustChangePasswordGuard() {
 function IdleTimeoutGuard() {
   const { isLoggedIn, isLoading, refetch } = useAuth();
   const [, navigate] = useLocation();
+  const [warningOpen, setWarningOpen] = useState(false);
 
-  useIdleTimeout({
+  const { resetTimer } = useIdleTimeout({
     enabled: !isLoading && isLoggedIn,
+    onWarning: () => setWarningOpen(true),
+    onWarningDismiss: () => setWarningOpen(false),
     onTimeout: async () => {
+      setWarningOpen(false);
       await performIdleLogout(navigate);
       refetch();
     },
   });
 
-  return null;
+  const handleContinue = () => {
+    resetTimer();
+    setWarningOpen(false);
+  };
+
+  const handleLogout = async () => {
+    setWarningOpen(false);
+    await performIdleLogout(navigate, "manual");
+    refetch();
+  };
+
+  return (
+    <IdleWarningModal
+      open={warningOpen}
+      onContinue={handleContinue}
+      onLogout={handleLogout}
+    />
+  );
 }
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
