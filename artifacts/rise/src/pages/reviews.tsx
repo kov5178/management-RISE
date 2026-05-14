@@ -63,7 +63,7 @@ export default function Reviews() {
     }
   };
 
-  const years = [2023, 2024, 2025, 2026];
+  const years = [2025, 2026, 2027, 2028, 2029];
 
   const getIndicatorName = (indicatorId: number) => {
     return indicators?.find(i => i.id === indicatorId)?.name || "알 수 없는 지표";
