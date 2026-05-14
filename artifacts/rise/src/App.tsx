@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AdminLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
+import { useIdleTimeout, performIdleLogout } from "@/hooks/use-idle-timeout";
 import NotFound from "@/pages/not-found";
 import { LogIn } from "lucide-react";
 import { Link } from "wouter";
@@ -69,6 +70,21 @@ function MustChangePasswordGuard() {
       navigate("/change-password");
     }
   }, [isLoading, isLoggedIn, mustChangePassword, navigate]);
+  return null;
+}
+
+function IdleTimeoutGuard() {
+  const { isLoggedIn, isLoading, refetch } = useAuth();
+  const [, navigate] = useLocation();
+
+  useIdleTimeout({
+    enabled: !isLoading && isLoggedIn,
+    onTimeout: async () => {
+      await performIdleLogout(navigate);
+      refetch();
+    },
+  });
+
   return null;
 }
 
@@ -150,12 +166,15 @@ function AppRoutes() {
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/register" component={Register} />
-      <Route path="/change-password" component={ChangePassword} />
-      <Route component={AppRoutes} />
-    </Switch>
+    <>
+      <IdleTimeoutGuard />
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route path="/register" component={Register} />
+        <Route path="/change-password" component={ChangePassword} />
+        <Route component={AppRoutes} />
+      </Switch>
+    </>
   );
 }
 
