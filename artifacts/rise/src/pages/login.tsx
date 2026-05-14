@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useSearch } from "wouter";
 import { useLogin } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { BarChart, AlertCircle, ExternalLink } from "lucide-react";
+import { BarChart, AlertCircle, ExternalLink, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 const SSO_ERROR_MESSAGES: Record<string, string> = {
@@ -23,13 +23,27 @@ export default function Login() {
   const params = new URLSearchParams(search);
   const redirectTo = params.get("redirect") ?? "/";
   const ssoError = params.get("error");
-  const { refetch } = useAuth();
+  const { isLoading, isLoggedIn, refetch } = useAuth();
   const login = useLogin();
   const [employeeNo, setEmployeeNo] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(
     ssoError ? (SSO_ERROR_MESSAGES[ssoError] ?? "SSO 로그인 오류가 발생했습니다.") : null,
   );
+
+  useEffect(() => {
+    if (!isLoading && isLoggedIn) {
+      navigate(redirectTo);
+    }
+  }, [isLoading, isLoggedIn, navigate, redirectTo]);
+
+  if (isLoading || isLoggedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
