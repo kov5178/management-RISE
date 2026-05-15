@@ -143,6 +143,13 @@ export default function Login() {
             사용자 등록 요청
           </a>
         </div>
+
+        <div className="text-center">
+          <a href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <BarChart className="w-3.5 h-3.5" />
+            로그인 없이 대시보드 보기
+          </a>
+        </div>
       </div>
     </div>
   );
