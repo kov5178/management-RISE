@@ -2,21 +2,21 @@ import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Folder, CheckSquare, BarChart, Target, FileText,
   Files, MessageSquare, RefreshCw, Users, LogOut, LogIn, UserPlus,
-  ClipboardList, ShieldCheck, History, ChevronRight
+  ClipboardList, ShieldCheck, History, ChevronRight, Clock, AlertTriangle
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem,
   SidebarMenuButton, SidebarProvider, SidebarFooter, SidebarMenuSub,
   SidebarMenuSubItem, SidebarMenuSubButton
 } from "@/components/ui/sidebar";
-import { ReactNode, useState, useEffect } from "react";
-import { Clock } from "lucide-react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLogout } from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useQueryClient } from "@tanstack/react-query";
+import { performIdleLogout } from "@/hooks/use-idle-timeout";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -67,7 +67,7 @@ function useSessionCountdown(lastLoginAt: string | null | undefined) {
 
   const minutes = Math.floor(remaining / 60000);
   const seconds = Math.floor((remaining % 60000) / 1000);
-  const isWarning = remaining < 5 * 60 * 1000;
+  const isWarning = remaining > 0 && remaining < 5 * 60 * 1000;
   const display = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   return { display, isWarning, remaining };
 }
@@ -80,9 +80,37 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [userMgmtOpen, setUserMgmtOpen] = useState(
     location.startsWith("/users") || location.startsWith("/user-requests") || location.startsWith("/role-change-logs")
   );
-  const { display: sessionDisplay, isWarning } = useSessionCountdown(
+  const { display: sessionDisplay, isWarning, remaining } = useSessionCountdown(
     isLoggedIn && user ? user.lastLoginAt : null
   );
+
+  const [expiryCountdown, setExpiryCountdown] = useState<number | null>(null);
+  const expiryHandledRef = useRef(false);
+
+  useEffect(() => {
+    if (!isLoggedIn || !user) {
+      expiryHandledRef.current = false;
+      setExpiryCountdown(null);
+      return;
+    }
+    if (remaining === 0 && !expiryHandledRef.current) {
+      expiryHandledRef.current = true;
+      setExpiryCountdown(5);
+    }
+  }, [remaining, isLoggedIn, user]);
+
+  useEffect(() => {
+    if (expiryCountdown === null) return;
+    if (expiryCountdown === 0) {
+      performIdleLogout(navigate, "timeout").then(() => {
+        queryClient.clear();
+        refetch();
+      });
+      return;
+    }
+    const id = setTimeout(() => setExpiryCountdown((c) => (c !== null ? c - 1 : null)), 1000);
+    return () => clearTimeout(id);
+  }, [expiryCountdown, navigate, queryClient, refetch]);
 
   const handleLogout = async () => {
     await logout.mutateAsync();
@@ -123,7 +151,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 );
               })}
 
-              {/* 사용자 관리 collapsible — admin/super_admin 전용 */}
               {isAdmin && (
                 <SidebarMenuItem>
                   <Collapsible open={userMgmtOpen} onOpenChange={setUserMgmtOpen}>
@@ -163,11 +190,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <SidebarFooter className="p-4 border-t border-sidebar-border/50">
             {isLoggedIn && user ? (
               <div className="space-y-2">
-                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${isWarning ? "bg-red-500/15 text-red-400" : "bg-sidebar-accent/40 text-sidebar-foreground/60"}`}>
-                  <Clock className="w-3 h-3 shrink-0" />
-                  <span className="text-xs font-mono font-semibold tracking-widest">{sessionDisplay}</span>
-                  <span className="text-xs ml-0.5">남음</span>
-                </div>
+                {expiryCountdown !== null ? (
+                  <div className="flex items-center gap-1.5 px-2 py-2 rounded-md bg-destructive/20 text-destructive animate-pulse">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span className="text-xs font-semibold">
+                      {expiryCountdown}초 후 자동 로그아웃됩니다
+                    </span>
+                  </div>
+                ) : (
+                  <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${isWarning ? "bg-red-500/15 text-red-400" : "bg-sidebar-accent/40 text-sidebar-foreground/60"}`}>
+                    <Clock className="w-3 h-3 shrink-0" />
+                    <span className="text-xs font-mono font-semibold tracking-widest">{sessionDisplay}</span>
+                    <span className="text-xs ml-0.5">남음</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 px-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-sidebar-foreground truncate">{user.name}</p>
