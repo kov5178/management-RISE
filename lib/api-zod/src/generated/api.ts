@@ -40,6 +40,26 @@ export const LoginResponse = zod.object({
 });
 
 /**
+ * @summary 데모 자동 로그인 (DEMO_MODE_ENABLED=true 필요)
+ */
+export const DemoLoginResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  employeeNo: zod.string(),
+  email: zod.string(),
+  role: zod
+    .string()
+    .describe(
+      "super_admin | admin | project_manager | task_manager | reviewer | viewer",
+    ),
+  department: zod.string().nullish(),
+  position: zod.string().nullish(),
+  status: zod.string(),
+  mustChangePassword: zod.boolean(),
+  lastLoginAt: zod.string().nullish(),
+});
+
+/**
  * @summary 현재 로그인 사용자 조회
  */
 export const GetMeResponse = zod.object({

@@ -122,4 +122,36 @@ router.post("/auth/change-password", requireAuth, async (req, res): Promise<void
   res.json({ ok: true });
 });
 
+router.post("/auth/demo-login", async (req, res): Promise<void> => {
+  if (process.env.DEMO_MODE_ENABLED !== "true") {
+    res.status(403).json({ error: "데모 모드가 활성화되지 않았습니다." });
+    return;
+  }
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.role, "admin"))
+    .limit(1);
+
+  if (!user) {
+    res.status(500).json({ error: "데모 사용자를 찾을 수 없습니다." });
+    return;
+  }
+
+  await db
+    .update(usersTable)
+    .set({ lastLoginAt: new Date(), updatedAt: new Date() })
+    .where(eq(usersTable.id, user.id));
+
+  req.session.userId = user.id;
+  req.session.employeeNo = user.employeeNo;
+  req.session.name = user.name;
+  req.session.role = user.role;
+  req.session.status = user.status;
+
+  const updatedUser = { ...user, lastLoginAt: new Date() };
+  res.json(serialize(formatUser(updatedUser)));
+});
+
 export default router;

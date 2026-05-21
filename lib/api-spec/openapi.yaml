@@ -75,6 +75,21 @@ paths:
         "403":
           description: Forbidden (pending/rejected/inactive)
 
+  /auth/demo-login:
+    post:
+      operationId: demoLogin
+      tags: [auth]
+      summary: 데모 자동 로그인 (DEMO_MODE_ENABLED=true 필요)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "403":
+          description: Forbidden (demo mode not enabled)
+
   /auth/logout:
     post:
       operationId: logout

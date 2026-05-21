@@ -246,6 +246,85 @@ export const useLogin = <
 };
 
 /**
+ * @summary 데모 자동 로그인 (DEMO_MODE_ENABLED=true 필요)
+ */
+export const getDemoLoginUrl = () => {
+  return `/api/auth/demo-login`;
+};
+
+export const demoLogin = async (options?: RequestInit): Promise<AuthUser> => {
+  return customFetch<AuthUser>(getDemoLoginUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getDemoLoginMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof demoLogin>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof demoLogin>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["demoLogin"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof demoLogin>>,
+    void
+  > = () => {
+    return demoLogin(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DemoLoginMutationResult = NonNullable<
+  Awaited<ReturnType<typeof demoLogin>>
+>;
+
+export type DemoLoginMutationError = ErrorType<void>;
+
+/**
+ * @summary 데모 자동 로그인 (DEMO_MODE_ENABLED=true 필요)
+ */
+export const useDemoLogin = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof demoLogin>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof demoLogin>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getDemoLoginMutationOptions(options));
+};
+
+/**
  * @summary 로그아웃
  */
 export const getLogoutUrl = () => {

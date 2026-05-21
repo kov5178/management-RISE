@@ -35,5 +35,14 @@ localPort = 8082
 externalPort = 3001
 
 [[ports]]
+localPort = 22200
+externalPort = 3002
+
+[[ports]]
 localPort = 24368
 externalPort = 3000
+
+[userenv]
+
+[userenv.shared]
+DEMO_MODE_ENABLED = "true"
