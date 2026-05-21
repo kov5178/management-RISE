@@ -9,9 +9,7 @@ import { useIdleTimeout, performIdleLogout } from "@/hooks/use-idle-timeout";
 import { IdleWarningModal } from "@/components/idle-warning-modal";
 import { useGetSettings } from "@workspace/api-client-react";
 import NotFound from "@/pages/not-found";
-import { LogIn } from "lucide-react";
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 import Dashboard from "@/pages/dashboard";
 import Projects from "@/pages/projects";
@@ -38,21 +36,6 @@ const queryClient = new QueryClient({
   },
 });
 
-function LoginRequired() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
-      <LogIn className="w-12 h-12 text-muted-foreground" />
-      <h2 className="text-xl font-bold">로그인이 필요합니다</h2>
-      <p className="text-muted-foreground text-sm">
-        RISE 성과관리 시스템을 이용하려면 로그인해 주세요.
-      </p>
-      <Link href="/login">
-        <Button>로그인</Button>
-      </Link>
-    </div>
-  );
-}
-
 function AccessDenied() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center px-4">
@@ -61,6 +44,14 @@ function AccessDenied() {
       <p className="text-muted-foreground text-sm">
         이 페이지는 관리자만 접근할 수 있습니다.
       </p>
+    </div>
+  );
+}
+
+function AuthSpinner() {
+  return (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
     </div>
   );
 }
@@ -118,28 +109,38 @@ function IdleTimeoutGuard() {
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isLoggedIn, isLoading, mustChangePassword } = useAuth();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   useEffect(() => {
-    if (!isLoading && isLoggedIn && mustChangePassword) {
+    if (isLoading) return;
+    if (!isLoggedIn) {
+      navigate(`/login?redirect=${encodeURIComponent(location)}`);
+      return;
+    }
+    if (mustChangePassword) {
       navigate("/change-password");
     }
-  }, [isLoading, isLoggedIn, mustChangePassword, navigate]);
-  if (isLoading) return null;
-  if (!isLoggedIn) return <LoginRequired />;
+  }, [isLoading, isLoggedIn, mustChangePassword, location, navigate]);
+  if (isLoading) return <AuthSpinner />;
+  if (!isLoggedIn) return null;
   if (mustChangePassword) return null;
   return <>{children}</>;
 }
 
 function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { isLoggedIn, isAdmin, isLoading, mustChangePassword } = useAuth();
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   useEffect(() => {
-    if (!isLoading && isLoggedIn && mustChangePassword) {
+    if (isLoading) return;
+    if (!isLoggedIn) {
+      navigate(`/login?redirect=${encodeURIComponent(location)}`);
+      return;
+    }
+    if (mustChangePassword) {
       navigate("/change-password");
     }
-  }, [isLoading, isLoggedIn, mustChangePassword, navigate]);
-  if (isLoading) return null;
-  if (!isLoggedIn) return <LoginRequired />;
+  }, [isLoading, isLoggedIn, mustChangePassword, location, navigate]);
+  if (isLoading) return <AuthSpinner />;
+  if (!isLoggedIn) return null;
   if (mustChangePassword) return null;
   if (!isAdmin) return <AccessDenied />;
   return <>{children}</>;
@@ -151,7 +152,7 @@ function AppRoutes() {
       <MustChangePasswordGuard />
       <Switch>
         <Route path="/">
-          <Dashboard />
+          <RequireAuth><Dashboard /></RequireAuth>
         </Route>
         <Route path="/projects">
           <RequireAuth><Projects /></RequireAuth>
