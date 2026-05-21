@@ -252,6 +252,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </Sidebar>
 
         <main className="flex-1 flex flex-col h-screen overflow-hidden">
+          <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs text-amber-900">
+            해당 웹앱은 개발 중이며, 모든 데이터는 실제 데이터가 아닙니다.
+          </div>
           <div className="flex-1 overflow-y-auto p-6 md:p-8">
             {children}
           </div>

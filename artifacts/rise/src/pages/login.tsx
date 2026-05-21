@@ -69,6 +69,9 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm space-y-6">
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs text-amber-900">
+          해당 웹앱은 개발 중이며, 모든 데이터는 실제 데이터가 아닙니다.
+        </div>
         <div className="flex flex-col items-center gap-2 text-center">
           <div className="bg-primary text-primary-foreground p-2 rounded-lg">
             <BarChart className="w-7 h-7" />
