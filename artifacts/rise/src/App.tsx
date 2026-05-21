@@ -7,6 +7,7 @@ import { AdminLayout } from "@/components/layout";
 import { useAuth } from "@/hooks/use-auth";
 import { useIdleTimeout, performIdleLogout } from "@/hooks/use-idle-timeout";
 import { IdleWarningModal } from "@/components/idle-warning-modal";
+import { useGetSettings } from "@workspace/api-client-react";
 import NotFound from "@/pages/not-found";
 import { LogIn } from "lucide-react";
 import { Link } from "wouter";
@@ -24,6 +25,7 @@ import Feedback from "@/pages/feedback";
 import Users from "@/pages/users";
 import UserRequests from "@/pages/user-requests";
 import RoleChangeLogs from "@/pages/role-change-logs";
+import AppSettings from "@/pages/settings";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
 import ChangePassword from "@/pages/change-password";
@@ -78,14 +80,18 @@ function IdleTimeoutGuard() {
   const { isLoggedIn, isLoading, refetch } = useAuth();
   const [, navigate] = useLocation();
   const [warningOpen, setWarningOpen] = useState(false);
+  const { data: settingsData } = useGetSettings();
+  const timeoutMinutes = settingsData?.sessionTimeoutMinutes ?? 30;
+  const timeoutMs = timeoutMinutes * 60 * 1000;
 
   const { resetTimer } = useIdleTimeout({
     enabled: !isLoading && isLoggedIn,
+    timeoutMs,
     onWarning: () => setWarningOpen(true),
     onWarningDismiss: () => setWarningOpen(false),
     onTimeout: async () => {
       setWarningOpen(false);
-      await performIdleLogout(navigate);
+      await performIdleLogout(navigate, "timeout", timeoutMinutes);
       refetch();
     },
   });
@@ -179,6 +185,9 @@ function AppRoutes() {
         </Route>
         <Route path="/role-change-logs">
           <RequireAdmin><RoleChangeLogs /></RequireAdmin>
+        </Route>
+        <Route path="/settings">
+          <RequireAdmin><AppSettings /></RequireAdmin>
         </Route>
         <Route component={NotFound} />
       </Switch>

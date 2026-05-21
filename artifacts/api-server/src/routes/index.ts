@@ -14,6 +14,7 @@ import authRouter from "./auth";
 import profileRouter from "./profile";
 import registrationRequestsRouter from "./registration-requests";
 import replitAuthRouter from "./replit-auth";
+import settingsRouter from "./settings";
 import { requireAuth } from "../middlewares/auth.js";
 
 const router: IRouter = Router();
@@ -25,6 +26,7 @@ router.use(profileRouter);
 router.use(registrationRequestsRouter);
 
 router.use(dashboardRouter);  // public: 비로그인 사용자도 대시보드 조회 가능
+router.use(settingsRouter);   // public GET, admin-only PUT
 
 router.use(requireAuth);
 

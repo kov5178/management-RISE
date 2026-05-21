@@ -436,6 +436,16 @@ export interface RoleChangeLog {
   changedAt: string;
 }
 
+export interface AppSettings {
+  /** 세션 타임아웃 시간 (분). 유효값: 15, 30, 60, 120 */
+  sessionTimeoutMinutes: number;
+}
+
+export interface UpdateSettingsBody {
+  /** 세션 타임아웃 시간 (분). 유효값: 15, 30, 60, 120 */
+  sessionTimeoutMinutes: number;
+}
+
 export interface DashboardSummary {
   totalProjects: number;
   totalTasks: number;

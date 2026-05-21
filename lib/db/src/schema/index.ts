@@ -11,3 +11,4 @@ export * from "./users";
 export * from "./registration-requests";
 export * from "./role-change-logs";
 export * from "./sessions";
+export * from "./settings";

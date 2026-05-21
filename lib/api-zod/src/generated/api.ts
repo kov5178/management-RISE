@@ -886,6 +886,30 @@ export const ListRoleChangeLogsResponse = zod.array(
 );
 
 /**
+ * @summary 시스템 설정 조회
+ */
+export const GetSettingsResponse = zod.object({
+  sessionTimeoutMinutes: zod
+    .number()
+    .describe("세션 타임아웃 시간 (분). 유효값: 15, 30, 60, 120"),
+});
+
+/**
+ * @summary 시스템 설정 변경 (관리자 전용)
+ */
+export const UpdateSettingsBody = zod.object({
+  sessionTimeoutMinutes: zod
+    .number()
+    .describe("세션 타임아웃 시간 (분). 유효값: 15, 30, 60, 120"),
+});
+
+export const UpdateSettingsResponse = zod.object({
+  sessionTimeoutMinutes: zod
+    .number()
+    .describe("세션 타임아웃 시간 (분). 유효값: 15, 30, 60, 120"),
+});
+
+/**
  * @summary 대시보드 전체 요약
  */
 export const GetDashboardSummaryQueryParams = zod.object({

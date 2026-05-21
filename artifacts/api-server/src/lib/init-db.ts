@@ -15,6 +15,17 @@ async function ensureSessionsTable(): Promise<void> {
   `);
 }
 
+async function ensureSettingsTable(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS "settings" (
+      "key" text NOT NULL,
+      "value" text NOT NULL,
+      "updated_at" timestamptz NOT NULL DEFAULT NOW(),
+      CONSTRAINT "settings_pkey" PRIMARY KEY ("key")
+    );
+  `);
+}
+
 async function ensureAdminUser(): Promise<void> {
   const [row] = await db.select({ cnt: count() }).from(usersTable);
   if (!row || row.cnt > 0) return;
@@ -43,6 +54,11 @@ export async function initDb(): Promise<void> {
     await ensureSessionsTable();
   } catch (err) {
     logger.error({ err }, "Failed to create sessions table");
+  }
+  try {
+    await ensureSettingsTable();
+  } catch (err) {
+    logger.error({ err }, "Failed to create settings table");
   }
   try {
     await ensureAdminUser();

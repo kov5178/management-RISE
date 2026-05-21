@@ -34,6 +34,8 @@ tags:
     description: 사용자 관리
   - name: dashboard
     description: 대시보드
+  - name: settings
+    description: 시스템 설정
 
 paths:
   /healthz:
@@ -1004,6 +1006,42 @@ paths:
                 items:
                   $ref: "#/components/schemas/RoleChangeLog"
 
+  # ── Settings ──────────────────────────────────────────────
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: 시스템 설정 조회
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: 시스템 설정 변경 (관리자 전용)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSettingsBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppSettings"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+
   # ── Dashboard ──────────────────────────────────────────────
   /dashboard/summary:
     get:
@@ -1898,6 +1936,25 @@ components:
         - changerRole
         - changedAt
 
+
+    # ── Settings ──────────────────────────────────────────
+    AppSettings:
+      type: object
+      properties:
+        sessionTimeoutMinutes:
+          type: integer
+          description: "세션 타임아웃 시간 (분). 유효값: 15, 30, 60, 120"
+      required:
+        - sessionTimeoutMinutes
+
+    UpdateSettingsBody:
+      type: object
+      properties:
+        sessionTimeoutMinutes:
+          type: integer
+          description: "세션 타임아웃 시간 (분). 유효값: 15, 30, 60, 120"
+      required:
+        - sessionTimeoutMinutes
 
     # ── Dashboard ──────────────────────────────────────────
     DashboardSummary:

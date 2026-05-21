@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Folder, CheckSquare, BarChart, Target, FileText,
   Files, MessageSquare, RefreshCw, Users, LogOut, LogIn, UserPlus,
-  ClipboardList, ShieldCheck, History, ChevronRight, Clock, AlertTriangle
+  ClipboardList, ShieldCheck, History, ChevronRight, Clock, AlertTriangle, Settings2
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { ReactNode, useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useLogout } from "@workspace/api-client-react";
+import { useLogout, useGetSettings } from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -47,23 +47,29 @@ const USER_MGMT_ITEMS = [
   { title: "사용자 목록 · 권한 변경", href: "/users", icon: Users },
   { title: "등록 요청 승인", href: "/user-requests", icon: ClipboardList },
   { title: "권한 변경 이력", href: "/role-change-logs", icon: History },
+  { title: "시스템 설정", href: "/settings", icon: Settings2 },
 ];
 
-const SESSION_DURATION_MS = 30 * 60 * 1000;
+function useSessionCountdown(
+  lastLoginAt: string | null | undefined,
+  sessionDurationMs: number,
+) {
+  const [remaining, setRemaining] = useState<number>(sessionDurationMs);
 
-function useSessionCountdown(lastLoginAt: string | null | undefined) {
-  const [remaining, setRemaining] = useState<number>(SESSION_DURATION_MS);
+  useEffect(() => {
+    setRemaining(sessionDurationMs);
+  }, [sessionDurationMs]);
 
   useEffect(() => {
     if (!lastLoginAt) return;
     const tick = () => {
       const elapsed = Date.now() - new Date(lastLoginAt).getTime();
-      setRemaining(Math.max(0, SESSION_DURATION_MS - elapsed));
+      setRemaining(Math.max(0, sessionDurationMs - elapsed));
     };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [lastLoginAt]);
+  }, [lastLoginAt, sessionDurationMs]);
 
   const minutes = Math.floor(remaining / 60000);
   const seconds = Math.floor((remaining % 60000) / 1000);
@@ -77,11 +83,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { user, isLoggedIn, isAdmin, refetch } = useAuth();
   const logout = useLogout();
   const queryClient = useQueryClient();
+  const { data: settingsData } = useGetSettings();
+  const sessionDurationMs = (settingsData?.sessionTimeoutMinutes ?? 30) * 60 * 1000;
   const [userMgmtOpen, setUserMgmtOpen] = useState(
-    location.startsWith("/users") || location.startsWith("/user-requests") || location.startsWith("/role-change-logs")
+    location.startsWith("/users") || location.startsWith("/user-requests") || location.startsWith("/role-change-logs") || location.startsWith("/settings")
   );
   const { display: sessionDisplay, isWarning, remaining } = useSessionCountdown(
-    isLoggedIn && user ? user.lastLoginAt : null
+    isLoggedIn && user ? user.lastLoginAt : null,
+    sessionDurationMs,
   );
 
   const [expiryCountdown, setExpiryCountdown] = useState<number | null>(null);
