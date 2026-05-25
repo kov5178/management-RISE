@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
-import { db, indicatorResultsTable, indicatorTargetsTable } from "@workspace/db";
+import { db, indicatorResultsTable, indicatorTargetsTable, indicatorsTable } from "@workspace/db";
 import {
   CreateResultBody,
   UpdateResultBody,
@@ -53,8 +53,13 @@ router.post("/results", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const [program] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, parsed.data.indicatorId));
+  if (!program || program.indicatorType !== "program") {
+    res.status(400).json({ error: "세부프로그램에 대해서만 실적을 입력할 수 있습니다." });
+    return;
+  }
 
-  const [target] = await db
+  let [target] = await db
     .select()
     .from(indicatorTargetsTable)
     .where(
@@ -63,6 +68,17 @@ router.post("/results", async (req, res): Promise<void> => {
         eq(indicatorTargetsTable.year, parsed.data.year)
       )
     );
+  if (!target && program.parentId) {
+    [target] = await db
+      .select()
+      .from(indicatorTargetsTable)
+      .where(
+        and(
+          eq(indicatorTargetsTable.indicatorId, program.parentId),
+          eq(indicatorTargetsTable.year, parsed.data.year)
+        )
+      );
+  }
   const progressRate = calculateProgress(parsed.data.actualValue ?? null, target?.targetValue ?? null);
 
   const [result] = await db
@@ -102,7 +118,7 @@ router.patch("/results/:id", async (req, res): Promise<void> => {
   if (parsed.data.actualValue !== undefined) {
     const [existing] = await db.select().from(indicatorResultsTable).where(eq(indicatorResultsTable.id, params.data.id));
     if (existing) {
-      const [target] = await db
+      let [target] = await db
         .select()
         .from(indicatorTargetsTable)
         .where(
@@ -111,6 +127,20 @@ router.patch("/results/:id", async (req, res): Promise<void> => {
             eq(indicatorTargetsTable.year, existing.year)
           )
         );
+      if (!target) {
+        const [program] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, existing.indicatorId));
+        if (program?.parentId) {
+          [target] = await db
+            .select()
+            .from(indicatorTargetsTable)
+            .where(
+              and(
+                eq(indicatorTargetsTable.indicatorId, program.parentId),
+                eq(indicatorTargetsTable.year, existing.year)
+              )
+            );
+        }
+      }
       progressRate = calculateProgress(parsed.data.actualValue ?? null, target?.targetValue ?? null);
     }
   }

@@ -48,6 +48,11 @@ export default function Indicators() {
     setDescription("");
   };
 
+  const handleIndicatorTypeChange = (value: string) => {
+    setIndicatorType(value);
+    setParentId("none");
+  };
+
   const handleCreate = async () => {
     if (!taskId || !name) return;
     try {
@@ -120,13 +125,17 @@ export default function Indicators() {
   };
 
   const parentIndicators = indicators?.filter(i => i.indicatorType === "parent") || [];
+  const detailIndicators = indicators?.filter(i => i.indicatorType === "child") || [];
+  const selectableParents = (indicatorType === "program" ? detailIndicators : parentIndicators)
+    .filter((item) => !taskId || item.taskId === Number(taskId))
+    .filter((item) => item.id !== editingIndicator?.id);
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">지표 관리</h2>
-          <p className="text-muted-foreground">단위과제별 상위/하위 지표를 관리합니다.</p>
+          <p className="text-muted-foreground">지표, 세부지표, 세부프로그램의 계층을 관리합니다.</p>
         </div>
         <div className="flex gap-4 items-center">
           <div className="flex items-center gap-2">
@@ -169,27 +178,27 @@ export default function Indicators() {
                 </div>
                 <div className="space-y-2 col-span-2 sm:col-span-1">
                   <Label>지표 유형</Label>
-                  <Select value={indicatorType} onValueChange={setIndicatorType}>
+                  <Select value={indicatorType} onValueChange={handleIndicatorTypeChange}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="parent">상위지표</SelectItem>
-                      <SelectItem value="child">하위지표</SelectItem>
+                      <SelectItem value="parent">지표</SelectItem>
+                      <SelectItem value="child">세부지표</SelectItem>
+                      <SelectItem value="program">세부프로그램</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
-                {indicatorType === "child" && (
+                {indicatorType !== "parent" && (
                   <div className="space-y-2 col-span-2">
-                    <Label>상위지표 선택</Label>
+                    <Label>{indicatorType === "program" ? "세부지표 선택" : "상위 지표 선택"}</Label>
                     <Select value={parentId} onValueChange={setParentId}>
                       <SelectTrigger>
-                        <SelectValue placeholder="상위지표를 선택하세요" />
+                        <SelectValue placeholder={indicatorType === "program" ? "세부지표를 선택하세요" : "상위 지표를 선택하세요"} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">없음</SelectItem>
-                        {parentIndicators.map(i => (
+                        {selectableParents.map(i => (
                           <SelectItem key={i.id} value={i.id.toString()}>{i.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -222,7 +231,7 @@ export default function Indicators() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>취소</Button>
-                <Button onClick={handleCreate} disabled={createIndicator.isPending || !name || !taskId}>등록</Button>
+                <Button onClick={handleCreate} disabled={createIndicator.isPending || !name || !taskId || (indicatorType !== "parent" && parentId === "none")}>등록</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -261,15 +270,16 @@ export default function Indicators() {
               indicators?.map((indicator) => {
                 const task = tasks?.find(t => t.id === indicator.taskId);
                 const isChild = indicator.indicatorType === "child";
+                const isProgram = indicator.indicatorType === "program";
                 return (
                   <TableRow key={indicator.id}>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${isChild ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-800'}`}>
-                        {isChild ? '하위' : '상위'}
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${isProgram ? 'bg-emerald-100 text-emerald-800' : isChild ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-800'}`}>
+                        {isProgram ? '프로그램' : isChild ? '세부' : '지표'}
                       </span>
                     </TableCell>
                     <TableCell className="font-medium">
-                      <div className={isChild ? "ml-4 border-l-2 border-muted pl-2" : ""}>
+                      <div className={isProgram ? "ml-8 border-l-2 border-emerald-200 pl-2" : isChild ? "ml-4 border-l-2 border-muted pl-2" : ""}>
                         {indicator.name}
                         {indicator.formula && <div className="text-xs text-muted-foreground mt-1">산출식: {indicator.formula}</div>}
                       </div>
@@ -316,27 +326,27 @@ export default function Indicators() {
             </div>
             <div className="space-y-2 col-span-2 sm:col-span-1">
               <Label>지표 유형</Label>
-              <Select value={indicatorType} onValueChange={setIndicatorType}>
+              <Select value={indicatorType} onValueChange={handleIndicatorTypeChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="parent">상위지표</SelectItem>
-                  <SelectItem value="child">하위지표</SelectItem>
+                  <SelectItem value="parent">지표</SelectItem>
+                  <SelectItem value="child">세부지표</SelectItem>
+                  <SelectItem value="program">세부프로그램</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
-            {indicatorType === "child" && (
+            {indicatorType !== "parent" && (
               <div className="space-y-2 col-span-2">
-                <Label>상위지표 선택</Label>
+                <Label>{indicatorType === "program" ? "세부지표 선택" : "상위 지표 선택"}</Label>
                 <Select value={parentId} onValueChange={setParentId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="상위지표를 선택하세요" />
+                    <SelectValue placeholder={indicatorType === "program" ? "세부지표를 선택하세요" : "상위 지표를 선택하세요"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">없음</SelectItem>
-                    {parentIndicators.map(i => (
+                    {selectableParents.map(i => (
                       <SelectItem key={i.id} value={i.id.toString()}>{i.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -369,7 +379,7 @@ export default function Indicators() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
-            <Button onClick={handleEdit} disabled={updateIndicator.isPending || !name}>저장</Button>
+            <Button onClick={handleEdit} disabled={updateIndicator.isPending || !name || (indicatorType !== "parent" && parentId === "none")}>저장</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
