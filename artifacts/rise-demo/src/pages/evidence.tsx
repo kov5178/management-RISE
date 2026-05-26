@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useListEvidence, useCreateEvidence, useDeleteEvidence, useListResults, useListIndicators, getListEvidenceQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,25 +12,57 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 
+const previewIndicators = [
+  { id: 1, parentId: null, indicatorType: "parent", name: "지역혁신 성과 확산", unit: null },
+  { id: 2, parentId: 1, indicatorType: "child", name: "산학협력 프로그램 운영", unit: "건" },
+  { id: 3, parentId: 2, indicatorType: "program", name: "기업 공동 프로젝트 지원", unit: "건" },
+  { id: 4, parentId: 2, indicatorType: "program", name: "성과공유 워크숍 개최", unit: "회" },
+];
+
+const previewResults = [
+  { id: 101, indicatorId: 3, actualValue: 14, status: "draft" },
+  { id: 102, indicatorId: 4, actualValue: 8, status: "submitted" },
+];
+
+const previewEvidence = [
+  {
+    id: 201,
+    resultId: 101,
+    fileName: "기업_공동프로젝트_성과보고서.pdf",
+    fileUrl: "#",
+    fileSize: 2048,
+    createdAt: "2026-05-20T00:00:00.000Z",
+  },
+];
+
 export default function Evidence() {
-  const currentYear = 2025;
+  const currentYear = new Date().getFullYear();
   const [filterYear, setFilterYear] = useState<string>(currentYear.toString());
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
-  
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [fileName, setFileName] = useState("");
+  const [fileUrl, setFileUrl] = useState("");
+
   const { data: indicators } = useListIndicators();
   const { data: results } = useListResults({ year: Number(filterYear) });
   const { data: evidenceList, isLoading } = useListEvidence(selectedResultId ? { resultId: selectedResultId } : undefined);
-  
   const createEvidence = useCreateEvidence();
   const deleteEvidence = useDeleteEvidence();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
-
-  // Form states for mock upload
-  const [fileName, setFileName] = useState("");
-  const [fileUrl, setFileUrl] = useState("");
+  const usingPreviewData = !Array.isArray(indicators);
+  const indicatorRows = Array.isArray(indicators) ? indicators : previewIndicators;
+  const resultRows = Array.isArray(results) ? results : previewResults;
+  const evidenceRows = Array.isArray(evidenceList)
+    ? evidenceList
+    : previewEvidence.filter((file) => file.resultId === selectedResultId);
+  const parentIndicators = indicatorRows.filter((indicator) => indicator.indicatorType === "parent");
+  const selectedResult = resultRows.find((result) => result.id === selectedResultId);
+  const selectedProgram = indicatorRows.find(
+    (indicator) => indicator.id === selectedResult?.indicatorId && indicator.indicatorType === "program",
+  );
+  const years = Array.from({ length: 5 }, (_, index) => currentYear - 1 + index);
 
   const resetForm = () => {
     setFileName("");
@@ -45,16 +77,16 @@ export default function Evidence() {
           resultId: selectedResultId,
           fileName,
           fileUrl,
-          fileSize: Math.floor(Math.random() * 5000) + 100, // mock size
+          fileSize: Math.floor(Math.random() * 5000) + 100,
           mimeType: "application/pdf",
-          uploadedBy: "현재 사용자"
-        }
+          uploadedBy: "현재 사용자",
+        },
       });
       queryClient.invalidateQueries({ queryKey: getListEvidenceQueryKey() });
-      toast({ title: "증빙 등록 성공", description: "증빙자료가 등록되었습니다." });
+      toast({ title: "증빙 등록 성공", description: "PDF 증빙자료가 등록되었습니다." });
       setIsUploadOpen(false);
       resetForm();
-    } catch (e) {
+    } catch {
       toast({ title: "등록 실패", description: "증빙자료 등록에 실패했습니다.", variant: "destructive" });
     }
   };
@@ -65,19 +97,9 @@ export default function Evidence() {
       await deleteEvidence.mutateAsync({ id });
       queryClient.invalidateQueries({ queryKey: getListEvidenceQueryKey() });
       toast({ title: "삭제 성공", description: "증빙자료가 삭제되었습니다." });
-    } catch (e) {
+    } catch {
       toast({ title: "삭제 실패", description: "증빙자료 삭제에 실패했습니다.", variant: "destructive" });
     }
-  };
-
-  const years = [2025, 2026, 2027, 2028, 2029];
-
-  // Helper to get indicator name from resultId
-  const getIndicatorInfo = (resId: number) => {
-    const res = results?.find(r => r.id === resId);
-    if (!res) return { name: "알 수 없는 지표", status: "draft" };
-    const ind = indicators?.find(i => i.id === res.indicatorId);
-    return { name: ind?.name || "알 수 없는 지표", status: res.status };
   };
 
   return (
@@ -85,7 +107,7 @@ export default function Evidence() {
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">증빙 관리</h2>
-          <p className="text-muted-foreground">실적 달성을 증명할 수 있는 자료를 등록합니다.</p>
+          <p className="text-muted-foreground">세부프로그램 실적별 PDF 증빙자료를 등록하고 관리합니다.</p>
         </div>
         <div className="flex items-center gap-2">
           <Label className="whitespace-nowrap">대상 연도</Label>
@@ -94,48 +116,79 @@ export default function Evidence() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {years.map(y => (
-                <SelectItem key={y} value={y.toString()}>{y}년도</SelectItem>
+              {years.map((year) => (
+                <SelectItem key={year} value={year.toString()}>{year}년도</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
       </div>
+      {usingPreviewData && (
+        <p className="text-sm text-muted-foreground">미리보기용 예시 데이터로 세부프로그램별 증빙 연결 구조를 표시합니다.</p>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-220px)] min-h-[500px]">
-        {/* Left pane: Results list */}
         <div className="border rounded-md bg-card col-span-1 flex flex-col overflow-hidden">
           <div className="p-3 border-b font-medium bg-muted/50">실적 목록 ({filterYear})</div>
-          <div className="overflow-y-auto flex-1 p-2 space-y-1">
-            {(!results || results.length === 0) ? (
+          <div className="overflow-y-auto flex-1 p-2 space-y-2">
+            {parentIndicators.length === 0 ? (
               <div className="text-center p-4 text-sm text-muted-foreground">등록된 실적이 없습니다.</div>
             ) : (
-              results.map(res => {
-                const indInfo = getIndicatorInfo(res.id);
-                const isSelected = selectedResultId === res.id;
+              parentIndicators.map((parent) => {
+                const details = indicatorRows.filter(
+                  (indicator) => indicator.indicatorType === "child" && indicator.parentId === parent.id,
+                );
                 return (
-                  <button
-                    key={res.id}
-                    onClick={() => setSelectedResultId(res.id)}
-                    className={`w-full text-left p-3 rounded-md transition-colors text-sm border flex flex-col gap-2
-                      ${isSelected ? 'bg-primary/5 border-primary shadow-sm' : 'bg-transparent border-transparent hover:bg-muted'}`}
-                  >
-                    <div className="font-medium line-clamp-2">{indInfo.name}</div>
-                    <div className="flex justify-between items-center w-full">
-                      <span className="text-muted-foreground">실적값: {res.actualValue ?? '-'}</span>
-                      <StatusBadge status={indInfo.status} />
-                    </div>
-                  </button>
+                  <Fragment key={parent.id}>
+                    <div className="px-3 py-2 text-sm font-semibold bg-muted/60 rounded-md">{parent.name}</div>
+                    {details.map((detail) => {
+                      const programs = indicatorRows.filter(
+                        (indicator) => indicator.indicatorType === "program" && indicator.parentId === detail.id,
+                      );
+                      return (
+                        <div key={detail.id} className="space-y-1">
+                          <div className="px-3 pt-1 pl-5 text-xs font-medium text-muted-foreground">
+                            하위 지표: {detail.name}
+                          </div>
+                          {programs.map((program) => {
+                            const result = resultRows.find((row) => row.indicatorId === program.id);
+                            if (!result) {
+                              return (
+                                <div key={program.id} className="ml-5 px-3 py-2 rounded-md text-sm text-muted-foreground">
+                                  {program.name} <span className="float-right text-xs">실적 미등록</span>
+                                </div>
+                              );
+                            }
+                            const isSelected = selectedResultId === result.id;
+                            return (
+                              <button
+                                key={program.id}
+                                onClick={() => setSelectedResultId(result.id)}
+                                className={`ml-5 w-[calc(100%-1.25rem)] text-left p-3 rounded-md transition-colors text-sm border flex flex-col gap-2 ${
+                                  isSelected ? "bg-primary/5 border-primary shadow-sm" : "bg-transparent border-transparent hover:bg-muted"
+                                }`}
+                              >
+                                <div className="font-medium line-clamp-2">{program.name}</div>
+                                <div className="flex justify-between items-center w-full">
+                                  <span className="text-muted-foreground">실적값 {result.actualValue ?? "-"}</span>
+                                  <StatusBadge status={result.status} />
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </Fragment>
                 );
               })
             )}
           </div>
         </div>
 
-        {/* Right pane: Evidence list */}
         <div className="border rounded-md bg-card col-span-1 md:col-span-2 flex flex-col overflow-hidden">
           <div className="p-3 border-b font-medium bg-muted/50 flex justify-between items-center">
-            <span>증빙 자료 목록</span>
+            <span>증빙 자료 목록{selectedProgram ? ` - ${selectedProgram.name}` : ""}</span>
             {selectedResultId && (
               <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
                 <DialogTrigger asChild>
@@ -148,17 +201,18 @@ export default function Evidence() {
                     <DialogTitle>증빙자료 등록</DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
+                    {selectedProgram && (
+                      <p className="text-sm text-muted-foreground">세부프로그램: {selectedProgram.name}</p>
+                    )}
                     <div className="space-y-2">
-                      <Label htmlFor="fname">파일명</Label>
-                      <Input id="fname" value={fileName} onChange={e => setFileName(e.target.value)} placeholder="예: 2024년_참석자_명부.pdf" />
+                      <Label htmlFor="fname">PDF 파일명</Label>
+                      <Input id="fname" value={fileName} onChange={(event) => setFileName(event.target.value)} placeholder="예: 성과보고서.pdf" />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="furl">파일 URL (외부 링크 등)</Label>
-                      <Input id="furl" value={fileUrl} onChange={e => setFileUrl(e.target.value)} placeholder="https://" />
+                      <Label htmlFor="furl">파일 URL</Label>
+                      <Input id="furl" value={fileUrl} onChange={(event) => setFileUrl(event.target.value)} placeholder="https://" />
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      * 이 시스템은 Mock 버전으로 실제 파일 업로드 대신 파일명과 URL을 직접 입력합니다.
-                    </p>
+                    <p className="text-xs text-muted-foreground">PDF 파일만 증빙자료로 등록할 수 있습니다.</p>
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsUploadOpen(false)}>취소</Button>
@@ -173,13 +227,14 @@ export default function Evidence() {
               <div className="h-full flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <File className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                  <p>왼쪽 목록에서 실적을 선택하면 증빙자료를 볼 수 있습니다.</p>
+                  <p>왼쪽 목록에서 세부프로그램 실적을 선택하면 증빙자료를 볼 수 있습니다.</p>
                 </div>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>세부프로그램명</TableHead>
                     <TableHead>파일명</TableHead>
                     <TableHead>용량</TableHead>
                     <TableHead>등록일</TableHead>
@@ -187,17 +242,18 @@ export default function Evidence() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading ? (
+                  {isLoading && Array.isArray(evidenceList) ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-8"><Skeleton className="h-4 w-32 mx-auto" /></TableCell>
+                      <TableCell colSpan={5} className="text-center py-8"><Skeleton className="h-4 w-32 mx-auto" /></TableCell>
                     </TableRow>
-                  ) : !evidenceList || evidenceList.length === 0 ? (
+                  ) : evidenceRows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-12 text-muted-foreground">등록된 증빙자료가 없습니다.</TableCell>
+                      <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">등록된 증빙자료가 없습니다.</TableCell>
                     </TableRow>
                   ) : (
-                    evidenceList.map((file) => (
+                    evidenceRows.map((file) => (
                       <TableRow key={file.id}>
+                        <TableCell className="font-medium">{selectedProgram?.name ?? "-"}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2 font-medium">
                             <File className="w-4 h-4 text-blue-500" />
@@ -207,27 +263,21 @@ export default function Evidence() {
                             type="button"
                             className="text-xs text-blue-500 hover:underline flex items-center gap-1 mt-1 ml-6"
                             onClick={async () => {
-                              const res = await fetch(`/api/evidence/${file.id}/download`);
-                              if (res.status === 401) {
-                                toast({ title: "로그인이 필요합니다.", variant: "destructive" });
+                              const response = await fetch(`/api/evidence/${file.id}/download`);
+                              if (!response.ok) {
+                                toast({ title: "파일을 찾을 수 없습니다.", variant: "destructive" });
                                 return;
                               }
-                              if (res.status === 403) {
-                                toast({ title: "다운로드 권한이 없습니다.", variant: "destructive" });
-                                return;
-                              }
-                              if (!res.ok) {
-                                toast({ title: "파일을 열 수 없습니다.", variant: "destructive" });
-                                return;
-                              }
-                              const data = await res.json();
+                              const data = await response.json();
                               window.open(data.fileUrl, "_blank", "noreferrer");
                             }}
                           >
                             <Link2 className="w-3 h-3" /> 파일 열기
                           </button>
                         </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{(file.fileSize || 0) > 1024 ? `${((file.fileSize || 0)/1024).toFixed(1)}MB` : `${file.fileSize}KB`}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {(file.fileSize || 0) > 1024 ? `${((file.fileSize || 0) / 1024).toFixed(1)}MB` : `${file.fileSize}KB`}
+                        </TableCell>
                         <TableCell className="text-muted-foreground text-sm">{new Date(file.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="sm" onClick={() => handleDelete(file.id)}>
