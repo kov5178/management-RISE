@@ -24,18 +24,15 @@ async function validateIndicatorParent(
   if (indicatorType === "parent") {
     return parentId == null ? null : "지표에는 상위 항목을 지정할 수 없습니다.";
   }
-  if (!["child", "program"].includes(indicatorType)) {
+  if (indicatorType !== "child") {
     return "지원하지 않는 지표 유형입니다.";
   }
   if (parentId == null) {
-    return indicatorType === "child" ? "세부지표의 상위 지표를 선택해주세요." : "세부프로그램의 세부지표를 선택해주세요.";
+    return "세부지표의 상위 지표를 선택해주세요.";
   }
   const [parent] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, parentId));
-  const expectedType = indicatorType === "child" ? "parent" : "child";
-  if (!parent || parent.indicatorType !== expectedType || parent.taskId !== taskId) {
-    return indicatorType === "child"
-      ? "동일 과제의 지표 아래에만 세부지표를 등록할 수 있습니다."
-      : "동일 과제의 세부지표 아래에만 세부프로그램을 등록할 수 있습니다.";
+  if (!parent || parent.indicatorType !== "parent" || parent.taskId !== taskId) {
+    return "동일 과제의 지표 아래에만 세부지표를 등록할 수 있습니다.";
   }
   return null;
 }

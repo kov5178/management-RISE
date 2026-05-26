@@ -33,9 +33,7 @@ export default function Evidence() {
   const evidenceRows = Array.isArray(evidenceList) ? evidenceList : [];
   const parentIndicators = indicatorRows.filter((indicator) => indicator.indicatorType === "parent");
   const selectedResult = resultRows.find((result) => result.id === selectedResultId);
-  const selectedProgram = indicatorRows.find(
-    (indicator) => indicator.id === selectedResult?.indicatorId && indicator.indicatorType === "program",
-  );
+  const selectedProgramName = selectedResult?.programName;
   const years = Array.from({ length: 5 }, (_, index) => currentYear - 1 + index);
 
   const resetForm = () => {
@@ -113,33 +111,25 @@ export default function Evidence() {
                   <Fragment key={parent.id}>
                     <div className="px-3 py-2 text-sm font-semibold bg-muted/60 rounded-md">{parent.name}</div>
                     {details.map((detail) => {
-                      const programs = indicatorRows.filter(
-                        (indicator) => indicator.indicatorType === "program" && indicator.parentId === detail.id,
-                      );
+                      const detailResults = resultRows.filter((result) => result.indicatorId === detail.id);
                       return (
                         <div key={detail.id} className="space-y-1">
                           <div className="px-3 pt-1 pl-5 text-xs font-medium text-muted-foreground">
                             하위 지표: {detail.name}
                           </div>
-                          {programs.map((program) => {
-                            const result = resultRows.find((row) => row.indicatorId === program.id);
-                            if (!result) {
-                              return (
-                                <div key={program.id} className="ml-5 px-3 py-2 rounded-md text-sm text-muted-foreground">
-                                  {program.name} <span className="float-right text-xs">실적 미등록</span>
-                                </div>
-                              );
-                            }
+                          {detailResults.length === 0 ? (
+                            <div className="ml-5 px-3 py-2 rounded-md text-sm text-muted-foreground">등록된 세부프로그램 실적이 없습니다.</div>
+                          ) : detailResults.map((result) => {
                             const isSelected = selectedResultId === result.id;
                             return (
                               <button
-                                key={program.id}
+                                key={result.id}
                                 onClick={() => setSelectedResultId(result.id)}
                                 className={`ml-5 w-[calc(100%-1.25rem)] text-left p-3 rounded-md transition-colors text-sm border flex flex-col gap-2 ${
                                   isSelected ? "bg-primary/5 border-primary shadow-sm" : "bg-transparent border-transparent hover:bg-muted"
                                 }`}
                               >
-                                <div className="font-medium line-clamp-2">{program.name}</div>
+                                <div className="font-medium line-clamp-2">{result.programName}</div>
                                 <div className="flex justify-between items-center w-full">
                                   <span className="text-muted-foreground">실적값 {result.actualValue ?? "-"}</span>
                                   <StatusBadge status={result.status} />
@@ -159,7 +149,7 @@ export default function Evidence() {
 
         <div className="border rounded-md bg-card col-span-1 md:col-span-2 flex flex-col overflow-hidden">
           <div className="p-3 border-b font-medium bg-muted/50 flex justify-between items-center">
-            <span>증빙 자료 목록{selectedProgram ? ` - ${selectedProgram.name}` : ""}</span>
+            <span>증빙 자료 목록{selectedProgramName ? ` - ${selectedProgramName}` : ""}</span>
             {selectedResultId && (
               <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
                 <DialogTrigger asChild>
@@ -172,8 +162,8 @@ export default function Evidence() {
                     <DialogTitle>증빙자료 등록</DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
-                    {selectedProgram && (
-                      <p className="text-sm text-muted-foreground">세부프로그램: {selectedProgram.name}</p>
+                    {selectedProgramName && (
+                      <p className="text-sm text-muted-foreground">세부프로그램: {selectedProgramName}</p>
                     )}
                     <div className="space-y-2">
                       <Label htmlFor="fname">PDF 파일명</Label>
@@ -224,7 +214,7 @@ export default function Evidence() {
                   ) : (
                     evidenceRows.map((file) => (
                       <TableRow key={file.id}>
-                        <TableCell className="font-medium">{selectedProgram?.name ?? "-"}</TableCell>
+                        <TableCell className="font-medium">{selectedProgramName ?? "-"}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2 font-medium">
                             <File className="w-4 h-4 text-blue-500" />

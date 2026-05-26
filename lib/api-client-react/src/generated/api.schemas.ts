@@ -153,8 +153,11 @@ export interface IndicatorResult {
   id: number;
   indicatorId: number;
   year: number;
+  programName: string;
+  resultDate: string;
+  actualValue: number;
   /** @nullable */
-  actualValue?: number | null;
+  note?: string | null;
   /** @nullable */
   calculatedValue?: number | null;
   /** @nullable */
@@ -172,15 +175,22 @@ export interface IndicatorResult {
 export interface CreateResultBody {
   indicatorId: number;
   year: number;
+  programName: string;
+  resultDate: string;
+  actualValue: number;
   /** @nullable */
-  actualValue?: number | null;
+  note?: string | null;
   /** @nullable */
   selfEvaluation?: string | null;
 }
 
 export interface UpdateResultBody {
+  year?: number;
+  programName?: string;
+  resultDate?: string;
+  actualValue?: number;
   /** @nullable */
-  actualValue?: number | null;
+  note?: string | null;
   /** @nullable */
   selfEvaluation?: string | null;
   status?: string;

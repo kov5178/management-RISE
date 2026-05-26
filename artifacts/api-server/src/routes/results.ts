@@ -53,9 +53,9 @@ router.post("/results", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const [program] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, parsed.data.indicatorId));
-  if (!program || program.indicatorType !== "program") {
-    res.status(400).json({ error: "세부프로그램에 대해서만 실적을 입력할 수 있습니다." });
+  const [detailIndicator] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, parsed.data.indicatorId));
+  if (!detailIndicator || detailIndicator.indicatorType !== "child") {
+    res.status(400).json({ error: "하위지표를 선택한 후 세부프로그램 실적을 입력할 수 있습니다." });
     return;
   }
 
@@ -68,17 +68,6 @@ router.post("/results", async (req, res): Promise<void> => {
         eq(indicatorTargetsTable.year, parsed.data.year)
       )
     );
-  if (!target && program.parentId) {
-    [target] = await db
-      .select()
-      .from(indicatorTargetsTable)
-      .where(
-        and(
-          eq(indicatorTargetsTable.indicatorId, program.parentId),
-          eq(indicatorTargetsTable.year, parsed.data.year)
-        )
-      );
-  }
   const progressRate = calculateProgress(parsed.data.actualValue ?? null, target?.targetValue ?? null);
 
   const [result] = await db
@@ -115,33 +104,21 @@ router.patch("/results/:id", async (req, res): Promise<void> => {
   }
 
   let progressRate: number | null | undefined = undefined;
-  if (parsed.data.actualValue !== undefined) {
+  if (parsed.data.actualValue !== undefined || parsed.data.year !== undefined) {
     const [existing] = await db.select().from(indicatorResultsTable).where(eq(indicatorResultsTable.id, params.data.id));
     if (existing) {
+      const year = parsed.data.year ?? existing.year;
       let [target] = await db
         .select()
         .from(indicatorTargetsTable)
         .where(
           and(
             eq(indicatorTargetsTable.indicatorId, existing.indicatorId),
-            eq(indicatorTargetsTable.year, existing.year)
+            eq(indicatorTargetsTable.year, year)
           )
         );
-      if (!target) {
-        const [program] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, existing.indicatorId));
-        if (program?.parentId) {
-          [target] = await db
-            .select()
-            .from(indicatorTargetsTable)
-            .where(
-              and(
-                eq(indicatorTargetsTable.indicatorId, program.parentId),
-                eq(indicatorTargetsTable.year, existing.year)
-              )
-            );
-        }
-      }
-      progressRate = calculateProgress(parsed.data.actualValue ?? null, target?.targetValue ?? null);
+      const actualValue = parsed.data.actualValue === undefined ? existing.actualValue : parsed.data.actualValue;
+      progressRate = calculateProgress(actualValue ?? null, target?.targetValue ?? null);
     }
   }
 

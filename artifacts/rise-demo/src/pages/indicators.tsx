@@ -19,8 +19,6 @@ const previewTasks = [
 const previewIndicators = [
   { id: 1, taskId: 1, parentId: null, indicatorType: "parent", name: "지역혁신 성과 확산", unit: "%", weight: 30, formula: "", description: "" },
   { id: 2, taskId: 1, parentId: 1, indicatorType: "child", name: "산학협력 프로그램 운영", unit: "건", weight: 20, formula: "", description: "" },
-  { id: 3, taskId: 1, parentId: 2, indicatorType: "program", name: "기업 공동 프로젝트 지원", unit: "건", weight: 10, formula: "", description: "" },
-  { id: 4, taskId: 1, parentId: 2, indicatorType: "program", name: "성과공유 워크숍 개최", unit: "회", weight: 10, formula: "", description: "" },
 ];
 
 export default function Indicators() {
@@ -138,9 +136,9 @@ export default function Indicators() {
     }
   };
 
-  const parentIndicators = indicatorRows.filter(i => i.indicatorType === "parent");
-  const detailIndicators = indicatorRows.filter(i => i.indicatorType === "child");
-  const selectableParents = (indicatorType === "program" ? detailIndicators : parentIndicators)
+  const managedIndicators = indicatorRows.filter(i => i.indicatorType === "parent" || i.indicatorType === "child");
+  const parentIndicators = managedIndicators.filter(i => i.indicatorType === "parent");
+  const selectableParents = parentIndicators
     .filter((item) => !taskId || item.taskId === Number(taskId))
     .filter((item) => item.id !== editingIndicator?.id);
 
@@ -149,7 +147,7 @@ export default function Indicators() {
       <div className="flex justify-between items-end">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">지표 관리</h2>
-          <p className="text-muted-foreground">지표, 세부지표, 세부프로그램의 계층을 관리합니다.</p>
+          <p className="text-muted-foreground">지표와 하위지표의 계층을 관리합니다. 세부프로그램은 실적 입력에서 등록합니다.</p>
         </div>
         <div className="flex gap-4 items-center">
           <div className="flex items-center gap-2">
@@ -199,17 +197,16 @@ export default function Indicators() {
                     <SelectContent>
                       <SelectItem value="parent">지표</SelectItem>
                       <SelectItem value="child">세부지표</SelectItem>
-                      <SelectItem value="program">세부프로그램</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
                 {indicatorType !== "parent" && (
                   <div className="space-y-2 col-span-2">
-                    <Label>{indicatorType === "program" ? "세부지표 선택" : "상위 지표 선택"}</Label>
+                    <Label>상위 지표 선택</Label>
                     <Select value={parentId} onValueChange={setParentId}>
                       <SelectTrigger>
-                        <SelectValue placeholder={indicatorType === "program" ? "세부지표를 선택하세요" : "상위 지표를 선택하세요"} />
+                        <SelectValue placeholder="상위 지표를 선택하세요" />
                       </SelectTrigger>
                       <SelectContent>
                         {selectableParents.map(i => (
@@ -252,7 +249,7 @@ export default function Indicators() {
         </div>
       </div>
       {usingPreviewData && (
-        <p className="text-sm text-muted-foreground">미리보기용 예시 데이터로 지표, 세부지표, 세부프로그램 등록 구조를 표시합니다.</p>
+        <p className="text-sm text-muted-foreground">미리보기용 예시 데이터로 지표와 하위지표 관리 구조를 표시합니다.</p>
       )}
 
       <div className="border rounded-md bg-card">
@@ -279,24 +276,23 @@ export default function Indicators() {
                   <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
-            ) : indicatorRows.length === 0 ? (
+            ) : managedIndicators.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">등록된 지표가 없습니다.</TableCell>
               </TableRow>
             ) : (
-              indicatorRows.map((indicator) => {
+              managedIndicators.map((indicator) => {
                 const task = taskRows.find(t => t.id === indicator.taskId);
                 const isChild = indicator.indicatorType === "child";
-                const isProgram = indicator.indicatorType === "program";
                 return (
                   <TableRow key={indicator.id}>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${isProgram ? 'bg-emerald-100 text-emerald-800' : isChild ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-800'}`}>
-                        {isProgram ? '프로그램' : isChild ? '세부' : '지표'}
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${isChild ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-800'}`}>
+                        {isChild ? '하위지표' : '지표'}
                       </span>
                     </TableCell>
                     <TableCell className="font-medium">
-                      <div className={isProgram ? "ml-8 border-l-2 border-emerald-200 pl-2" : isChild ? "ml-4 border-l-2 border-muted pl-2" : ""}>
+                      <div className={isChild ? "ml-4 border-l-2 border-muted pl-2" : ""}>
                         {indicator.name}
                         {indicator.formula && <div className="text-xs text-muted-foreground mt-1">산출식: {indicator.formula}</div>}
                       </div>
@@ -350,17 +346,16 @@ export default function Indicators() {
                 <SelectContent>
                   <SelectItem value="parent">지표</SelectItem>
                   <SelectItem value="child">세부지표</SelectItem>
-                  <SelectItem value="program">세부프로그램</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             {indicatorType !== "parent" && (
               <div className="space-y-2 col-span-2">
-                <Label>{indicatorType === "program" ? "세부지표 선택" : "상위 지표 선택"}</Label>
+                <Label>상위 지표 선택</Label>
                 <Select value={parentId} onValueChange={setParentId}>
                   <SelectTrigger>
-                    <SelectValue placeholder={indicatorType === "program" ? "세부지표를 선택하세요" : "상위 지표를 선택하세요"} />
+                    <SelectValue placeholder="상위 지표를 선택하세요" />
                   </SelectTrigger>
                   <SelectContent>
                     {selectableParents.map(i => (
