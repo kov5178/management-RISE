@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { useListResults, useCreateResult, useUpdateResult, useListIndicators, useListTargets, getListResultsQueryKey } from "@workspace/api-client-react";
+import { useListResults, useCreateResult, useUpdateResult, useListIndicators, useListTargets, useListEvidence, useCreateEvidence, getListResultsQueryKey, getListEvidenceQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Edit2, Plus } from "lucide-react";
+import { Download, Edit2, FileText, Plus, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
@@ -26,12 +26,16 @@ export default function Results() {
   const [resultDate, setResultDate] = useState(`${currentYear}-01-01`);
   const [actualValue, setActualValue] = useState<number | "">("");
   const [note, setNote] = useState("");
+  const [pdfFileName, setPdfFileName] = useState("");
+  const [pdfFileUrl, setPdfFileUrl] = useState("");
 
   const { data: indicators } = useListIndicators();
   const { data: targets } = useListTargets({ year: Number(filterYear) });
   const { data: results, isLoading } = useListResults({ year: Number(filterYear) });
+  const { data: evidenceFiles } = useListEvidence({ resultId: editingResult?.id ?? -1 });
   const createResult = useCreateResult();
   const updateResult = useUpdateResult();
+  const createEvidence = useCreateEvidence();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -41,6 +45,7 @@ export default function Results() {
   const parentIndicators = indicatorRows.filter((item) => item.indicatorType === "parent");
   const detailIndicators = indicatorRows.filter((item) => item.indicatorType === "child");
   const selectableDetails = detailIndicators.filter((item) => item.parentId === Number(parentId));
+  const evidenceRows = Array.isArray(evidenceFiles) ? evidenceFiles : [];
   const years = Array.from({ length: 5 }, (_, index) => currentYear - 1 + index);
 
   const findTargetValue = (detailId: number) =>
@@ -54,6 +59,8 @@ export default function Results() {
     setResultDate(`${filterYear}-01-01`);
     setActualValue("");
     setNote("");
+    setPdfFileName("");
+    setPdfFileUrl("");
   };
 
   const openCreate = () => {
@@ -70,6 +77,8 @@ export default function Results() {
     setResultDate(result.resultDate ?? `${result.year}-01-01`);
     setActualValue(result.actualValue ?? "");
     setNote(result.note ?? "");
+    setPdfFileName("");
+    setPdfFileUrl("");
     setIsFormOpen(true);
   };
 
@@ -78,16 +87,26 @@ export default function Results() {
       toast({ title: "필수값 확인", description: "하위지표, 세부프로그램명, 실적날짜, 실적값을 입력해주세요.", variant: "destructive" });
       return;
     }
+    if (!editingResult && (!pdfFileName || !pdfFileUrl)) {
+      toast({ title: "PDF 증빙 확인", description: "세부프로그램 실적 등록 시 PDF 증빙파일을 등록해주세요.", variant: "destructive" });
+      return;
+    }
+    if ((pdfFileName || pdfFileUrl) && (!pdfFileName.toLowerCase().endsWith(".pdf") || !pdfFileUrl)) {
+      toast({ title: "PDF 증빙 확인", description: "PDF 파일명과 파일 URL을 모두 입력해주세요.", variant: "destructive" });
+      return;
+    }
     const year = Number(resultDate.slice(0, 4));
     try {
+      let resultId: number;
       if (editingResult) {
-        await updateResult.mutateAsync({
+        const saved = await updateResult.mutateAsync({
           id: editingResult.id,
           data: { year, programName: programName.trim(), resultDate, actualValue: Number(actualValue), note: note || null },
         });
+        resultId = saved.id;
         toast({ title: "수정 완료", description: "세부프로그램 실적이 수정되었습니다." });
       } else {
-        await createResult.mutateAsync({
+        const saved = await createResult.mutateAsync({
           data: {
             indicatorId: Number(indicatorId),
             year,
@@ -97,9 +116,22 @@ export default function Results() {
             note: note || null,
           },
         });
+        resultId = saved.id;
         toast({ title: "입력 완료", description: "세부프로그램 실적이 저장되었습니다." });
       }
+      if (pdfFileName && pdfFileUrl) {
+        await createEvidence.mutateAsync({
+          data: {
+            resultId,
+            fileName: pdfFileName,
+            fileUrl: pdfFileUrl,
+            mimeType: "application/pdf",
+            uploadedBy: "현재 사용자",
+          },
+        });
+      }
       queryClient.invalidateQueries({ queryKey: getListResultsQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getListEvidenceQueryKey() });
       setFilterYear(year.toString());
       setIsFormOpen(false);
       resetForm();
@@ -190,10 +222,31 @@ export default function Results() {
                   <Label htmlFor="note">비고</Label>
                   <Textarea id="note" value={note} onChange={(event) => setNote(event.target.value)} rows={3} placeholder="추가 내용을 입력하세요" />
                 </div>
+                {editingResult && evidenceRows.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>등록된 PDF 증빙자료</Label>
+                    {evidenceRows.map((file) => (
+                      <div key={file.id} className="flex items-center gap-2 rounded border px-3 py-2 text-sm">
+                        <FileText className="w-4 h-4 text-red-500" />
+                        <span>{file.fileName}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="space-y-3 rounded border border-dashed p-3">
+                  <Label className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" /> PDF 증빙자료 {editingResult ? "추가" : "등록 *"}
+                  </Label>
+                  <Input value={pdfFileName} onChange={(event) => setPdfFileName(event.target.value)} placeholder="예: 세부프로그램_성과증빙.pdf" />
+                  <Input type="url" value={pdfFileUrl} onChange={(event) => setPdfFileUrl(event.target.value)} placeholder="PDF 파일 URL" />
+                  <p className="text-xs text-muted-foreground">
+                    {editingResult ? "PDF를 추가하면 증빙관리 메뉴에서도 함께 확인할 수 있습니다." : "실적 입력 시 PDF 증빙자료 등록이 필요합니다."}
+                  </p>
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsFormOpen(false)}>취소</Button>
-                <Button onClick={handleSave} disabled={createResult.isPending || updateResult.isPending}>
+                <Button onClick={handleSave} disabled={createResult.isPending || updateResult.isPending || createEvidence.isPending}>
                   {editingResult ? "수정" : "입력"}
                 </Button>
               </DialogFooter>
