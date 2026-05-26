@@ -12,10 +12,24 @@ import { Plus, Edit2, Trash2, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const previewTasks = [
+  { id: 1, name: "지역산업 연계 성과관리" },
+];
+
+const previewIndicators = [
+  { id: 1, taskId: 1, parentId: null, indicatorType: "parent", name: "지역혁신 성과 확산", unit: "%", weight: 30, formula: "", description: "" },
+  { id: 2, taskId: 1, parentId: 1, indicatorType: "child", name: "산학협력 프로그램 운영", unit: "건", weight: 20, formula: "", description: "" },
+  { id: 3, taskId: 1, parentId: 2, indicatorType: "program", name: "기업 공동 프로젝트 지원", unit: "건", weight: 10, formula: "", description: "" },
+  { id: 4, taskId: 1, parentId: 2, indicatorType: "program", name: "성과공유 워크숍 개최", unit: "회", weight: 10, formula: "", description: "" },
+];
+
 export default function Indicators() {
   const [filterTaskId, setFilterTaskId] = useState<string>("all");
   const { data: tasks } = useListTasks();
   const { data: indicators, isLoading } = useListIndicators(filterTaskId !== "all" ? { taskId: Number(filterTaskId) } : undefined);
+  const usingPreviewData = !Array.isArray(indicators) || !Array.isArray(tasks);
+  const taskRows = Array.isArray(tasks) ? tasks : previewTasks;
+  const indicatorRows = Array.isArray(indicators) ? indicators : previewIndicators;
   
   const createIndicator = useCreateIndicator();
   const updateIndicator = useUpdateIndicator();
@@ -124,8 +138,8 @@ export default function Indicators() {
     }
   };
 
-  const parentIndicators = indicators?.filter(i => i.indicatorType === "parent") || [];
-  const detailIndicators = indicators?.filter(i => i.indicatorType === "child") || [];
+  const parentIndicators = indicatorRows.filter(i => i.indicatorType === "parent");
+  const detailIndicators = indicatorRows.filter(i => i.indicatorType === "child");
   const selectableParents = (indicatorType === "program" ? detailIndicators : parentIndicators)
     .filter((item) => !taskId || item.taskId === Number(taskId))
     .filter((item) => item.id !== editingIndicator?.id);
@@ -146,7 +160,7 @@ export default function Indicators() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">모든 과제</SelectItem>
-                {tasks?.map(t => (
+                {taskRows.map(t => (
                   <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -170,7 +184,7 @@ export default function Indicators() {
                       <SelectValue placeholder="과제를 선택하세요" />
                     </SelectTrigger>
                     <SelectContent>
-                      {tasks?.map(t => (
+                      {taskRows.map(t => (
                         <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -237,6 +251,9 @@ export default function Indicators() {
           </Dialog>
         </div>
       </div>
+      {usingPreviewData && (
+        <p className="text-sm text-muted-foreground">미리보기용 예시 데이터로 지표, 세부지표, 세부프로그램 등록 구조를 표시합니다.</p>
+      )}
 
       <div className="border rounded-md bg-card">
         <Table>
@@ -262,13 +279,13 @@ export default function Indicators() {
                   <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
-            ) : indicators?.length === 0 ? (
+            ) : indicatorRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">등록된 지표가 없습니다.</TableCell>
               </TableRow>
             ) : (
-              indicators?.map((indicator) => {
-                const task = tasks?.find(t => t.id === indicator.taskId);
+              indicatorRows.map((indicator) => {
+                const task = taskRows.find(t => t.id === indicator.taskId);
                 const isChild = indicator.indicatorType === "child";
                 const isProgram = indicator.indicatorType === "program";
                 return (
@@ -318,7 +335,7 @@ export default function Indicators() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {tasks?.map(t => (
+                  {taskRows.map(t => (
                     <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                   ))}
                 </SelectContent>

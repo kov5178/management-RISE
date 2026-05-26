@@ -16,6 +16,8 @@ export default function Indicators() {
   const [filterTaskId, setFilterTaskId] = useState<string>("all");
   const { data: tasks } = useListTasks();
   const { data: indicators, isLoading } = useListIndicators(filterTaskId !== "all" ? { taskId: Number(filterTaskId) } : undefined);
+  const taskRows = Array.isArray(tasks) ? tasks : [];
+  const indicatorRows = Array.isArray(indicators) ? indicators : [];
   
   const createIndicator = useCreateIndicator();
   const updateIndicator = useUpdateIndicator();
@@ -124,8 +126,8 @@ export default function Indicators() {
     }
   };
 
-  const parentIndicators = indicators?.filter(i => i.indicatorType === "parent") || [];
-  const detailIndicators = indicators?.filter(i => i.indicatorType === "child") || [];
+  const parentIndicators = indicatorRows.filter(i => i.indicatorType === "parent");
+  const detailIndicators = indicatorRows.filter(i => i.indicatorType === "child");
   const selectableParents = (indicatorType === "program" ? detailIndicators : parentIndicators)
     .filter((item) => !taskId || item.taskId === Number(taskId))
     .filter((item) => item.id !== editingIndicator?.id);
@@ -146,7 +148,7 @@ export default function Indicators() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">모든 과제</SelectItem>
-                {tasks?.map(t => (
+                {taskRows.map(t => (
                   <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -170,7 +172,7 @@ export default function Indicators() {
                       <SelectValue placeholder="과제를 선택하세요" />
                     </SelectTrigger>
                     <SelectContent>
-                      {tasks?.map(t => (
+                      {taskRows.map(t => (
                         <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -262,13 +264,13 @@ export default function Indicators() {
                   <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
-            ) : indicators?.length === 0 ? (
+            ) : indicatorRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">등록된 지표가 없습니다.</TableCell>
               </TableRow>
             ) : (
-              indicators?.map((indicator) => {
-                const task = tasks?.find(t => t.id === indicator.taskId);
+              indicatorRows.map((indicator) => {
+                const task = taskRows.find(t => t.id === indicator.taskId);
                 const isChild = indicator.indicatorType === "child";
                 const isProgram = indicator.indicatorType === "program";
                 return (
@@ -318,7 +320,7 @@ export default function Indicators() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {tasks?.map(t => (
+                  {taskRows.map(t => (
                     <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
                   ))}
                 </SelectContent>
