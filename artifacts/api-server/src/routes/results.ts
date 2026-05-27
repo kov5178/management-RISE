@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
-import { db, indicatorResultsTable, indicatorTargetsTable } from "@workspace/db";
+import { db, indicatorResultsTable, indicatorTargetsTable, indicatorsTable } from "@workspace/db";
 import {
   CreateResultBody,
   UpdateResultBody,
@@ -53,8 +53,13 @@ router.post("/results", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const [detailIndicator] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, parsed.data.indicatorId));
+  if (!detailIndicator || detailIndicator.indicatorType !== "child") {
+    res.status(400).json({ error: "하위지표를 선택한 후 세부프로그램 실적을 입력할 수 있습니다." });
+    return;
+  }
 
-  const [target] = await db
+  let [target] = await db
     .select()
     .from(indicatorTargetsTable)
     .where(
@@ -99,19 +104,21 @@ router.patch("/results/:id", async (req, res): Promise<void> => {
   }
 
   let progressRate: number | null | undefined = undefined;
-  if (parsed.data.actualValue !== undefined) {
+  if (parsed.data.actualValue !== undefined || parsed.data.year !== undefined) {
     const [existing] = await db.select().from(indicatorResultsTable).where(eq(indicatorResultsTable.id, params.data.id));
     if (existing) {
-      const [target] = await db
+      const year = parsed.data.year ?? existing.year;
+      let [target] = await db
         .select()
         .from(indicatorTargetsTable)
         .where(
           and(
             eq(indicatorTargetsTable.indicatorId, existing.indicatorId),
-            eq(indicatorTargetsTable.year, existing.year)
+            eq(indicatorTargetsTable.year, year)
           )
         );
-      progressRate = calculateProgress(parsed.data.actualValue ?? null, target?.targetValue ?? null);
+      const actualValue = parsed.data.actualValue === undefined ? existing.actualValue : parsed.data.actualValue;
+      progressRate = calculateProgress(actualValue ?? null, target?.targetValue ?? null);
     }
   }
 

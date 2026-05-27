@@ -16,6 +16,27 @@ import { serialize } from "../lib/serialize.js";
 
 const router: IRouter = Router();
 
+async function validateIndicatorParent(
+  indicatorType: string,
+  parentId: number | null | undefined,
+  taskId: number,
+): Promise<string | null> {
+  if (indicatorType === "parent") {
+    return parentId == null ? null : "지표에는 상위 항목을 지정할 수 없습니다.";
+  }
+  if (indicatorType !== "child") {
+    return "지원하지 않는 지표 유형입니다.";
+  }
+  if (parentId == null) {
+    return "세부지표의 상위 지표를 선택해주세요.";
+  }
+  const [parent] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, parentId));
+  if (!parent || parent.indicatorType !== "parent" || parent.taskId !== taskId) {
+    return "동일 과제의 지표 아래에만 세부지표를 등록할 수 있습니다.";
+  }
+  return null;
+}
+
 router.get("/indicators", async (req, res): Promise<void> => {
   const query = ListIndicatorsQueryParams.safeParse(req.query);
   if (!query.success) {
@@ -50,6 +71,11 @@ router.post("/indicators", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  const hierarchyError = await validateIndicatorParent(parsed.data.indicatorType, parsed.data.parentId, parsed.data.taskId);
+  if (hierarchyError) {
+    res.status(400).json({ error: hierarchyError });
+    return;
+  }
   const [indicator] = await db.insert(indicatorsTable).values(parsed.data).returning();
   res.status(201).json(GetIndicatorResponse.parse(serialize(indicator)));
 });
@@ -77,6 +103,20 @@ router.patch("/indicators/:id", async (req, res): Promise<void> => {
   const parsed = UpdateIndicatorBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [existing] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, params.data.id));
+  if (!existing) {
+    res.status(404).json({ error: "지표를 찾을 수 없습니다." });
+    return;
+  }
+  const hierarchyError = await validateIndicatorParent(
+    parsed.data.indicatorType ?? existing.indicatorType,
+    parsed.data.parentId === undefined ? existing.parentId : parsed.data.parentId,
+    existing.taskId,
+  );
+  if (hierarchyError) {
+    res.status(400).json({ error: hierarchyError });
     return;
   }
   const [indicator] = await db

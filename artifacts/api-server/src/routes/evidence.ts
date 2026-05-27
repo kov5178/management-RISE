@@ -70,6 +70,10 @@ router.post("/evidence", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+  if (!parsed.data.fileName.toLowerCase().endsWith(".pdf") || parsed.data.mimeType !== "application/pdf") {
+    res.status(400).json({ error: "PDF 형식의 증빙자료만 등록할 수 있습니다." });
+    return;
+  }
   const [file] = await db.insert(evidenceFilesTable).values(parsed.data).returning();
   res.status(201).json(serialize(file));
 });

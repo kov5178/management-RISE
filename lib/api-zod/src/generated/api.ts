@@ -543,7 +543,10 @@ export const ListResultsResponseItem = zod.object({
   id: zod.number(),
   indicatorId: zod.number(),
   year: zod.number(),
-  actualValue: zod.number().nullish(),
+  programName: zod.string(),
+  resultDate: zod.string(),
+  actualValue: zod.number(),
+  note: zod.string().nullish(),
   calculatedValue: zod.number().nullish(),
   progressRate: zod.number().nullish(),
   status: zod
@@ -564,7 +567,10 @@ export const ListResultsResponse = zod.array(ListResultsResponseItem);
 export const CreateResultBody = zod.object({
   indicatorId: zod.number(),
   year: zod.number(),
-  actualValue: zod.number().nullish(),
+  programName: zod.string(),
+  resultDate: zod.string(),
+  actualValue: zod.number(),
+  note: zod.string().nullish(),
   selfEvaluation: zod.string().nullish(),
 });
 
@@ -579,7 +585,10 @@ export const GetResultResponse = zod.object({
   id: zod.number(),
   indicatorId: zod.number(),
   year: zod.number(),
-  actualValue: zod.number().nullish(),
+  programName: zod.string(),
+  resultDate: zod.string(),
+  actualValue: zod.number(),
+  note: zod.string().nullish(),
   calculatedValue: zod.number().nullish(),
   progressRate: zod.number().nullish(),
   status: zod
@@ -601,7 +610,11 @@ export const UpdateResultParams = zod.object({
 });
 
 export const UpdateResultBody = zod.object({
-  actualValue: zod.number().nullish(),
+  year: zod.number().optional(),
+  programName: zod.string().optional(),
+  resultDate: zod.string().optional(),
+  actualValue: zod.number().optional(),
+  note: zod.string().nullish(),
   selfEvaluation: zod.string().nullish(),
   status: zod.string().optional(),
 });
@@ -610,7 +623,10 @@ export const UpdateResultResponse = zod.object({
   id: zod.number(),
   indicatorId: zod.number(),
   year: zod.number(),
-  actualValue: zod.number().nullish(),
+  programName: zod.string(),
+  resultDate: zod.string(),
+  actualValue: zod.number(),
+  note: zod.string().nullish(),
   calculatedValue: zod.number().nullish(),
   progressRate: zod.number().nullish(),
   status: zod
@@ -642,7 +658,10 @@ export const SubmitResultResponse = zod.object({
   id: zod.number(),
   indicatorId: zod.number(),
   year: zod.number(),
-  actualValue: zod.number().nullish(),
+  programName: zod.string(),
+  resultDate: zod.string(),
+  actualValue: zod.number(),
+  note: zod.string().nullish(),
   calculatedValue: zod.number().nullish(),
   progressRate: zod.number().nullish(),
   status: zod

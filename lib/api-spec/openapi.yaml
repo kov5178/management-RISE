@@ -1418,8 +1418,15 @@ components:
           type: integer
         year:
           type: integer
+        programName:
+          type: string
+        resultDate:
+          type: string
+          format: date
         actualValue:
-          type: ["number", "null"]
+          type: number
+        note:
+          type: ["string", "null"]
         calculatedValue:
           type: ["number", "null"]
         progressRate:
@@ -1439,6 +1446,9 @@ components:
         - id
         - indicatorId
         - year
+        - programName
+        - resultDate
+        - actualValue
         - status
         - createdAt
         - updatedAt
@@ -1450,19 +1460,38 @@ components:
           type: integer
         year:
           type: integer
+        programName:
+          type: string
+        resultDate:
+          type: string
+          format: date
         actualValue:
-          type: ["number", "null"]
+          type: number
+        note:
+          type: ["string", "null"]
         selfEvaluation:
           type: ["string", "null"]
       required:
         - indicatorId
         - year
+        - programName
+        - resultDate
+        - actualValue
 
     UpdateResultBody:
       type: object
       properties:
+        year:
+          type: integer
+        programName:
+          type: string
+        resultDate:
+          type: string
+          format: date
         actualValue:
-          type: ["number", "null"]
+          type: number
+        note:
+          type: ["string", "null"]
         selfEvaluation:
           type: ["string", "null"]
         status:
