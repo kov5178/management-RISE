@@ -238,7 +238,14 @@ export default function Evidence() {
                                 return;
                               }
                               const data = await response.json();
-                              window.open(data.fileUrl, "_blank", "noreferrer");
+                              if (String(data.fileUrl).startsWith("data:")) {
+                                const link = document.createElement("a");
+                                link.href = data.fileUrl;
+                                link.download = file.fileName;
+                                link.click();
+                              } else {
+                                window.open(data.fileUrl, "_blank", "noreferrer");
+                              }
                             }}
                           >
                             <Link2 className="w-3 h-3" /> 파일 열기
