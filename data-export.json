@@ -1,0 +1,1226 @@
+{
+  "meta": {
+    "exportedAt": "2026-05-27T23:02:25.480Z",
+    "version": "1.0",
+    "description": "RISE 성과관리 시스템 데이터 내보내기",
+    "counts": {
+      "projects": 4,
+      "tasks": 8,
+      "indicators": 11,
+      "targets": 33,
+      "results": 28,
+      "evidence": 10,
+      "reviews": 10,
+      "feedback": 7
+    }
+  },
+  "data": {
+    "projects": [
+      {
+        "id": 1,
+        "name": "지역정주형 인재양성",
+        "description": "지역 내 정착 취업률 향상을 위한 교육과정 운영",
+        "startYear": 2025,
+        "endYear": 2029,
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:20.913Z",
+        "updatedAt": "2026-05-13T04:57:44.418Z"
+      },
+      {
+        "id": 2,
+        "name": "지산학연 협력 생태계 구축",
+        "description": "지역 산업체·학교·연구소 협력 강화",
+        "startYear": 2025,
+        "endYear": 2029,
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:20.913Z",
+        "updatedAt": "2026-05-13T04:57:47.625Z"
+      },
+      {
+        "id": 3,
+        "name": "평생직업교육 체계 확대",
+        "description": "재직자 및 성인학습자 대상 직업교육 확대",
+        "startYear": 2025,
+        "endYear": 2029,
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:20.913Z",
+        "updatedAt": "2026-05-13T04:57:49.986Z"
+      },
+      {
+        "id": 4,
+        "name": "지역현안 해결",
+        "description": "지역사회 문제 해결형 교육·연구 수행",
+        "startYear": 2025,
+        "endYear": 2029,
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:20.913Z",
+        "updatedAt": "2026-05-13T04:57:52.012Z"
+      }
+    ],
+    "tasks": [
+      {
+        "id": 1,
+        "projectId": 1,
+        "name": "지역 내 취업 연계 프로그램 운영",
+        "description": "지역 기업과 연계한 현장실습 및 취업지원",
+        "managerName": "김지역",
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:41.655Z",
+        "updatedAt": "2026-05-12T06:29:23.089Z"
+      },
+      {
+        "id": 2,
+        "projectId": 1,
+        "name": "지역 정주 환경 개선 교육",
+        "description": "지역 정착 유도를 위한 생활·주거 연계 교육",
+        "managerName": "이정주",
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:41.655Z",
+        "updatedAt": "2026-05-21T01:11:39.820Z"
+      },
+      {
+        "id": 3,
+        "projectId": 2,
+        "name": "산학협력 클러스터 구축",
+        "description": "지역 주요 산업과 대학 간 공동연구 및 인턴십 운영",
+        "managerName": "박산학",
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:41.655Z",
+        "updatedAt": "2026-05-21T01:11:41.871Z"
+      },
+      {
+        "id": 4,
+        "projectId": 2,
+        "name": "지역 중소기업 기술지원",
+        "description": "중소기업 기술력 향상을 위한 컨설팅 및 교육",
+        "managerName": "최기술",
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:41.655Z",
+        "updatedAt": "2026-05-21T01:11:43.383Z"
+      },
+      {
+        "id": 5,
+        "projectId": 3,
+        "name": "재직자 계속교육 과정 운영",
+        "description": "재직자를 위한 야간·주말 직업교육 과정",
+        "managerName": "정재직",
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:41.655Z",
+        "updatedAt": "2026-05-21T01:11:44.999Z"
+      },
+      {
+        "id": 6,
+        "projectId": 3,
+        "name": "성인학습자 맞춤형 교육",
+        "description": "학습자 중심의 모듈식 교육과정 운영",
+        "managerName": "한성인",
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:41.655Z",
+        "updatedAt": "2026-05-21T01:11:46.653Z"
+      },
+      {
+        "id": 7,
+        "projectId": 4,
+        "name": "지역문제 해결형 프로젝트 수업",
+        "description": "지역사회 현안을 주제로 한 캡스톤 디자인",
+        "managerName": "윤지역",
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:41.655Z",
+        "updatedAt": "2026-05-21T01:11:48.127Z"
+      },
+      {
+        "id": 8,
+        "projectId": 4,
+        "name": "지역 연구개발 사업 참여",
+        "description": "지역 공공기관과 공동 R&D 수행",
+        "managerName": "조연구",
+        "status": "active",
+        "createdAt": "2026-05-04T12:44:41.655Z",
+        "updatedAt": "2026-05-21T01:11:49.935Z"
+      }
+    ],
+    "indicators": [
+      {
+        "id": 1,
+        "taskId": 1,
+        "parentId": null,
+        "indicatorType": "parent",
+        "name": "지역 정주 취업률",
+        "unit": "%",
+        "formula": "0.9*A1 + 0.1*A2",
+        "weight": null,
+        "description": "지역 내 및 인접지역 취업률 합산",
+        "createdAt": "2026-05-04T12:45:06.075Z",
+        "updatedAt": "2026-05-04T12:45:06.075Z"
+      },
+      {
+        "id": 2,
+        "taskId": 1,
+        "parentId": 1,
+        "indicatorType": "child",
+        "name": "지역 내 취업자 수",
+        "unit": "명",
+        "formula": null,
+        "weight": 0.9,
+        "description": "충청북도 내 취업한 졸업자 수",
+        "createdAt": "2026-05-04T12:45:06.075Z",
+        "updatedAt": "2026-05-04T12:45:06.075Z"
+      },
+      {
+        "id": 3,
+        "taskId": 1,
+        "parentId": 1,
+        "indicatorType": "child",
+        "name": "지역 외(수도권 제외) 취업자 수",
+        "unit": "명",
+        "formula": null,
+        "weight": 0.1,
+        "description": "수도권 외 타 지역 취업 졸업자 수",
+        "createdAt": "2026-05-04T12:45:06.075Z",
+        "updatedAt": "2026-05-04T12:45:06.075Z"
+      },
+      {
+        "id": 4,
+        "taskId": 1,
+        "parentId": null,
+        "indicatorType": "child",
+        "name": "대학 전체 졸업자 수",
+        "unit": "명",
+        "formula": null,
+        "weight": null,
+        "description": "해당 연도 전체 졸업자 수",
+        "createdAt": "2026-05-04T12:45:06.075Z",
+        "updatedAt": "2026-05-04T12:45:06.075Z"
+      },
+      {
+        "id": 5,
+        "taskId": 2,
+        "parentId": null,
+        "indicatorType": "parent",
+        "name": "지역 정착률",
+        "unit": "%",
+        "formula": "A/B*100",
+        "weight": null,
+        "description": "졸업 후 1년 내 지역 거주 비율",
+        "createdAt": "2026-05-04T12:45:06.075Z",
+        "updatedAt": "2026-05-04T12:45:06.075Z"
+      },
+      {
+        "id": 6,
+        "taskId": 2,
+        "parentId": 5,
+        "indicatorType": "child",
+        "name": "지역 거주 졸업자 수",
+        "unit": "명",
+        "formula": null,
+        "weight": 1,
+        "description": "졸업 후 충청북도 거주 졸업자",
+        "createdAt": "2026-05-04T12:45:06.075Z",
+        "updatedAt": "2026-05-04T12:45:06.075Z"
+      },
+      {
+        "id": 7,
+        "taskId": 3,
+        "parentId": null,
+        "indicatorType": "parent",
+        "name": "산학협력 협약 기관 수",
+        "unit": "개",
+        "formula": null,
+        "weight": null,
+        "description": "협력 협약 체결 산업체·기관 수",
+        "createdAt": "2026-05-04T12:45:06.075Z",
+        "updatedAt": "2026-05-04T12:45:06.075Z"
+      },
+      {
+        "id": 8,
+        "taskId": 3,
+        "parentId": null,
+        "indicatorType": "parent",
+        "name": "공동연구 과제 수",
+        "unit": "건",
+        "formula": null,
+        "weight": null,
+        "description": "산학 공동연구 수행 건수",
+        "createdAt": "2026-05-04T12:45:06.075Z",
+        "updatedAt": "2026-05-04T12:45:06.075Z"
+      },
+      {
+        "id": 9,
+        "taskId": 5,
+        "parentId": null,
+        "indicatorType": "parent",
+        "name": "재직자 교육 이수율",
+        "unit": "%",
+        "formula": "A/B*100",
+        "weight": null,
+        "description": "등록자 대비 이수 완료자 비율",
+        "createdAt": "2026-05-04T12:45:06.075Z",
+        "updatedAt": "2026-05-04T12:45:06.075Z"
+      },
+      {
+        "id": 10,
+        "taskId": 5,
+        "parentId": 9,
+        "indicatorType": "child",
+        "name": "교육 이수 완료자 수",
+        "unit": "명",
+        "formula": null,
+        "weight": 1,
+        "description": "수료 기준 충족 재직자",
+        "createdAt": "2026-05-04T12:45:06.075Z",
+        "updatedAt": "2026-05-04T12:45:06.075Z"
+      },
+      {
+        "id": 11,
+        "taskId": 7,
+        "parentId": null,
+        "indicatorType": "parent",
+        "name": "지역문제 해결 프로젝트 수행 건수",
+        "unit": "건",
+        "formula": null,
+        "weight": null,
+        "description": "캡스톤 등 지역현안 해결 프로젝트",
+        "createdAt": "2026-05-04T12:45:06.075Z",
+        "updatedAt": "2026-05-04T12:45:06.075Z"
+      }
+    ],
+    "targets": [
+      {
+        "id": 1,
+        "indicatorId": 1,
+        "year": 2023,
+        "targetValue": 45,
+        "note": "1차년도 목표",
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 2,
+        "indicatorId": 1,
+        "year": 2024,
+        "targetValue": 50,
+        "note": "2차년도 목표",
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 3,
+        "indicatorId": 1,
+        "year": 2025,
+        "targetValue": 55,
+        "note": "3차년도 목표",
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 4,
+        "indicatorId": 2,
+        "year": 2023,
+        "targetValue": 320,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 5,
+        "indicatorId": 2,
+        "year": 2024,
+        "targetValue": 360,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 6,
+        "indicatorId": 2,
+        "year": 2025,
+        "targetValue": 412,
+        "note": "",
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-12T06:29:58.587Z"
+      },
+      {
+        "id": 7,
+        "indicatorId": 3,
+        "year": 2023,
+        "targetValue": 80,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 8,
+        "indicatorId": 3,
+        "year": 2024,
+        "targetValue": 90,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 9,
+        "indicatorId": 3,
+        "year": 2025,
+        "targetValue": 123,
+        "note": "",
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-12T06:30:01.936Z"
+      },
+      {
+        "id": 10,
+        "indicatorId": 4,
+        "year": 2023,
+        "targetValue": 800,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 11,
+        "indicatorId": 4,
+        "year": 2024,
+        "targetValue": 850,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 12,
+        "indicatorId": 4,
+        "year": 2025,
+        "targetValue": 900,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 13,
+        "indicatorId": 5,
+        "year": 2023,
+        "targetValue": 30,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 14,
+        "indicatorId": 5,
+        "year": 2024,
+        "targetValue": 35,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 15,
+        "indicatorId": 5,
+        "year": 2025,
+        "targetValue": 100,
+        "note": "",
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-12T06:30:08.385Z"
+      },
+      {
+        "id": 16,
+        "indicatorId": 6,
+        "year": 2023,
+        "targetValue": 240,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 17,
+        "indicatorId": 6,
+        "year": 2024,
+        "targetValue": 280,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 18,
+        "indicatorId": 6,
+        "year": 2025,
+        "targetValue": 320,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 19,
+        "indicatorId": 7,
+        "year": 2023,
+        "targetValue": 20,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 20,
+        "indicatorId": 7,
+        "year": 2024,
+        "targetValue": 25,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 21,
+        "indicatorId": 7,
+        "year": 2025,
+        "targetValue": 30,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 22,
+        "indicatorId": 8,
+        "year": 2023,
+        "targetValue": 5,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 23,
+        "indicatorId": 8,
+        "year": 2024,
+        "targetValue": 8,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 24,
+        "indicatorId": 8,
+        "year": 2025,
+        "targetValue": 10,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 25,
+        "indicatorId": 9,
+        "year": 2023,
+        "targetValue": 70,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 26,
+        "indicatorId": 9,
+        "year": 2024,
+        "targetValue": 75,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 27,
+        "indicatorId": 9,
+        "year": 2025,
+        "targetValue": 80,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 28,
+        "indicatorId": 10,
+        "year": 2023,
+        "targetValue": 140,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 29,
+        "indicatorId": 10,
+        "year": 2024,
+        "targetValue": 180,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 30,
+        "indicatorId": 10,
+        "year": 2025,
+        "targetValue": 220,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 31,
+        "indicatorId": 11,
+        "year": 2023,
+        "targetValue": 10,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 32,
+        "indicatorId": 11,
+        "year": 2024,
+        "targetValue": 15,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      },
+      {
+        "id": 33,
+        "indicatorId": 11,
+        "year": 2025,
+        "targetValue": 20,
+        "note": null,
+        "createdAt": "2026-05-04T12:45:32.551Z",
+        "updatedAt": "2026-05-04T12:45:32.551Z"
+      }
+    ],
+    "results": [
+      {
+        "id": 1,
+        "indicatorId": 2,
+        "year": 2023,
+        "actualValue": 298,
+        "calculatedValue": null,
+        "progressRate": 93.1,
+        "status": "approved",
+        "selfEvaluation": "목표치에 근접한 수준으로 지역 내 취업 연계 활동 성과가 나타나고 있음",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 2,
+        "indicatorId": 3,
+        "year": 2023,
+        "actualValue": 75,
+        "calculatedValue": null,
+        "progressRate": 93.8,
+        "status": "approved",
+        "selfEvaluation": "수도권 외 취업 유도 프로그램 효과",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 3,
+        "indicatorId": 4,
+        "year": 2023,
+        "actualValue": 820,
+        "calculatedValue": null,
+        "progressRate": 102.5,
+        "status": "approved",
+        "selfEvaluation": "전년 대비 졸업자 수 유지",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 4,
+        "indicatorId": 2,
+        "year": 2024,
+        "actualValue": 342,
+        "calculatedValue": null,
+        "progressRate": 95,
+        "status": "approved",
+        "selfEvaluation": "취업 연계 프로그램 확대로 목표 초과 달성",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 5,
+        "indicatorId": 3,
+        "year": 2024,
+        "actualValue": 88,
+        "calculatedValue": null,
+        "progressRate": 97.8,
+        "status": "submitted",
+        "selfEvaluation": "지속적인 증가 추세",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 6,
+        "indicatorId": 4,
+        "year": 2024,
+        "actualValue": 840,
+        "calculatedValue": null,
+        "progressRate": 98.8,
+        "status": "approved",
+        "selfEvaluation": null,
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 7,
+        "indicatorId": 2,
+        "year": 2025,
+        "actualValue": 210,
+        "calculatedValue": null,
+        "progressRate": 52.5,
+        "status": "draft",
+        "selfEvaluation": "하반기 취업박람회 준비 중",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 8,
+        "indicatorId": 3,
+        "year": 2025,
+        "actualValue": 52,
+        "calculatedValue": null,
+        "progressRate": 52,
+        "status": "draft",
+        "selfEvaluation": null,
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 9,
+        "indicatorId": 4,
+        "year": 2025,
+        "actualValue": 430,
+        "calculatedValue": null,
+        "progressRate": 47.8,
+        "status": "draft",
+        "selfEvaluation": "1학기 졸업자 기준",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 10,
+        "indicatorId": 6,
+        "year": 2023,
+        "actualValue": 228,
+        "calculatedValue": null,
+        "progressRate": 95,
+        "status": "approved",
+        "selfEvaluation": "전입 장려금 제도 효과",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 11,
+        "indicatorId": 6,
+        "year": 2024,
+        "actualValue": 265,
+        "calculatedValue": null,
+        "progressRate": 94.6,
+        "status": "reviewing",
+        "selfEvaluation": null,
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 12,
+        "indicatorId": 6,
+        "year": 2025,
+        "actualValue": 130,
+        "calculatedValue": null,
+        "progressRate": 40.6,
+        "status": "draft",
+        "selfEvaluation": null,
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 13,
+        "indicatorId": 7,
+        "year": 2023,
+        "actualValue": 22,
+        "calculatedValue": null,
+        "progressRate": 110,
+        "status": "approved",
+        "selfEvaluation": "신규 협약 체결 활성화",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 14,
+        "indicatorId": 7,
+        "year": 2024,
+        "actualValue": 27,
+        "calculatedValue": null,
+        "progressRate": 108,
+        "status": "approved",
+        "selfEvaluation": null,
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 15,
+        "indicatorId": 7,
+        "year": 2025,
+        "actualValue": 18,
+        "calculatedValue": null,
+        "progressRate": 60,
+        "status": "revision_requested",
+        "selfEvaluation": "3분기까지 목표 대비 부진",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 16,
+        "indicatorId": 8,
+        "year": 2023,
+        "actualValue": 6,
+        "calculatedValue": null,
+        "progressRate": 120,
+        "status": "approved",
+        "selfEvaluation": "공동연구 발굴 노력",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 17,
+        "indicatorId": 8,
+        "year": 2024,
+        "actualValue": 9,
+        "calculatedValue": null,
+        "progressRate": 112.5,
+        "status": "approved",
+        "selfEvaluation": "목표 초과 달성",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 18,
+        "indicatorId": 8,
+        "year": 2025,
+        "actualValue": 4,
+        "calculatedValue": null,
+        "progressRate": 40,
+        "status": "draft",
+        "selfEvaluation": null,
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 19,
+        "indicatorId": 10,
+        "year": 2023,
+        "actualValue": 132,
+        "calculatedValue": null,
+        "progressRate": 94.3,
+        "status": "approved",
+        "selfEvaluation": "초기 모집 인원 대비 이수율 양호",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 20,
+        "indicatorId": 10,
+        "year": 2024,
+        "actualValue": 176,
+        "calculatedValue": null,
+        "progressRate": 97.8,
+        "status": "submitted",
+        "selfEvaluation": null,
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 21,
+        "indicatorId": 10,
+        "year": 2025,
+        "actualValue": 85,
+        "calculatedValue": null,
+        "progressRate": 38.6,
+        "status": "draft",
+        "selfEvaluation": null,
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 22,
+        "indicatorId": 11,
+        "year": 2023,
+        "actualValue": 11,
+        "calculatedValue": null,
+        "progressRate": 110,
+        "status": "approved",
+        "selfEvaluation": null,
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 23,
+        "indicatorId": 11,
+        "year": 2024,
+        "actualValue": 16,
+        "calculatedValue": null,
+        "progressRate": 106.7,
+        "status": "approved",
+        "selfEvaluation": "목표 초과 달성",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 24,
+        "indicatorId": 11,
+        "year": 2025,
+        "actualValue": 8,
+        "calculatedValue": null,
+        "progressRate": 40,
+        "status": "draft",
+        "selfEvaluation": null,
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:45:38.644Z",
+        "updatedAt": "2026-05-04T12:45:38.644Z"
+      },
+      {
+        "id": 25,
+        "indicatorId": 1,
+        "year": 2023,
+        "actualValue": null,
+        "calculatedValue": 33.6,
+        "progressRate": 74.7,
+        "status": "approved",
+        "selfEvaluation": "하위지표 산출식 기반 계산값. 지역 내 취업자 증가 추세로 전년 대비 개선됨",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:46:09.638Z",
+        "updatedAt": "2026-05-04T12:46:09.638Z"
+      },
+      {
+        "id": 26,
+        "indicatorId": 1,
+        "year": 2024,
+        "actualValue": null,
+        "calculatedValue": 37.7,
+        "progressRate": 75.4,
+        "status": "approved",
+        "selfEvaluation": "꾸준한 증가 추세 유지. 지역 기업 연계 강화 필요",
+        "submittedAt": null,
+        "createdAt": "2026-05-04T12:46:09.638Z",
+        "updatedAt": "2026-05-04T12:46:09.638Z"
+      },
+      {
+        "id": 27,
+        "indicatorId": 1,
+        "year": 2025,
+        "actualValue": 100,
+        "calculatedValue": null,
+        "progressRate": 181.8,
+        "status": "submitted",
+        "selfEvaluation": "하반기 실적 집계 후 산출 예정",
+        "submittedAt": "2026-05-13T04:54:21.056Z",
+        "createdAt": "2026-05-04T12:46:09.638Z",
+        "updatedAt": "2026-05-13T04:54:21.056Z"
+      },
+      {
+        "id": 58,
+        "indicatorId": 9,
+        "year": 2025,
+        "actualValue": 12,
+        "calculatedValue": null,
+        "progressRate": 15,
+        "status": "submitted",
+        "selfEvaluation": "",
+        "submittedAt": "2026-05-13T04:54:39.694Z",
+        "createdAt": "2026-05-13T04:54:39.526Z",
+        "updatedAt": "2026-05-13T04:54:39.694Z"
+      }
+    ],
+    "evidence": [
+      {
+        "id": 1,
+        "resultId": 1,
+        "fileName": "2023년_지역내취업자명단.xlsx",
+        "fileUrl": "/uploads/2023_local_employment.xlsx",
+        "fileSize": 245760,
+        "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "uploadedBy": "김관리자",
+        "createdAt": "2026-05-04T12:46:14.845Z"
+      },
+      {
+        "id": 2,
+        "resultId": 2,
+        "fileName": "2023년_지역외취업자명단.xlsx",
+        "fileUrl": "/uploads/2023_outer_employment.xlsx",
+        "fileSize": 102400,
+        "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "uploadedBy": "김관리자",
+        "createdAt": "2026-05-04T12:46:14.845Z"
+      },
+      {
+        "id": 3,
+        "resultId": 3,
+        "fileName": "2023년_졸업자현황.xlsx",
+        "fileUrl": "/uploads/2023_graduates.xlsx",
+        "fileSize": 153600,
+        "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "uploadedBy": "이담당자",
+        "createdAt": "2026-05-04T12:46:14.845Z"
+      },
+      {
+        "id": 4,
+        "resultId": 4,
+        "fileName": "2024년_취업자명단_지역내.xlsx",
+        "fileUrl": "/uploads/2024_local_employment.xlsx",
+        "fileSize": 286720,
+        "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "uploadedBy": "이담당자",
+        "createdAt": "2026-05-04T12:46:14.845Z"
+      },
+      {
+        "id": 5,
+        "resultId": 10,
+        "fileName": "2023년_지역거주졸업자조사.pdf",
+        "fileUrl": "/uploads/2023_local_residents.pdf",
+        "fileSize": 512000,
+        "mimeType": "application/pdf",
+        "uploadedBy": "박검토자",
+        "createdAt": "2026-05-04T12:46:14.845Z"
+      },
+      {
+        "id": 6,
+        "resultId": 13,
+        "fileName": "2023년_산학협력협약서_목록.pdf",
+        "fileUrl": "/uploads/2023_agreements.pdf",
+        "fileSize": 1024000,
+        "mimeType": "application/pdf",
+        "uploadedBy": "최기술",
+        "createdAt": "2026-05-04T12:46:14.845Z"
+      },
+      {
+        "id": 7,
+        "resultId": 16,
+        "fileName": "2023년_공동연구과제협약서.pdf",
+        "fileUrl": "/uploads/2023_research.pdf",
+        "fileSize": 768000,
+        "mimeType": "application/pdf",
+        "uploadedBy": "박산학",
+        "createdAt": "2026-05-04T12:46:14.845Z"
+      },
+      {
+        "id": 8,
+        "resultId": 19,
+        "fileName": "2023년_재직자교육이수증명.xlsx",
+        "fileUrl": "/uploads/2023_education_completion.xlsx",
+        "fileSize": 204800,
+        "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "uploadedBy": "정재직",
+        "createdAt": "2026-05-04T12:46:14.845Z"
+      },
+      {
+        "id": 9,
+        "resultId": 22,
+        "fileName": "2023년_캡스톤실적증빙.pdf",
+        "fileUrl": "/uploads/2023_capstone.pdf",
+        "fileSize": 2048000,
+        "mimeType": "application/pdf",
+        "uploadedBy": "윤지역",
+        "createdAt": "2026-05-04T12:46:14.845Z"
+      },
+      {
+        "id": 34,
+        "resultId": 21,
+        "fileName": "첨부파일1",
+        "fileUrl": "www.naver.com",
+        "fileSize": 4031,
+        "mimeType": "application/pdf",
+        "uploadedBy": "현재 사용자",
+        "createdAt": "2026-05-13T04:53:27.561Z"
+      }
+    ],
+    "reviews": [
+      {
+        "id": 1,
+        "resultId": 1,
+        "reviewerName": "박검토자",
+        "reviewStatus": "approved",
+        "comment": "지역 내 취업자 현황 자료 확인 완료. 승인합니다.",
+        "reviewedAt": "2026-03-05T12:46:46.165Z",
+        "createdAt": "2026-05-04T12:46:46.165Z"
+      },
+      {
+        "id": 2,
+        "resultId": 2,
+        "reviewerName": "박검토자",
+        "reviewStatus": "approved",
+        "comment": "증빙자료 충분. 승인합니다.",
+        "reviewedAt": "2026-03-05T12:46:46.165Z",
+        "createdAt": "2026-05-04T12:46:46.165Z"
+      },
+      {
+        "id": 3,
+        "resultId": 3,
+        "reviewerName": "박검토자",
+        "reviewStatus": "approved",
+        "comment": "졸업자 수 확인 완료.",
+        "reviewedAt": "2026-03-05T12:46:46.165Z",
+        "createdAt": "2026-05-04T12:46:46.165Z"
+      },
+      {
+        "id": 4,
+        "resultId": 4,
+        "reviewerName": "박검토자",
+        "reviewStatus": "approved",
+        "comment": "2024년 취업자 수 증가 확인. 우수한 성과.",
+        "reviewedAt": "2026-04-04T12:46:46.165Z",
+        "createdAt": "2026-05-04T12:46:46.165Z"
+      },
+      {
+        "id": 5,
+        "resultId": 10,
+        "reviewerName": "박검토자",
+        "reviewStatus": "approved",
+        "comment": "거주 조사 자료 적합성 확인.",
+        "reviewedAt": "2026-03-05T12:46:46.165Z",
+        "createdAt": "2026-05-04T12:46:46.165Z"
+      },
+      {
+        "id": 6,
+        "resultId": 13,
+        "reviewerName": "박검토자",
+        "reviewStatus": "approved",
+        "comment": "협약서 원본 확인 완료.",
+        "reviewedAt": "2026-03-05T12:46:46.165Z",
+        "createdAt": "2026-05-04T12:46:46.165Z"
+      },
+      {
+        "id": 7,
+        "resultId": 15,
+        "reviewerName": "박검토자",
+        "reviewStatus": "revision_requested",
+        "comment": "목표 대비 실적 부진. 추진 계획 및 원인 분석 자료 추가 제출 요망.",
+        "reviewedAt": "2026-04-24T12:46:46.165Z",
+        "createdAt": "2026-05-04T12:46:46.165Z"
+      },
+      {
+        "id": 8,
+        "resultId": 16,
+        "reviewerName": "박검토자",
+        "reviewStatus": "approved",
+        "comment": "공동연구 협약 확인. 목표 초과 달성 우수.",
+        "reviewedAt": "2026-03-05T12:46:46.165Z",
+        "createdAt": "2026-05-04T12:46:46.165Z"
+      },
+      {
+        "id": 9,
+        "resultId": 19,
+        "reviewerName": "박검토자",
+        "reviewStatus": "approved",
+        "comment": "이수증명 원본 일치.",
+        "reviewedAt": "2026-03-05T12:46:46.165Z",
+        "createdAt": "2026-05-04T12:46:46.165Z"
+      },
+      {
+        "id": 10,
+        "resultId": 22,
+        "reviewerName": "박검토자",
+        "reviewStatus": "approved",
+        "comment": "결과물 보고서 확인. 승인합니다.",
+        "reviewedAt": "2026-03-05T12:46:46.165Z",
+        "createdAt": "2026-05-04T12:46:46.165Z"
+      }
+    ],
+    "feedback": [
+      {
+        "id": 1,
+        "taskId": 1,
+        "year": 2023,
+        "evaluationContent": "지역 내 취업 연계 프로그램이 목표 대비 93% 달성. 일부 지역 기업 참여 저조로 목표 미달. 전반적으로 양호한 수준이나 하반기 집중 관리 필요.",
+        "improvementPlan": "지역 기업 MOU 추가 체결, 취업박람회 2회 추가 개최, 현장실습 이수자 취업 연계 강화",
+        "actionStatus": "completed",
+        "dueDate": "2024-02-28",
+        "createdAt": "2026-05-04T12:46:51.448Z",
+        "updatedAt": "2026-05-04T12:46:51.448Z"
+      },
+      {
+        "id": 2,
+        "taskId": 1,
+        "year": 2024,
+        "evaluationContent": "취업 연계 프로그램 개선으로 전년 대비 14.8% 성과 향상. 목표 초과 달성. 지역 정착을 위한 사후관리 프로그램 보강 필요.",
+        "improvementPlan": "졸업 후 1년 추적관리 시스템 구축, 정착 인센티브 프로그램 신설",
+        "actionStatus": "in_progress",
+        "dueDate": "2024-12-31",
+        "createdAt": "2026-05-04T12:46:51.448Z",
+        "updatedAt": "2026-05-04T12:46:51.448Z"
+      },
+      {
+        "id": 3,
+        "taskId": 2,
+        "year": 2023,
+        "evaluationContent": "지역 정착률 목표 대비 95% 달성. 주거 환경 개선 교육 효과가 일부 확인되었으나 지속적인 모니터링 필요.",
+        "improvementPlan": "졸업생 정착 지원 네트워크 구성, 지자체 연계 주거 지원 확대",
+        "actionStatus": "completed",
+        "dueDate": "2024-02-28",
+        "createdAt": "2026-05-04T12:46:51.448Z",
+        "updatedAt": "2026-05-04T12:46:51.448Z"
+      },
+      {
+        "id": 4,
+        "taskId": 3,
+        "year": 2023,
+        "evaluationContent": "산학협력 협약 기관 수 목표 초과 달성(22개/목표 20개). 협약의 실질적 활성화를 위한 사후관리 강화 필요.",
+        "improvementPlan": "협약 기관 대상 정기 간담회 운영, 인턴십 연계 기관 비율 제고",
+        "actionStatus": "completed",
+        "dueDate": "2024-02-28",
+        "createdAt": "2026-05-04T12:46:51.448Z",
+        "updatedAt": "2026-05-04T12:46:51.448Z"
+      },
+      {
+        "id": 5,
+        "taskId": 3,
+        "year": 2025,
+        "evaluationContent": "목표 대비 60% 수준으로 추진 지연. 하반기 집중 협약 체결 필요.",
+        "improvementPlan": "협약 체결 대상 기업 발굴 확대, 지역 상공회의소 협력 강화, 체결 프로세스 간소화",
+        "actionStatus": "completed",
+        "dueDate": "2025-12-31",
+        "createdAt": "2026-05-04T12:46:51.448Z",
+        "updatedAt": "2026-05-12T06:31:09.403Z"
+      },
+      {
+        "id": 6,
+        "taskId": 5,
+        "year": 2023,
+        "evaluationContent": "재직자 교육 이수율 목표 대비 94.3% 달성. 직장인 야간과정 참여율이 예상보다 낮음.",
+        "improvementPlan": "온라인 병행 과정 도입, 수강료 지원 확대, 기업 단체 수강 유도",
+        "actionStatus": "completed",
+        "dueDate": "2024-02-28",
+        "createdAt": "2026-05-04T12:46:51.448Z",
+        "updatedAt": "2026-05-04T12:46:51.448Z"
+      },
+      {
+        "id": 7,
+        "taskId": 7,
+        "year": 2023,
+        "evaluationContent": "지역문제 해결 프로젝트 목표 대비 110% 달성(11건/목표 10건). 우수 성과로 대외 발표 기회 확대.",
+        "improvementPlan": "우수 프로젝트 지자체 정책 반영 추진, 학생 참여 확대",
+        "actionStatus": "completed",
+        "dueDate": "2024-02-28",
+        "createdAt": "2026-05-04T12:46:51.448Z",
+        "updatedAt": "2026-05-04T12:46:51.448Z"
+      }
+    ]
+  }
+}
