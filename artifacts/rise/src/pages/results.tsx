@@ -125,10 +125,6 @@ export default function Results() {
       return;
     }
     const selectedFiles = pdfRows.map((row) => row.file).filter((file): file is File => file !== null);
-    if (!editingResult && selectedFiles.length === 0) {
-      toast({ title: "PDF 증빙 확인", description: "세부프로그램 실적 등록 시 PDF 증빙파일을 선택해주세요.", variant: "destructive" });
-      return;
-    }
     const year = Number(resultDate.slice(0, 4));
     try {
       let resultId: number;
