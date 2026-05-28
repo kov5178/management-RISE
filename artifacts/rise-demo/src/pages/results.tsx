@@ -97,9 +97,6 @@ export default function Results() {
       toast({ title: "필수값 확인", description: "하위지표, 세부프로그램명, 실적날짜, 실적값을 입력해주세요.", variant: "destructive" }); return;
     }
     const selectedFiles = pdfRows.map((row) => row.file).filter((file): file is File => file !== null);
-    if (!editingResult && selectedFiles.length === 0) {
-      toast({ title: "PDF 증빙 확인", description: "세부프로그램 실적 등록 시 PDF 증빙파일을 선택해주세요.", variant: "destructive" }); return;
-    }
     const year = Number(resultDate.slice(0, 4));
     try {
       let resultId: number;
@@ -114,7 +111,7 @@ export default function Results() {
         await createEvidence.mutateAsync({ data: { resultId, fileName: file.name, fileUrl: await readFileAsDataUrl(file), fileSize: Math.max(1, Math.ceil(file.size / 1024)), mimeType: "application/pdf", uploadedBy: "현재 사용자" } });
       }
       queryClient.invalidateQueries({ queryKey: getListResultsQueryKey() }); queryClient.invalidateQueries({ queryKey: getListEvidenceQueryKey() }); setFilterYear(year.toString()); setIsFormOpen(false); resetForm();
-      toast({ title: editingResult ? "수정 완료" : "입력 완료", description: "세부프로그램 실적과 PDF 증빙자료가 저장되었습니다." });
+      toast({ title: editingResult ? "수정 완료" : "입력 완료", description: selectedFiles.length > 0 ? "세부프로그램 실적과 PDF 증빙자료가 저장되었습니다." : "세부프로그램 실적이 저장되었습니다." });
     } catch { toast({ title: "저장 실패", description: "미리보기에서는 입력 흐름만 확인할 수 있습니다.", variant: "destructive" }); }
   };
   const handleExport = () => exportToCsv(`results_${filterYear}`, resultRows.map((result) => {
@@ -143,9 +140,9 @@ export default function Results() {
                 <div className="space-y-2"><Label htmlFor="note">비고</Label><Textarea id="note" value={note} onChange={(event) => setNote(event.target.value)} rows={3} placeholder="추가 내용을 입력하세요" /></div>
                 {editingResult && evidenceRows.length > 0 && <div className="space-y-2"><Label>등록된 PDF 증빙자료</Label>{evidenceRows.map((file) => <div key={file.id} className="flex items-center gap-2 rounded border px-3 py-2 text-sm"><FileText className="w-4 h-4 text-red-500" />{file.fileName}</div>)}</div>}
                 <div className="space-y-3 rounded border border-dashed p-3">
-                  <div className="flex items-center justify-between"><Label>PDF 증빙자료 {editingResult ? "추가" : "등록 *"}</Label><div className="flex gap-1"><Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={addPdfRow} aria-label="PDF 라인 추가"><Plus className="w-4 h-4" /></Button><Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => removePdfRow(pdfRows[pdfRows.length - 1].id)} aria-label="PDF 라인 삭제"><Minus className="w-4 h-4" /></Button></div></div>
+                  <div className="flex items-center justify-between"><Label>PDF 증빙자료 {editingResult ? "추가" : "등록 (선택)"}</Label><div className="flex gap-1"><Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={addPdfRow} aria-label="PDF 라인 추가"><Plus className="w-4 h-4" /></Button><Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => removePdfRow(pdfRows[pdfRows.length - 1].id)} aria-label="PDF 라인 삭제"><Minus className="w-4 h-4" /></Button></div></div>
                   {pdfRows.map((row, index) => <div key={row.id} className="flex items-center gap-2"><span className="w-12 text-xs text-muted-foreground">PDF {index + 1}</span><Input value={row.file?.name ?? ""} readOnly placeholder="선택된 파일 없음" className="flex-1" /><input id={`pdf-file-${row.id}`} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(event) => handleFileChange(row.id, event.target.files?.[0] ?? null)} /><label htmlFor={`pdf-file-${row.id}`} className="inline-flex h-10 cursor-pointer items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent">파일 선택</label></div>)}
-                  <p className="text-xs text-muted-foreground">선택된 PDF는 해당 세부프로그램 실적에 연결되며 증빙관리 메뉴에서 확인할 수 있습니다.</p>
+                  <p className="text-xs text-muted-foreground">PDF는 선택사항이며, 등록한 파일은 해당 세부프로그램 실적에 연결되어 증빙관리 메뉴에서 확인할 수 있습니다.</p>
                 </div>
               </div>
               <DialogFooter><Button variant="outline" onClick={() => setIsFormOpen(false)}>취소</Button><Button onClick={handleSave} disabled={createResult.isPending || updateResult.isPending || createEvidence.isPending}>{editingResult ? "수정" : "입력"}</Button></DialogFooter>
