@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, real } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, real, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { indicatorsTable } from "./indicators";
@@ -27,7 +27,9 @@ export const indicatorResultsTable = pgTable("indicator_results", {
   submittedAt: timestamp("submitted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-});
+}, (t) => [
+  unique("uq_indicator_results_indicator_year").on(t.indicatorId, t.year),
+]);
 
 export const insertResultSchema = createInsertSchema(indicatorResultsTable).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertResult = z.infer<typeof insertResultSchema>;
