@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import { useListResults, useCreateResult, useUpdateResult, useListIndicators, useListTargets, getListResultsQueryKey } from "@workspace/api-client-react";
-import type { Indicator, IndicatorResult, IndicatorTarget } from "@workspace/api-client-react";
+import type { Indicator, IndicatorResult } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,7 @@ export default function Results() {
   const [editingResult, setEditingResult] = useState<IndicatorResult | null>(null);
   const [indicatorId, setIndicatorId] = useState("");
   const [monthlyValues, setMonthlyValues] = useState<MonthlyDraft>(emptyMonthlyDraft());
+  const [selectedMonth, setSelectedMonth] = useState<BusinessMonthKey>("marValue");
   const [note, setNote] = useState("");
   const [status, setStatus] = useState("draft");
 
@@ -91,9 +92,6 @@ export default function Results() {
     targetRows.find((target) => target.indicatorId === indicatorIdValue)?.targetValue ?? null;
 
   const getChildMonthlyValues = (childId: number) => toMonthlyValues(resultByIndicator.get(childId));
-
-  const getChildTotal = (childId: number) => sumBusinessMonthValues(getChildMonthlyValues(childId));
-
   const getParentChildren = (parentId: number) => childIndicators.filter((child) => child.parentId === parentId);
 
   const getParentMonthlyValues = (parent: Indicator): MonthlyValues => {
@@ -118,6 +116,7 @@ export default function Results() {
     setMonthlyValues(
       Object.fromEntries(BUSINESS_MONTHS.map((month) => [month.key, result?.[month.key] ?? ""])) as MonthlyDraft,
     );
+    setSelectedMonth("marValue");
     setNote(result?.note ?? "");
     setStatus(result?.status ?? "draft");
     setIsFormOpen(true);
@@ -144,7 +143,7 @@ export default function Results() {
       }
       queryClient.invalidateQueries({ queryKey: getListResultsQueryKey() });
       setIsFormOpen(false);
-      toast({ title: "저장 완료", description: "월별 실적값이 저장되었습니다." });
+      toast({ title: "저장 완료", description: "선택한 월의 실적값이 저장되었습니다." });
     } catch {
       toast({ title: "저장 실패", description: "월별 실적값 저장에 실패했습니다.", variant: "destructive" });
     }
@@ -175,13 +174,15 @@ export default function Results() {
   };
 
   const selectedIndicator = childIndicators.find((item) => item.id === Number(indicatorId));
+  const selectedMonthMeta = BUSINESS_MONTHS.find((month) => month.key === selectedMonth);
+  const draftTotal = sumBusinessMonthValues(toPayloadValues(monthlyValues));
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">실적 입력</h2>
-          <p className="text-muted-foreground">하위지표별 월별 실적을 입력하고 상위지표 실적은 산출식 기준으로 자동 표시합니다.</p>
+          <p className="text-muted-foreground">하위지표별 월간 실적을 입력하고 상위지표 실적은 산출식 기준으로 자동 표시합니다.</p>
           <p className="text-sm text-muted-foreground mt-1">사업기간: {formatBusinessPeriod(Number(filterYear))}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -201,7 +202,9 @@ export default function Results() {
               <TableHead>지표명</TableHead>
               <TableHead className="w-[150px]">진척도</TableHead>
               <TableHead className="text-right">목표값</TableHead>
-              <TableHead className="min-w-[520px]">실적값</TableHead>
+              <TableHead className="min-w-[760px]">
+                <MonthlyHeader />
+              </TableHead>
               <TableHead>비고</TableHead>
               <TableHead>상태</TableHead>
               <TableHead className="text-right">관리</TableHead>
@@ -260,7 +263,7 @@ export default function Results() {
       </div>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[760px]">
+        <DialogContent className="sm:max-w-[620px]">
           <DialogHeader><DialogTitle>월별 실적 입력/수정</DialogTitle></DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -273,19 +276,33 @@ export default function Results() {
                 <div className="rounded border bg-muted px-3 py-2 text-sm">{filterYear}년도 ({formatBusinessPeriod(Number(filterYear))})</div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-              {BUSINESS_MONTHS.map((month) => (
-                <div key={month.key} className="space-y-2">
-                  <Label htmlFor={month.key}>{month.label}</Label>
-                  <Input
-                    id={month.key}
-                    type="number"
-                    value={monthlyValues[month.key]}
-                    onChange={(event) => setMonthlyValues((values) => ({ ...values, [month.key]: event.target.value === "" ? "" : Number(event.target.value) }))}
-                  />
-                </div>
-              ))}
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[180px_1fr]">
+              <div className="space-y-2">
+                <Label>월 선택</Label>
+                <Select value={selectedMonth} onValueChange={(value) => setSelectedMonth(value as BusinessMonthKey)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {BUSINESS_MONTHS.map((month) => <SelectItem key={month.key} value={month.key}>{month.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="selected-month-value">{selectedMonthMeta?.label ?? "선택 월"} 실적값</Label>
+                <Input
+                  id="selected-month-value"
+                  type="number"
+                  value={monthlyValues[selectedMonth]}
+                  onChange={(event) => setMonthlyValues((values) => ({ ...values, [selectedMonth]: event.target.value === "" ? "" : Number(event.target.value) }))}
+                />
+              </div>
             </div>
+
+            <div className="space-y-2">
+              <Label>입력 현황</Label>
+              <MonthlySummary monthly={toMonthlyValues(toPayloadValues(monthlyValues))} total={draftTotal} />
+            </div>
+
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>상태</Label>
@@ -299,7 +316,7 @@ export default function Results() {
               </div>
               <div className="space-y-2">
                 <Label>합계</Label>
-                <div className="rounded border bg-muted px-3 py-2 text-sm font-semibold">{sumBusinessMonthValues(toPayloadValues(monthlyValues)).toLocaleString()}</div>
+                <div className="rounded border bg-muted px-3 py-2 text-sm font-semibold">{draftTotal.toLocaleString()}</div>
               </div>
             </div>
             <div className="space-y-2">
@@ -317,18 +334,29 @@ export default function Results() {
   );
 }
 
-function MonthlySummary({ monthly, total }: { monthly: MonthlyValues; total: number }) {
+function MonthlyHeader() {
   return (
-    <div className="space-y-2">
-      <div className="font-semibold">합계 {total.toLocaleString()}</div>
-      <div className="grid grid-cols-6 gap-1 text-xs">
+    <div className="space-y-1">
+      <div className="font-semibold">실적값</div>
+      <div className="grid grid-cols-[repeat(13,minmax(44px,1fr))] gap-1 text-xs text-muted-foreground">
+        <div className="rounded bg-muted px-2 py-1 text-center font-medium text-foreground">합계</div>
         {BUSINESS_MONTHS.map((month) => (
-          <div key={month.key} className="rounded bg-muted px-2 py-1 text-center">
-            <div className="text-muted-foreground">{month.label}</div>
-            <div className="font-medium">{monthly[month.key].toLocaleString()}</div>
-          </div>
+          <div key={month.key} className="rounded bg-muted px-2 py-1 text-center">{month.label}</div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function MonthlySummary({ monthly, total }: { monthly: MonthlyValues; total: number }) {
+  return (
+    <div className="grid grid-cols-[repeat(13,minmax(44px,1fr))] gap-1 text-xs">
+      <div className="rounded bg-muted px-2 py-1 text-center font-semibold">{total.toLocaleString()}</div>
+      {BUSINESS_MONTHS.map((month) => (
+        <div key={month.key} className="rounded bg-muted px-2 py-1 text-center">
+          {monthly[month.key].toLocaleString()}
+        </div>
+      ))}
     </div>
   );
 }
