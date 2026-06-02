@@ -153,10 +153,30 @@ export interface IndicatorResult {
   id: number;
   indicatorId: number;
   year: number;
-  programName: string;
-  resultDate: string;
-  actualValue: number;
   /** @nullable */
+  marValue?: number | null;
+  /** @nullable */
+  aprValue?: number | null;
+  /** @nullable */
+  mayValue?: number | null;
+  /** @nullable */
+  junValue?: number | null;
+  /** @nullable */
+  julValue?: number | null;
+  /** @nullable */
+  augValue?: number | null;
+  /** @nullable */
+  sepValue?: number | null;
+  /** @nullable */
+  octValue?: number | null;
+  /** @nullable */
+  novValue?: number | null;
+  /** @nullable */
+  decValue?: number | null;
+  /** @nullable */
+  janValue?: number | null;
+  /** @nullable */
+  febValue?: number | null;  /** @nullable */
   note?: string | null;
   /** @nullable */
   calculatedValue?: number | null;
@@ -175,58 +195,68 @@ export interface IndicatorResult {
 export interface CreateResultBody {
   indicatorId: number;
   year: number;
-  programName: string;
-  resultDate: string;
-  actualValue: number;
   /** @nullable */
-  note?: string | null;
+  marValue?: number | null;
   /** @nullable */
-  selfEvaluation?: string | null;
-}
-
-export interface UpdateResultBody {
-  year?: number;
-  programName?: string;
-  resultDate?: string;
-  actualValue?: number;
+  aprValue?: number | null;
   /** @nullable */
+  mayValue?: number | null;
+  /** @nullable */
+  junValue?: number | null;
+  /** @nullable */
+  julValue?: number | null;
+  /** @nullable */
+  augValue?: number | null;
+  /** @nullable */
+  sepValue?: number | null;
+  /** @nullable */
+  octValue?: number | null;
+  /** @nullable */
+  novValue?: number | null;
+  /** @nullable */
+  decValue?: number | null;
+  /** @nullable */
+  janValue?: number | null;
+  /** @nullable */
+  febValue?: number | null;  /** @nullable */
   note?: string | null;
   /** @nullable */
   selfEvaluation?: string | null;
   status?: string;
 }
 
-export interface EvidenceFile {
-  id: number;
-  resultId: number;
-  fileName: string;
-  fileUrl: string;
+export interface UpdateResultBody {
+  year?: number;
   /** @nullable */
-  fileSize?: number | null;
+  marValue?: number | null;
   /** @nullable */
-  mimeType?: string | null;
+  aprValue?: number | null;
   /** @nullable */
-  uploadedBy?: string | null;
-  createdAt: string;
+  mayValue?: number | null;
+  /** @nullable */
+  junValue?: number | null;
+  /** @nullable */
+  julValue?: number | null;
+  /** @nullable */
+  augValue?: number | null;
+  /** @nullable */
+  sepValue?: number | null;
+  /** @nullable */
+  octValue?: number | null;
+  /** @nullable */
+  novValue?: number | null;
+  /** @nullable */
+  decValue?: number | null;
+  /** @nullable */
+  janValue?: number | null;
+  /** @nullable */
+  febValue?: number | null;  /** @nullable */
+  note?: string | null;
+  /** @nullable */
+  selfEvaluation?: string | null;
+  status?: string;
 }
 
-export interface CreateEvidenceBody {
-  resultId: number;
-  fileName: string;
-  fileUrl: string;
-  /** @nullable */
-  fileSize?: number | null;
-  /** @nullable */
-  mimeType?: string | null;
-  /** @nullable */
-  uploadedBy?: string | null;
-}
-
-export interface EvidenceDownloadResponse {
-  id: number;
-  fileName: string;
-  fileUrl: string;
-}
 
 export interface Review {
   id: number;
@@ -485,7 +515,6 @@ export interface TaskProgress {
   progress: number;
   indicatorCount: number;
   approvedCount: number;
-  missingEvidenceCount: number;
   isOverTarget: boolean;
 }
 
@@ -502,20 +531,16 @@ export interface AlertIndicator {
 
 export interface DashboardAlerts {
   atRiskIndicators: AlertIndicator[];
-  missingEvidenceIndicators: AlertIndicator[];
   revisionRequestedIndicators: AlertIndicator[];
 }
 
 export interface TrendDataPoint {
-  year: number;
+  month: string;
+  targetProgress: number;
+  /** @nullable */
+  actualProgress?: number | null;
   /** @nullable */
   targetValue?: number | null;
-  /** @nullable */
-  actualValue?: number | null;
-  /** @nullable */
-  progress?: number | null;
-  /** @nullable */
-  projectName?: string | null;
 }
 
 export type ListRegistrationRequestsParams = {
@@ -546,9 +571,7 @@ export type ListResultsParams = {
   status?: string;
 };
 
-export type ListEvidenceParams = {
-  resultId?: number;
-};
+
 
 export type ListReviewsParams = {
   resultId?: number;

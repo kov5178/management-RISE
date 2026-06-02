@@ -17,17 +17,17 @@ export default function Reviews() {
   const currentYear = 2025;
   const [filterYear, setFilterYear] = useState<string>(currentYear.toString());
   const [activeTab, setActiveTab] = useState<string>("pending");
-  
+
   const { data: indicators } = useListIndicators();
   const { data: allResults, isLoading } = useListResults({ year: Number(filterYear) });
-  
+
   const createReview = useCreateReview();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [selectedResult, setSelectedResult] = useState<any>(null);
-  
+
   // Form states
   const [reviewStatus, setReviewStatus] = useState<string>("approved");
   const [comment, setComment] = useState("");
@@ -93,7 +93,7 @@ export default function Reviews() {
           resultsList.map((res) => (
             <TableRow key={res.id}>
               <TableCell className="font-medium">{getIndicatorName(res.indicatorId)}</TableCell>
-              <TableCell>{res.actualValue ?? '-'}</TableCell>
+              <TableCell>{res.calculatedValue ?? '-'}</TableCell>
               <TableCell className="text-muted-foreground text-sm">{res.submittedAt ? new Date(res.submittedAt).toLocaleString() : '-'}</TableCell>
               <TableCell><StatusBadge status={res.status} /></TableCell>
               <TableCell className="text-right">
@@ -155,7 +155,7 @@ export default function Reviews() {
           <div className="grid gap-4 py-4">
             <div className="p-3 bg-muted rounded-md border space-y-2 text-sm">
               <div className="font-medium">{getIndicatorName(selectedResult?.indicatorId)}</div>
-              <div className="text-muted-foreground">실적값: {selectedResult?.actualValue ?? '-'}</div>
+              <div className="text-muted-foreground">실적값: {selectedResult?.calculatedValue ?? '-'}</div>
               {selectedResult?.selfEvaluation && (
                 <div className="mt-2 pt-2 border-t">
                   <strong>자체평가:</strong> {selectedResult.selfEvaluation}
@@ -168,25 +168,25 @@ export default function Reviews() {
                 <div className="space-y-2">
                   <Label>검토 결과 판정</Label>
                   <div className="grid grid-cols-3 gap-2">
-                    <Button 
+                    <Button
                       type="button"
-                      variant={reviewStatus === "approved" ? "default" : "outline"} 
+                      variant={reviewStatus === "approved" ? "default" : "outline"}
                       className={`gap-2 ${reviewStatus === "approved" ? "bg-green-600 hover:bg-green-700" : ""}`}
                       onClick={() => setReviewStatus("approved")}
                     >
                       <CheckCircle className="w-4 h-4" /> 승인
                     </Button>
-                    <Button 
+                    <Button
                       type="button"
-                      variant={reviewStatus === "revision_requested" ? "default" : "outline"} 
+                      variant={reviewStatus === "revision_requested" ? "default" : "outline"}
                       className={`gap-2 ${reviewStatus === "revision_requested" ? "bg-orange-500 hover:bg-orange-600" : ""}`}
                       onClick={() => setReviewStatus("revision_requested")}
                     >
                       <AlertCircle className="w-4 h-4" /> 보완요청
                     </Button>
-                    <Button 
+                    <Button
                       type="button"
-                      variant={reviewStatus === "rejected" ? "default" : "outline"} 
+                      variant={reviewStatus === "rejected" ? "default" : "outline"}
                       className={`gap-2 ${reviewStatus === "rejected" ? "bg-red-600 hover:bg-red-700" : ""}`}
                       onClick={() => setReviewStatus("rejected")}
                     >
@@ -196,10 +196,10 @@ export default function Reviews() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="comment">검토 의견 (필수)</Label>
-                  <Textarea 
-                    id="comment" 
-                    value={comment} 
-                    onChange={e => setComment(e.target.value)} 
+                  <Textarea
+                    id="comment"
+                    value={comment}
+                    onChange={e => setComment(e.target.value)}
                     rows={4}
                     placeholder="검토 의견, 보완이 필요한 사유 등을 입력하세요."
                   />

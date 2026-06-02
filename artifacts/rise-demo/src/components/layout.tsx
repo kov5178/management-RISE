@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Folder, CheckSquare, BarChart, Target, FileText,
-  Files, MessageSquare, RefreshCw, Users, LogOut, LogIn, UserPlus,
+  MessageSquare, RefreshCw, Users, LogOut, LogIn, UserPlus,
   ClipboardList, ShieldCheck, History, ChevronRight, Clock, AlertTriangle, Settings2
 } from "lucide-react";
 import {
@@ -35,16 +35,15 @@ const NAV_ITEMS = [
   { title: "대시보드", href: "/", icon: LayoutDashboard },
   { title: "프로젝트 관리", href: "/projects", icon: Folder },
   { title: "단위과제 관리", href: "/tasks", icon: CheckSquare },
-  { title: "지표 관리", href: "/indicators", icon: BarChart },
+  { title: "지표관리", href: "/indicators", icon: BarChart },
   { title: "목표값 관리", href: "/targets", icon: Target },
   { title: "실적 입력", href: "/results", icon: FileText },
-  { title: "증빙관리", href: "/evidence", icon: Files },
   { title: "검토 관리", href: "/reviews", icon: MessageSquare },
-  { title: "자체평가·환류", href: "/feedback", icon: RefreshCw },
+  { title: "자체평가/환류", href: "/feedback", icon: RefreshCw },
 ];
 
 const USER_MGMT_ITEMS = [
-  { title: "사용자 목록 · 권한 변경", href: "/users", icon: Users },
+  { title: "사용자 목록/권한 변경", href: "/users", icon: Users },
   { title: "등록 요청 승인", href: "/user-requests", icon: ClipboardList },
   { title: "권한 변경 이력", href: "/role-change-logs", icon: History },
   { title: "시스템 설정", href: "/settings", icon: Settings2 },

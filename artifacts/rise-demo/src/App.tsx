@@ -12,7 +12,6 @@ import Tasks from "@/pages/tasks";
 import Indicators from "@/pages/indicators";
 import Targets from "@/pages/targets";
 import Results from "@/pages/results";
-import Evidence from "@/pages/evidence";
 import Reviews from "@/pages/reviews";
 import Feedback from "@/pages/feedback";
 import Users from "@/pages/users";
@@ -82,9 +81,6 @@ function AppRoutes() {
         </Route>
         <Route path="/results">
           <RequireAuth><Results /></RequireAuth>
-        </Route>
-        <Route path="/evidence">
-          <RequireAuth><Evidence /></RequireAuth>
         </Route>
         <Route path="/reviews">
           <RequireAuth><Reviews /></RequireAuth>

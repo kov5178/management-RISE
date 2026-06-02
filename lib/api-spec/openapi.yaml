@@ -24,8 +24,6 @@ tags:
     description: 목표값 관리
   - name: results
     description: 실적 입력
-  - name: evidence
-    description: 증빙자료 관리
   - name: reviews
     description: 검토 관리
   - name: feedback
@@ -633,209 +631,139 @@ paths:
             type: integer
       responses:
         "204":
-          description: No Content
+          description: No Content    # Indicator Results
+    IndicatorResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        indicatorId:
+          type: integer
+        year:
+          type: integer
+        marValue:
+          type: ["number", "null"]
+        aprValue:
+          type: ["number", "null"]
+        mayValue:
+          type: ["number", "null"]
+        junValue:
+          type: ["number", "null"]
+        julValue:
+          type: ["number", "null"]
+        augValue:
+          type: ["number", "null"]
+        sepValue:
+          type: ["number", "null"]
+        octValue:
+          type: ["number", "null"]
+        novValue:
+          type: ["number", "null"]
+        decValue:
+          type: ["number", "null"]
+        janValue:
+          type: ["number", "null"]
+        febValue:
+          type: ["number", "null"]        note:
+          type: ["string", "null"]
+        calculatedValue:
+          type: ["number", "null"]
+        progressRate:
+          type: ["number", "null"]
+        status:
+          type: string
+          description: "draft | submitted | reviewing | revision_requested | approved | rejected"
+        selfEvaluation:
+          type: ["string", "null"]
+        submittedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - indicatorId
+        - year
+        - status
+        - createdAt
+        - updatedAt
 
-  # ── Indicator Results ─────────────────────────────────────
-  /results:
-    get:
-      operationId: listResults
-      tags: [results]
-      summary: 실적 목록
-      parameters:
-        - name: indicatorId
-          in: query
-          schema:
-            type: integer
-        - name: year
-          in: query
-          schema:
-            type: integer
-        - name: status
-          in: query
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/IndicatorResult"
-    post:
-      operationId: createResult
-      tags: [results]
-      summary: 실적 입력
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateResultBody"
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IndicatorResult"
+    CreateResultBody:
+      type: object
+      properties:
+        indicatorId:
+          type: integer
+        year:
+          type: integer
+        marValue:
+          type: ["number", "null"]
+        aprValue:
+          type: ["number", "null"]
+        mayValue:
+          type: ["number", "null"]
+        junValue:
+          type: ["number", "null"]
+        julValue:
+          type: ["number", "null"]
+        augValue:
+          type: ["number", "null"]
+        sepValue:
+          type: ["number", "null"]
+        octValue:
+          type: ["number", "null"]
+        novValue:
+          type: ["number", "null"]
+        decValue:
+          type: ["number", "null"]
+        janValue:
+          type: ["number", "null"]
+        febValue:
+          type: ["number", "null"]        note:
+          type: ["string", "null"]
+        selfEvaluation:
+          type: ["string", "null"]
+        status:
+          type: string
+      required:
+        - indicatorId
+        - year
 
-  /results/{id}:
-    get:
-      operationId: getResult
-      tags: [results]
-      summary: 실적 조회
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IndicatorResult"
-        "404":
-          description: Not Found
-    patch:
-      operationId: updateResult
-      tags: [results]
-      summary: 실적 수정
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateResultBody"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IndicatorResult"
-    delete:
-      operationId: deleteResult
-      tags: [results]
-      summary: 실적 삭제
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "204":
-          description: No Content
-
-  /results/{id}/submit:
-    post:
-      operationId: submitResult
-      tags: [results]
-      summary: 실적 제출
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IndicatorResult"
-
-  # ── Evidence Files ─────────────────────────────────────────
-  /evidence:
-    get:
-      operationId: listEvidence
-      tags: [evidence]
-      summary: 증빙자료 목록
-      parameters:
-        - name: resultId
-          in: query
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/EvidenceFile"
-    post:
-      operationId: createEvidence
-      tags: [evidence]
-      summary: 증빙자료 등록
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateEvidenceBody"
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EvidenceFile"
-
-  /evidence/{id}:
-    delete:
-      operationId: deleteEvidence
-      tags: [evidence]
-      summary: 증빙자료 삭제
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "204":
-          description: No Content
-
-  /evidence/{id}/download:
-    get:
-      operationId: downloadEvidence
-      tags: [evidence]
-      summary: 증빙자료 다운로드 (로그인 및 권한 필요)
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EvidenceDownloadResponse"
-        "401":
-          description: Unauthorized
-        "403":
-          description: Forbidden
-        "404":
-          description: Not Found
-
-  # ── Reviews ───────────────────────────────────────────────
+    UpdateResultBody:
+      type: object
+      properties:
+        year:
+          type: integer
+        marValue:
+          type: ["number", "null"]
+        aprValue:
+          type: ["number", "null"]
+        mayValue:
+          type: ["number", "null"]
+        junValue:
+          type: ["number", "null"]
+        julValue:
+          type: ["number", "null"]
+        augValue:
+          type: ["number", "null"]
+        sepValue:
+          type: ["number", "null"]
+        octValue:
+          type: ["number", "null"]
+        novValue:
+          type: ["number", "null"]
+        decValue:
+          type: ["number", "null"]
+        janValue:
+          type: ["number", "null"]
+        febValue:
+          type: ["number", "null"]        note:
+          type: ["string", "null"]
+        selfEvaluation:
+          type: ["string", "null"]
+        status:
+          type: string
+  # Reviews ───────────────────────────────────────────────
   /reviews:
     get:
       operationId: listReviews
@@ -1406,9 +1334,7 @@ components:
         targetValue:
           type: ["number", "null"]
         note:
-          type: ["string", "null"]
-
-    # ── Indicator Results ──────────────────────────────────
+          type: ["string", "null"]    # Indicator Results
     IndicatorResult:
       type: object
       properties:
@@ -1418,14 +1344,30 @@ components:
           type: integer
         year:
           type: integer
-        programName:
-          type: string
-        resultDate:
-          type: string
-          format: date
-        actualValue:
-          type: number
-        note:
+        marValue:
+          type: ["number", "null"]
+        aprValue:
+          type: ["number", "null"]
+        mayValue:
+          type: ["number", "null"]
+        junValue:
+          type: ["number", "null"]
+        julValue:
+          type: ["number", "null"]
+        augValue:
+          type: ["number", "null"]
+        sepValue:
+          type: ["number", "null"]
+        octValue:
+          type: ["number", "null"]
+        novValue:
+          type: ["number", "null"]
+        decValue:
+          type: ["number", "null"]
+        janValue:
+          type: ["number", "null"]
+        febValue:
+          type: ["number", "null"]        note:
           type: ["string", "null"]
         calculatedValue:
           type: ["number", "null"]
@@ -1446,9 +1388,6 @@ components:
         - id
         - indicatorId
         - year
-        - programName
-        - resultDate
-        - actualValue
         - status
         - createdAt
         - updatedAt
@@ -1460,105 +1399,74 @@ components:
           type: integer
         year:
           type: integer
-        programName:
-          type: string
-        resultDate:
-          type: string
-          format: date
-        actualValue:
-          type: number
-        note:
+        marValue:
+          type: ["number", "null"]
+        aprValue:
+          type: ["number", "null"]
+        mayValue:
+          type: ["number", "null"]
+        junValue:
+          type: ["number", "null"]
+        julValue:
+          type: ["number", "null"]
+        augValue:
+          type: ["number", "null"]
+        sepValue:
+          type: ["number", "null"]
+        octValue:
+          type: ["number", "null"]
+        novValue:
+          type: ["number", "null"]
+        decValue:
+          type: ["number", "null"]
+        janValue:
+          type: ["number", "null"]
+        febValue:
+          type: ["number", "null"]        note:
           type: ["string", "null"]
         selfEvaluation:
           type: ["string", "null"]
+        status:
+          type: string
       required:
         - indicatorId
         - year
-        - programName
-        - resultDate
-        - actualValue
 
     UpdateResultBody:
       type: object
       properties:
         year:
           type: integer
-        programName:
-          type: string
-        resultDate:
-          type: string
-          format: date
-        actualValue:
-          type: number
-        note:
+        marValue:
+          type: ["number", "null"]
+        aprValue:
+          type: ["number", "null"]
+        mayValue:
+          type: ["number", "null"]
+        junValue:
+          type: ["number", "null"]
+        julValue:
+          type: ["number", "null"]
+        augValue:
+          type: ["number", "null"]
+        sepValue:
+          type: ["number", "null"]
+        octValue:
+          type: ["number", "null"]
+        novValue:
+          type: ["number", "null"]
+        decValue:
+          type: ["number", "null"]
+        janValue:
+          type: ["number", "null"]
+        febValue:
+          type: ["number", "null"]        note:
           type: ["string", "null"]
         selfEvaluation:
           type: ["string", "null"]
         status:
           type: string
-
-    # ── Evidence Files ─────────────────────────────────────
-    EvidenceFile:
-      type: object
-      properties:
-        id:
-          type: integer
-        resultId:
-          type: integer
-        fileName:
-          type: string
-        fileUrl:
-          type: string
-        fileSize:
-          type: ["integer", "null"]
-        mimeType:
-          type: ["string", "null"]
-        uploadedBy:
-          type: ["string", "null"]
-        createdAt:
-          type: string
-      required:
-        - id
-        - resultId
-        - fileName
-        - fileUrl
-        - createdAt
-
-    CreateEvidenceBody:
-      type: object
-      properties:
-        resultId:
-          type: integer
-        fileName:
-          type: string
-        fileUrl:
-          type: string
-        fileSize:
-          type: ["integer", "null"]
-        mimeType:
-          type: ["string", "null"]
-        uploadedBy:
-          type: ["string", "null"]
-      required:
-        - resultId
-        - fileName
-        - fileUrl
-
-    EvidenceDownloadResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-        fileName:
-          type: string
-        fileUrl:
-          type: string
-      required:
-        - id
-        - fileName
-        - fileUrl
-
-    # ── Reviews ────────────────────────────────────────────
+  # Reviews ────────────────────────────────────────────
     Review:
       type: object
       properties:
@@ -2073,8 +1981,6 @@ components:
           type: integer
         approvedCount:
           type: integer
-        missingEvidenceCount:
-          type: integer
         isOverTarget:
           type: boolean
       required:
@@ -2085,7 +1991,6 @@ components:
         - progress
         - indicatorCount
         - approvedCount
-        - missingEvidenceCount
         - isOverTarget
 
     DashboardAlerts:
@@ -2095,17 +2000,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AlertIndicator"
-        missingEvidenceIndicators:
-          type: array
-          items:
-            $ref: "#/components/schemas/AlertIndicator"
         revisionRequestedIndicators:
           type: array
           items:
             $ref: "#/components/schemas/AlertIndicator"
       required:
         - atRiskIndicators
-        - missingEvidenceIndicators
         - revisionRequestedIndicators
 
     AlertIndicator:
@@ -2132,15 +2032,14 @@ components:
     TrendDataPoint:
       type: object
       properties:
-        year:
-          type: integer
+        month:
+          type: string
+        targetProgress:
+          type: number
+        actualProgress:
+          type: ["number", "null"]
         targetValue:
           type: ["number", "null"]
-        actualValue:
-          type: ["number", "null"]
-        progress:
-          type: ["number", "null"]
-        projectName:
-          type: ["string", "null"]
       required:
-        - year
+        - month
+        - targetProgress
