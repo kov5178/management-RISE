@@ -10,6 +10,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { formatBusinessPeriod, getBusinessYearFromDate } from "@/lib/business-year";
 
+const formatPercent = (value: number | null | undefined) => `${(value ?? 0).toFixed(1)}%`;
+
 export default function Dashboard() {
   const currentYear = getBusinessYearFromDate(new Date());
 
@@ -18,10 +20,13 @@ export default function Dashboard() {
   const { data: tasks, isLoading: isLoadingTasks } = useGetDashboardTasks({ year: currentYear });
   const { data: alerts, isLoading: isLoadingAlerts } = useGetDashboardAlerts({ year: currentYear });
   const { data: trend, isLoading: isLoadingTrend } = useGetDashboardTrend({ year: currentYear });
+  const projectRows = Array.isArray(projects) ? projects : [];
+  const taskRows = Array.isArray(tasks) ? tasks : [];
+  const trendRows = Array.isArray(trend) ? trend : [];
 
   const handleExport = () => {
-    if (!tasks) return;
-    exportToCsv(`dashboard_tasks_${currentYear}`, tasks.map((task) => ({
+    if (taskRows.length === 0) return;
+    exportToCsv(`dashboard_tasks_${currentYear}`, taskRows.map((task) => ({
       "프로젝트명": task.projectName,
       "단위과제명": task.taskName,
       "진척도(%)": task.progress,
@@ -44,7 +49,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard title="전체 진척도" loading={isLoadingSummary} value={`${summary?.overallProgress.toFixed(1) ?? "0.0"}%`} />
+        <SummaryCard title="전체 진척도" loading={isLoadingSummary} value={formatPercent(summary?.overallProgress)} />
         <SummaryCard title="프로젝트 / 과제" loading={isLoadingSummary} value={`${summary?.totalProjects ?? 0} / ${summary?.totalTasks ?? 0}`} />
         <SummaryCard title="총 지표수" loading={isLoadingSummary} value={String(summary?.totalIndicators ?? 0)} />
         <SummaryCard title="승인 완료" loading={isLoadingSummary} value={String(summary?.approvedCount ?? 0)} className="text-green-600" />
@@ -57,11 +62,11 @@ export default function Dashboard() {
             {isLoadingProjects ? <Skeleton className="h-[300px] w-full" /> : (
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={projects} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart data={projectRows} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" domain={[0, 100]} />
                     <YAxis dataKey="projectName" type="category" width={150} tick={{ fontSize: 12 }} />
-                    <RechartsTooltip formatter={(value: number) => [`${value.toFixed(1)}%`, "진척도"]} />
+                    <RechartsTooltip formatter={(value: number | null | undefined) => [formatPercent(value), "진척도"]} />
                     <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -76,11 +81,11 @@ export default function Dashboard() {
             {isLoadingTrend ? <Skeleton className="h-[300px] w-full" /> : (
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={trend} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <LineChart data={trendRows} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                     <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} width={40} />
-                    <RechartsTooltip formatter={(value: number, name: string) => [`${value?.toFixed(1)}%`, name]} />
+                    <RechartsTooltip formatter={(value: number | null | undefined, name: string) => [formatPercent(value), name]} />
                     <Legend />
                     <Line type="monotone" dataKey="targetProgress" name="목표 진척도" stroke="hsl(var(--muted-foreground))" strokeDasharray="5 5" dot={false} />
                     <Line type="monotone" dataKey="actualProgress" name="실적 진척도" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} />
@@ -108,20 +113,20 @@ export default function Dashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {tasks?.map((task) => (
+                    {taskRows.map((task) => (
                       <TableRow key={task.taskId}>
                         <TableCell className="font-medium">{task.taskName}</TableCell>
                         <TableCell className="text-muted-foreground">{task.projectName}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {task.progress.toFixed(1)}%
+                            {formatPercent(task.progress)}
                             {task.isOverTarget && <Badge variant="secondary" className="bg-green-100 text-green-800">초과달성</Badge>}
                           </div>
                         </TableCell>
                         <TableCell className="text-right">{task.approvedCount} / {task.indicatorCount}</TableCell>
                       </TableRow>
                     ))}
-                    {(!tasks || tasks.length === 0) && (
+                    {taskRows.length === 0 && (
                       <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">데이터가 없습니다.</TableCell></TableRow>
                     )}
                   </TableBody>
