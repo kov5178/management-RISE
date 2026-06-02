@@ -10,7 +10,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { formatBusinessPeriod, getBusinessYearFromDate } from "@/lib/business-year";
 
-const formatPercent = (value: number | null | undefined) => `${(value ?? 0).toFixed(1)}%`;
+const formatPercent = (value: unknown) => {
+  const numericValue = typeof value === "number" ? value : Number(value ?? 0);
+  return `${Number.isFinite(numericValue) ? numericValue.toFixed(1) : "0.0"}%`;
+};
 
 export default function Dashboard() {
   const currentYear = getBusinessYearFromDate(new Date());
@@ -66,7 +69,7 @@ export default function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" domain={[0, 100]} />
                     <YAxis dataKey="projectName" type="category" width={150} tick={{ fontSize: 12 }} />
-                    <RechartsTooltip formatter={(value: number | null | undefined) => [formatPercent(value), "진척도"]} />
+                    <RechartsTooltip formatter={(value) => [formatPercent(value), "진척도"]} />
                     <Bar dataKey="progress" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -85,7 +88,7 @@ export default function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                     <YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} width={40} />
-                    <RechartsTooltip formatter={(value: number | null | undefined, name: string) => [formatPercent(value), name]} />
+                    <RechartsTooltip formatter={(value, name) => [formatPercent(value), name]} />
                     <Legend />
                     <Line type="monotone" dataKey="targetProgress" name="목표 진척도" stroke="hsl(var(--muted-foreground))" strokeDasharray="5 5" dot={false} />
                     <Line type="monotone" dataKey="actualProgress" name="실적 진척도" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} connectNulls={false} />

@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { db, indicatorResultsTable, indicatorTargetsTable, indicatorsTable } from "@workspace/db";
 import {
   CreateResultBody,
@@ -90,6 +90,28 @@ router.post("/results", async (req, res): Promise<void> => {
   const [result] = await db
     .insert(indicatorResultsTable)
     .values({ ...parsed.data, calculatedValue, progressRate })
+    .onConflictDoUpdate({
+      target: [indicatorResultsTable.indicatorId, indicatorResultsTable.year],
+      set: {
+        marValue: sql`excluded.mar_value`,
+        aprValue: sql`excluded.apr_value`,
+        mayValue: sql`excluded.may_value`,
+        junValue: sql`excluded.jun_value`,
+        julValue: sql`excluded.jul_value`,
+        augValue: sql`excluded.aug_value`,
+        sepValue: sql`excluded.sep_value`,
+        octValue: sql`excluded.oct_value`,
+        novValue: sql`excluded.nov_value`,
+        decValue: sql`excluded.dec_value`,
+        janValue: sql`excluded.jan_value`,
+        febValue: sql`excluded.feb_value`,
+        note: sql`excluded.note`,
+        status: sql`excluded.status`,
+        calculatedValue,
+        progressRate,
+        updatedAt: new Date(),
+      },
+    })
     .returning();
   res.status(201).json(GetResultResponse.parse(serialize(result)));
 });
