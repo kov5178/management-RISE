@@ -298,11 +298,6 @@ export default function Results() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>입력 현황</Label>
-              <MonthlySummary monthly={toMonthlyValues(toPayloadValues(monthlyValues))} total={draftTotal} />
-            </div>
-
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>상태</Label>
