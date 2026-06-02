@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, count, sql } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 import {
   db,
   projectsTable,
@@ -17,6 +17,72 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+const BUSINESS_MONTHS = [
+  { month: "mar", resultKey: "marValue", monthLabel: "3월" },
+  { month: "apr", resultKey: "aprValue", monthLabel: "4월" },
+  { month: "may", resultKey: "mayValue", monthLabel: "5월" },
+  { month: "jun", resultKey: "junValue", monthLabel: "6월" },
+  { month: "jul", resultKey: "julValue", monthLabel: "7월" },
+  { month: "aug", resultKey: "augValue", monthLabel: "8월" },
+  { month: "sep", resultKey: "sepValue", monthLabel: "9월" },
+  { month: "oct", resultKey: "octValue", monthLabel: "10월" },
+  { month: "nov", resultKey: "novValue", monthLabel: "11월" },
+  { month: "dec", resultKey: "decValue", monthLabel: "12월" },
+  { month: "jan", resultKey: "janValue", monthLabel: "1월" },
+  { month: "feb", resultKey: "febValue", monthLabel: "2월" },
+] as const;
+
+type ResultMonthKey = (typeof BUSINESS_MONTHS)[number]["resultKey"];
+
+function toNumber(value: unknown, fallback = 0) {
+  const numericValue = typeof value === "number" ? value : Number(value ?? fallback);
+  return Number.isFinite(numericValue) ? numericValue : fallback;
+}
+
+function roundOne(value: number) {
+  return Math.round(value * 10) / 10;
+}
+
+function parseNumberParam(value: unknown) {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  const parsed = Number(rawValue);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function calculateMonthlyTrend(
+  targetValue: unknown,
+  result: Partial<Record<ResultMonthKey, unknown>> | undefined,
+) {
+  const annualTarget = toNumber(targetValue);
+  let cumulativeActual = 0;
+
+  return BUSINESS_MONTHS.map((month, index) => {
+    cumulativeActual += toNumber(result?.[month.resultKey]);
+    const monthlyTargetValue = roundOne((annualTarget * (index + 1)) / BUSINESS_MONTHS.length);
+    const monthlyActualValue = roundOne(cumulativeActual);
+
+    return {
+      month: month.month,
+      monthLabel: month.monthLabel,
+      targetValue: monthlyTargetValue,
+      actualValue: monthlyActualValue,
+      progressRate: calculateProgress(monthlyActualValue, monthlyTargetValue, undefined),
+    };
+  });
+}
+
+function calculateProgress(actualValue: number, targetValue: number, storedProgress: unknown) {
+  const stored = typeof storedProgress === "number" || typeof storedProgress === "string"
+    ? Number(storedProgress)
+    : NaN;
+  if (Number.isFinite(stored)) return roundOne(stored);
+  return targetValue > 0 ? roundOne((actualValue / targetValue) * 100) : 0;
+}
+
+function getIndicatorKey(indicator: typeof indicatorsTable.$inferSelect) {
+  return indicator.name.trim();
+}
 
 router.get("/dashboard/summary", async (req, res): Promise<void> => {
   const query = GetDashboardSummaryQueryParams.safeParse(req.query);
@@ -140,6 +206,209 @@ router.get("/dashboard/tasks", async (req, res): Promise<void> => {
   });
 
   res.json(data);
+});
+
+router.get("/dashboard/project-indicators", async (req, res): Promise<void> => {
+  const year = parseNumberParam(req.query.year) ?? new Date().getFullYear();
+  const projectId = parseNumberParam(req.query.projectId);
+
+  const projects = await db.select().from(projectsTable);
+  const tasks = await db.select().from(tasksTable);
+  const indicators = await db.select().from(indicatorsTable);
+  const targets = await db
+    .select()
+    .from(indicatorTargetsTable)
+    .where(eq(indicatorTargetsTable.year, year));
+  const results = await db
+    .select()
+    .from(indicatorResultsTable)
+    .where(eq(indicatorResultsTable.year, year));
+
+  const filteredTasks = projectId ? tasks.filter((task) => task.projectId === projectId) : tasks;
+  const taskIds = new Set(filteredTasks.map((task) => task.id));
+  const projectIndicators = indicators.filter((indicator) => taskIds.has(indicator.taskId));
+
+  const data = projectIndicators.map((indicator) => {
+    const task = tasks.find((item) => item.id === indicator.taskId);
+    const project = projects.find((item) => item.id === task?.projectId);
+    const target = targets.find((item) => item.indicatorId === indicator.id);
+    const result = results.find((item) => item.indicatorId === indicator.id);
+    const targetValue = toNumber(target?.targetValue);
+    const monthly = calculateMonthlyTrend(targetValue, result);
+    const actualValue = monthly.at(-1)?.actualValue ?? 0;
+
+    return {
+      projectId: project?.id ?? null,
+      projectName: project?.name ?? "",
+      taskId: task?.id ?? null,
+      taskName: task?.name ?? "",
+      indicatorId: indicator.id,
+      indicatorName: indicator.name,
+      indicatorKey: getIndicatorKey(indicator),
+      targetValue,
+      actualValue: roundOne(actualValue),
+      progressRate: calculateProgress(actualValue, targetValue, undefined),
+      note: result?.note ?? target?.note ?? "",
+      monthly,
+    };
+  });
+
+  res.json(data);
+});
+
+router.get("/dashboard/task-indicators", async (req, res): Promise<void> => {
+  const year = parseNumberParam(req.query.year) ?? new Date().getFullYear();
+  const projectId = parseNumberParam(req.query.projectId);
+  const taskId = parseNumberParam(req.query.taskId);
+
+  const projects = await db.select().from(projectsTable);
+  const tasks = await db.select().from(tasksTable);
+  const indicators = await db.select().from(indicatorsTable);
+  const targets = await db
+    .select()
+    .from(indicatorTargetsTable)
+    .where(eq(indicatorTargetsTable.year, year));
+  const results = await db
+    .select()
+    .from(indicatorResultsTable)
+    .where(eq(indicatorResultsTable.year, year));
+
+  const filteredTasks = tasks.filter((task) => {
+    if (taskId && task.id !== taskId) return false;
+    if (projectId && task.projectId !== projectId) return false;
+    return true;
+  });
+  const taskIds = new Set(filteredTasks.map((task) => task.id));
+  const taskIndicators = indicators.filter((indicator) => taskIds.has(indicator.taskId));
+
+  const data = taskIndicators.map((indicator) => {
+    const task = tasks.find((item) => item.id === indicator.taskId);
+    const project = projects.find((item) => item.id === task?.projectId);
+    const target = targets.find((item) => item.indicatorId === indicator.id);
+    const result = results.find((item) => item.indicatorId === indicator.id);
+    const targetValue = toNumber(target?.targetValue);
+    const monthly = calculateMonthlyTrend(targetValue, result);
+    const actualValue = monthly.at(-1)?.actualValue ?? 0;
+
+    return {
+      projectId: project?.id ?? null,
+      projectName: project?.name ?? "",
+      taskId: task?.id ?? null,
+      taskName: task?.name ?? "",
+      indicatorId: indicator.id,
+      indicatorName: indicator.name,
+      indicatorKey: getIndicatorKey(indicator),
+      targetValue,
+      actualValue: roundOne(actualValue),
+      progressRate: calculateProgress(actualValue, targetValue, undefined),
+      note: result?.note ?? target?.note ?? "",
+      monthly,
+    };
+  });
+
+  res.json(data);
+});
+
+router.get("/dashboard/indicator-task-performance", async (req, res): Promise<void> => {
+  const year = parseNumberParam(req.query.year) ?? new Date().getFullYear();
+  const projectId = parseNumberParam(req.query.projectId);
+  const rawIndicatorName = Array.isArray(req.query.indicatorName)
+    ? req.query.indicatorName[0]
+    : req.query.indicatorName;
+  const indicatorName = String(rawIndicatorName ?? "").trim();
+
+  const projects = await db.select().from(projectsTable);
+  const tasks = await db.select().from(tasksTable);
+  const indicators = await db.select().from(indicatorsTable);
+  const targets = await db
+    .select()
+    .from(indicatorTargetsTable)
+    .where(eq(indicatorTargetsTable.year, year));
+  const results = await db
+    .select()
+    .from(indicatorResultsTable)
+    .where(eq(indicatorResultsTable.year, year));
+
+  const filteredTasks = tasks.filter((task) => !projectId || task.projectId === projectId);
+  const taskIds = new Set(filteredTasks.map((task) => task.id));
+  const filteredIndicators = indicators.filter((indicator) => {
+    if (!taskIds.has(indicator.taskId)) return false;
+    if (!indicatorName) return true;
+    return getIndicatorKey(indicator) === indicatorName;
+  });
+
+  const data = filteredIndicators.map((indicator) => {
+    const task = tasks.find((item) => item.id === indicator.taskId);
+    const project = projects.find((item) => item.id === task?.projectId);
+    const target = targets.find((item) => item.indicatorId === indicator.id);
+    const result = results.find((item) => item.indicatorId === indicator.id);
+    const targetValue = toNumber(target?.targetValue);
+    const monthly = calculateMonthlyTrend(targetValue, result);
+    const actualValue = monthly.at(-1)?.actualValue ?? 0;
+
+    return {
+      projectId: project?.id ?? null,
+      projectName: project?.name ?? "",
+      taskId: task?.id ?? null,
+      taskName: task?.name ?? "",
+      indicatorId: indicator.id,
+      indicatorName: indicator.name,
+      indicatorKey: getIndicatorKey(indicator),
+      targetValue,
+      actualValue: roundOne(actualValue),
+      progressRate: calculateProgress(actualValue, targetValue, undefined),
+      note: result?.note ?? target?.note ?? "",
+      monthly,
+    };
+  });
+
+  res.json(data);
+});
+
+router.get("/dashboard/indicator-monthly-trend", async (req, res): Promise<void> => {
+  const year = parseNumberParam(req.query.year) ?? new Date().getFullYear();
+  const indicatorId = parseNumberParam(req.query.indicatorId);
+
+  if (!indicatorId) {
+    res.status(400).json({ message: "indicatorId is required." });
+    return;
+  }
+
+  const projects = await db.select().from(projectsTable);
+  const tasks = await db.select().from(tasksTable);
+  const indicators = await db.select().from(indicatorsTable);
+  const target = await db
+    .select()
+    .from(indicatorTargetsTable)
+    .where(eq(indicatorTargetsTable.year, year));
+  const result = await db
+    .select()
+    .from(indicatorResultsTable)
+    .where(eq(indicatorResultsTable.year, year));
+
+  const indicator = indicators.find((item) => item.id === indicatorId);
+  const task = tasks.find((item) => item.id === indicator?.taskId);
+  const project = projects.find((item) => item.id === task?.projectId);
+  const indicatorTarget = target.find((item) => item.indicatorId === indicatorId);
+  const indicatorResult = result.find((item) => item.indicatorId === indicatorId);
+  const targetValue = toNumber(indicatorTarget?.targetValue);
+  const monthly = calculateMonthlyTrend(targetValue, indicatorResult);
+  const actualValue = monthly.at(-1)?.actualValue ?? 0;
+
+  res.json({
+    projectId: project?.id ?? null,
+    projectName: project?.name ?? "",
+    taskId: task?.id ?? null,
+    taskName: task?.name ?? "",
+    indicatorId,
+    indicatorName: indicator?.name ?? "",
+    indicatorKey: indicator ? getIndicatorKey(indicator) : "",
+    targetValue,
+    actualValue: roundOne(actualValue),
+    progressRate: calculateProgress(actualValue, targetValue, undefined),
+    note: indicatorResult?.note ?? indicatorTarget?.note ?? "",
+    monthly,
+  });
 });
 
 router.get("/dashboard/alerts", async (req, res): Promise<void> => {
