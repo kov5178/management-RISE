@@ -45,7 +45,7 @@ pnpm workspace monorepo using TypeScript. 국립한국교통대학교 RISE 성�
 
 ### API Routes (artifacts/api-server)
 All routes prefixed with `/api`:
-- `/projects`, `/tasks`, `/indicators`, `/targets`, `/results`, `/evidence`, `/reviews`, `/feedback`, `/users`
+- `/projects`, `/tasks`, `/indicators`, `/targets`, `/results`, `/reviews`, `/feedback`, `/users`
 - `/dashboard/summary`, `/dashboard/projects`, `/dashboard/tasks`, `/dashboard/alerts`, `/dashboard/trend`
 
 ### Frontend Pages (artifacts/rise)
@@ -55,7 +55,6 @@ All routes prefixed with `/api`:
 - `/indicators` — 지표 관리 (상위/하위 지표)
 - `/targets` — 목표값 관리
 - `/results` — 실적 입력 (작성/제출)
-- `/evidence` — 증빙 관리
 - `/reviews` — 검토 관리
 - `/feedback` — 자체평가·환류
 - `/users` — 사용자 관리

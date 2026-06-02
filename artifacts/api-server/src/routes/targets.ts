@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
-import { db, indicatorTargetsTable } from "@workspace/db";
+import { db, indicatorTargetsTable, indicatorsTable } from "@workspace/db";
 import {
   CreateTargetBody,
   UpdateTargetBody,
@@ -39,6 +39,11 @@ router.post("/targets", async (req, res): Promise<void> => {
   const parsed = CreateTargetBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const [indicator] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, parsed.data.indicatorId));
+  if (!indicator || indicator.indicatorType !== "child") {
+    res.status(400).json({ error: "하위지표에 대해서만 목표값을 직접 입력할 수 있습니다." });
     return;
   }
   const [target] = await db.insert(indicatorTargetsTable).values(parsed.data).returning();

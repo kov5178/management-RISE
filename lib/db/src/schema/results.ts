@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, real, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { indicatorsTable } from "./indicators";
@@ -7,9 +7,18 @@ export const indicatorResultsTable = pgTable("indicator_results", {
   id: serial("id").primaryKey(),
   indicatorId: integer("indicator_id").notNull().references(() => indicatorsTable.id, { onDelete: "cascade" }),
   year: integer("year").notNull(),
-  programName: text("program_name").notNull(),
-  resultDate: date("result_date").notNull(),
-  actualValue: real("actual_value").notNull(),
+  marValue: real("mar_value"),
+  aprValue: real("apr_value"),
+  mayValue: real("may_value"),
+  junValue: real("jun_value"),
+  julValue: real("jul_value"),
+  augValue: real("aug_value"),
+  sepValue: real("sep_value"),
+  octValue: real("oct_value"),
+  novValue: real("nov_value"),
+  decValue: real("dec_value"),
+  janValue: real("jan_value"),
+  febValue: real("feb_value"),
   note: text("note"),
   calculatedValue: real("calculated_value"),
   progressRate: real("progress_rate"),

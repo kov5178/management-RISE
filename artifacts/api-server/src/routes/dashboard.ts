@@ -7,7 +7,6 @@ import {
   indicatorsTable,
   indicatorTargetsTable,
   indicatorResultsTable,
-  evidenceFilesTable,
 } from "@workspace/db";
 import {
   GetDashboardSummaryQueryParams,
@@ -111,8 +110,6 @@ router.get("/dashboard/tasks", async (req, res): Promise<void> => {
     .select()
     .from(indicatorResultsTable)
     .where(eq(indicatorResultsTable.year, year));
-  const evidenceFiles = await db.select().from(evidenceFilesTable);
-
   const data = tasks.map((task) => {
     const project = projects.find((p) => p.id === task.projectId);
     const taskIndicators = indicators.filter((i) => i.taskId === task.id);
@@ -130,11 +127,6 @@ router.get("/dashboard/tasks", async (req, res): Promise<void> => {
     const approvedCount = taskResults.filter((r) => r.status === "approved").length;
     const isOverTarget = validProgress.some((p) => p > 100);
 
-    // count results without evidence
-    const resultIds = taskResults.map((r) => r.id);
-    const evidenceResultIds = new Set(evidenceFiles.filter((e) => resultIds.includes(e.resultId)).map((e) => e.resultId));
-    const missingEvidenceCount = taskResults.filter((r) => !evidenceResultIds.has(r.id)).length;
-
     return {
       taskId: task.id,
       taskName: task.name,
@@ -143,7 +135,6 @@ router.get("/dashboard/tasks", async (req, res): Promise<void> => {
       progress: Math.round(progress * 10) / 10,
       indicatorCount: taskIndicators.length,
       approvedCount,
-      missingEvidenceCount,
       isOverTarget,
     };
   });
@@ -162,7 +153,6 @@ router.get("/dashboard/alerts", async (req, res): Promise<void> => {
     .select()
     .from(indicatorResultsTable)
     .where(eq(indicatorResultsTable.year, year));
-  const evidenceFiles = await db.select().from(evidenceFilesTable);
 
   function getNames(indicatorId: number) {
     const indicator = indicators.find((i) => i.id === indicatorId);
@@ -185,18 +175,6 @@ router.get("/dashboard/alerts", async (req, res): Promise<void> => {
       status: r.status,
     }));
 
-  // missing evidence
-  const resultIds = results.map((r) => r.id);
-  const evidenceResultIds = new Set(evidenceFiles.filter((e) => resultIds.includes(e.resultId)).map((e) => e.resultId));
-  const missingEvidenceIndicators = results
-    .filter((r) => !evidenceResultIds.has(r.id))
-    .map((r) => ({
-      indicatorId: r.indicatorId,
-      ...getNames(r.indicatorId),
-      progress: r.progressRate,
-      status: r.status,
-    }));
-
   // revision requested
   const revisionRequestedIndicators = results
     .filter((r) => r.status === "revision_requested")
@@ -207,7 +185,7 @@ router.get("/dashboard/alerts", async (req, res): Promise<void> => {
       status: r.status,
     }));
 
-  res.json({ atRiskIndicators, missingEvidenceIndicators, revisionRequestedIndicators });
+  res.json({ atRiskIndicators, revisionRequestedIndicators });
 });
 
 router.get("/dashboard/trend", async (req, res): Promise<void> => {
@@ -251,15 +229,11 @@ router.get("/dashboard/trend", async (req, res): Promise<void> => {
   const finalAvgProgress =
     withProgress.length > 0
       ? Math.round((withProgress.reduce((a, b) => a + (b.progressRate ?? 0), 0) / withProgress.length) * 10) / 10
-      : null;
-
-  // Monthly accumulation weights: simulate typical government performance reporting cycle
-  // (slow start Q1, ramp up Q2-Q3, plateau Q4)
+      : null;  // Business-year order: Mar through Feb.
   const MONTH_WEIGHTS = [0.0, 0.04, 0.12, 0.22, 0.34, 0.45, 0.55, 0.65, 0.74, 0.83, 0.91, 1.0];
-  // Monthly target weights: linear ramp toward 100% by Dec
   const TARGET_WEIGHTS = [0.08, 0.17, 0.25, 0.33, 0.42, 0.50, 0.58, 0.67, 0.75, 0.83, 0.92, 1.0];
 
-  const MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+  const MONTH_LABELS = ["3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월", "1월", "2월"];
 
   const trend = MONTH_LABELS.map((label, idx) => {
     const actualProgress =

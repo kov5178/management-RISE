@@ -543,10 +543,18 @@ export const ListResultsResponseItem = zod.object({
   id: zod.number(),
   indicatorId: zod.number(),
   year: zod.number(),
-  programName: zod.string(),
-  resultDate: zod.string(),
-  actualValue: zod.number(),
-  note: zod.string().nullish(),
+  marValue: zod.number().nullish(),
+  aprValue: zod.number().nullish(),
+  mayValue: zod.number().nullish(),
+  junValue: zod.number().nullish(),
+  julValue: zod.number().nullish(),
+  augValue: zod.number().nullish(),
+  sepValue: zod.number().nullish(),
+  octValue: zod.number().nullish(),
+  novValue: zod.number().nullish(),
+  decValue: zod.number().nullish(),
+  janValue: zod.number().nullish(),
+  febValue: zod.number().nullish(),  note: zod.string().nullish(),
   calculatedValue: zod.number().nullish(),
   progressRate: zod.number().nullish(),
   status: zod
@@ -562,16 +570,25 @@ export const ListResultsResponseItem = zod.object({
 export const ListResultsResponse = zod.array(ListResultsResponseItem);
 
 /**
- * @summary 실적 입력
+ * @summary 월별 실적 입력
  */
 export const CreateResultBody = zod.object({
   indicatorId: zod.number(),
   year: zod.number(),
-  programName: zod.string(),
-  resultDate: zod.string(),
-  actualValue: zod.number(),
-  note: zod.string().nullish(),
+  marValue: zod.number().nullish(),
+  aprValue: zod.number().nullish(),
+  mayValue: zod.number().nullish(),
+  junValue: zod.number().nullish(),
+  julValue: zod.number().nullish(),
+  augValue: zod.number().nullish(),
+  sepValue: zod.number().nullish(),
+  octValue: zod.number().nullish(),
+  novValue: zod.number().nullish(),
+  decValue: zod.number().nullish(),
+  janValue: zod.number().nullish(),
+  febValue: zod.number().nullish(),  note: zod.string().nullish(),
   selfEvaluation: zod.string().nullish(),
+  status: zod.string().optional(),
 });
 
 /**
@@ -581,29 +598,10 @@ export const GetResultParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const GetResultResponse = zod.object({
-  id: zod.number(),
-  indicatorId: zod.number(),
-  year: zod.number(),
-  programName: zod.string(),
-  resultDate: zod.string(),
-  actualValue: zod.number(),
-  note: zod.string().nullish(),
-  calculatedValue: zod.number().nullish(),
-  progressRate: zod.number().nullish(),
-  status: zod
-    .string()
-    .describe(
-      "draft | submitted | reviewing | revision_requested | approved | rejected",
-    ),
-  selfEvaluation: zod.string().nullish(),
-  submittedAt: zod.string().nullish(),
-  createdAt: zod.string(),
-  updatedAt: zod.string(),
-});
+export const GetResultResponse = ListResultsResponseItem;
 
 /**
- * @summary 실적 수정
+ * @summary 월별 실적 수정
  */
 export const UpdateResultParams = zod.object({
   id: zod.coerce.number(),
@@ -611,34 +609,23 @@ export const UpdateResultParams = zod.object({
 
 export const UpdateResultBody = zod.object({
   year: zod.number().optional(),
-  programName: zod.string().optional(),
-  resultDate: zod.string().optional(),
-  actualValue: zod.number().optional(),
-  note: zod.string().nullish(),
+  marValue: zod.number().nullish(),
+  aprValue: zod.number().nullish(),
+  mayValue: zod.number().nullish(),
+  junValue: zod.number().nullish(),
+  julValue: zod.number().nullish(),
+  augValue: zod.number().nullish(),
+  sepValue: zod.number().nullish(),
+  octValue: zod.number().nullish(),
+  novValue: zod.number().nullish(),
+  decValue: zod.number().nullish(),
+  janValue: zod.number().nullish(),
+  febValue: zod.number().nullish(),  note: zod.string().nullish(),
   selfEvaluation: zod.string().nullish(),
   status: zod.string().optional(),
 });
 
-export const UpdateResultResponse = zod.object({
-  id: zod.number(),
-  indicatorId: zod.number(),
-  year: zod.number(),
-  programName: zod.string(),
-  resultDate: zod.string(),
-  actualValue: zod.number(),
-  note: zod.string().nullish(),
-  calculatedValue: zod.number().nullish(),
-  progressRate: zod.number().nullish(),
-  status: zod
-    .string()
-    .describe(
-      "draft | submitted | reviewing | revision_requested | approved | rejected",
-    ),
-  selfEvaluation: zod.string().nullish(),
-  submittedAt: zod.string().nullish(),
-  createdAt: zod.string(),
-  updatedAt: zod.string(),
-});
+export const UpdateResultResponse = ListResultsResponseItem;
 
 /**
  * @summary 실적 삭제
@@ -654,77 +641,8 @@ export const SubmitResultParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const SubmitResultResponse = zod.object({
-  id: zod.number(),
-  indicatorId: zod.number(),
-  year: zod.number(),
-  programName: zod.string(),
-  resultDate: zod.string(),
-  actualValue: zod.number(),
-  note: zod.string().nullish(),
-  calculatedValue: zod.number().nullish(),
-  progressRate: zod.number().nullish(),
-  status: zod
-    .string()
-    .describe(
-      "draft | submitted | reviewing | revision_requested | approved | rejected",
-    ),
-  selfEvaluation: zod.string().nullish(),
-  submittedAt: zod.string().nullish(),
-  createdAt: zod.string(),
-  updatedAt: zod.string(),
-});
+export const SubmitResultResponse = ListResultsResponseItem;
 
-/**
- * @summary 증빙자료 목록
- */
-export const ListEvidenceQueryParams = zod.object({
-  resultId: zod.coerce.number().optional(),
-});
-
-export const ListEvidenceResponseItem = zod.object({
-  id: zod.number(),
-  resultId: zod.number(),
-  fileName: zod.string(),
-  fileUrl: zod.string(),
-  fileSize: zod.number().nullish(),
-  mimeType: zod.string().nullish(),
-  uploadedBy: zod.string().nullish(),
-  createdAt: zod.string(),
-});
-export const ListEvidenceResponse = zod.array(ListEvidenceResponseItem);
-
-/**
- * @summary 증빙자료 등록
- */
-export const CreateEvidenceBody = zod.object({
-  resultId: zod.number(),
-  fileName: zod.string(),
-  fileUrl: zod.string(),
-  fileSize: zod.number().nullish(),
-  mimeType: zod.string().nullish(),
-  uploadedBy: zod.string().nullish(),
-});
-
-/**
- * @summary 증빙자료 삭제
- */
-export const DeleteEvidenceParams = zod.object({
-  id: zod.coerce.number(),
-});
-
-/**
- * @summary 증빙자료 다운로드 (로그인 및 권한 필요)
- */
-export const DownloadEvidenceParams = zod.object({
-  id: zod.coerce.number(),
-});
-
-export const DownloadEvidenceResponse = zod.object({
-  id: zod.number(),
-  fileName: zod.string(),
-  fileUrl: zod.string(),
-});
 
 /**
  * @summary 검토 목록
@@ -1001,7 +919,6 @@ export const GetDashboardTasksResponseItem = zod.object({
   progress: zod.number(),
   indicatorCount: zod.number(),
   approvedCount: zod.number(),
-  missingEvidenceCount: zod.number(),
   isOverTarget: zod.boolean(),
 });
 export const GetDashboardTasksResponse = zod.array(
@@ -1017,16 +934,6 @@ export const GetDashboardAlertsQueryParams = zod.object({
 
 export const GetDashboardAlertsResponse = zod.object({
   atRiskIndicators: zod.array(
-    zod.object({
-      indicatorId: zod.number(),
-      indicatorName: zod.string(),
-      taskName: zod.string(),
-      projectName: zod.string(),
-      progress: zod.number().nullish(),
-      status: zod.string().nullish(),
-    }),
-  ),
-  missingEvidenceIndicators: zod.array(
     zod.object({
       indicatorId: zod.number(),
       indicatorName: zod.string(),
@@ -1057,11 +964,10 @@ export const GetDashboardTrendQueryParams = zod.object({
 });
 
 export const GetDashboardTrendResponseItem = zod.object({
-  year: zod.number(),
+  month: zod.string(),
+  targetProgress: zod.number(),
+  actualProgress: zod.number().nullish(),
   targetValue: zod.number().nullish(),
-  actualValue: zod.number().nullish(),
-  progress: zod.number().nullish(),
-  projectName: zod.string().nullish(),
 });
 export const GetDashboardTrendResponse = zod.array(
   GetDashboardTrendResponseItem,
