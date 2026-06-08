@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/28691576/README.md)
 # RISE Performance App
 
 Next.js App Router, TypeScript, TailwindCSS, Prisma, PostgreSQL 기반의 RISE 성과관리 웹앱입니다.

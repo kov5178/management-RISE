@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RISE 성과관리</title>
+    <style>
+      :root {
+        --ink: #17202a;
+        --navy: #1f4d68;
+        --teal: #1f8a8a;
+        --mint: #b7e4d6;
+        --gold: #f2b84b;
+        --cloud: #f5f7fb;
+        --line: #dbe3ea;
+        --muted: #657384;
+        --white: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(183, 228, 214, 0.5), transparent 32rem),
+          linear-gradient(180deg, #fbfcff 0%, #eef3f8 100%);
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      .page {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 48px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--navy);
+        color: var(--white);
+        font-size: 20px;
+        font-weight: 800;
+      }
+
+      .brand strong {
+        display: block;
+        color: var(--navy);
+        font-size: 14px;
+      }
+
+      .brand span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn {
+        border: 0;
+        border-radius: 8px;
+        padding: 11px 16px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .btn-primary {
+        background: var(--ink);
+        color: var(--white);
+      }
+
+      .btn-secondary {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--ink);
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: 1.02fr 0.98fr;
+        gap: 42px;
+        align-items: center;
+        padding: 70px 0 38px;
+      }
+
+      .eyebrow {
+        margin: 0 0 16px;
+        color: var(--teal);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 720px;
+        margin: 0;
+        font-size: clamp(42px, 6vw, 68px);
+        line-height: 1.05;
+        letter-spacing: 0;
+      }
+
+      .lead {
+        max-width: 650px;
+        margin: 24px 0 0;
+        color: #536171;
+        font-size: 18px;
+        line-height: 1.75;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      .panel {
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: 0 18px 60px rgba(23, 32, 42, 0.1);
+        backdrop-filter: blur(10px);
+      }
+
+      .focus-card {
+        padding: 20px;
+      }
+
+      .focus-inner {
+        border-radius: 10px;
+        padding: 24px;
+        background: var(--ink);
+        color: var(--white);
+      }
+
+      .focus-heading {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .focus-heading p {
+        margin: 0 0 8px;
+        color: var(--mint);
+        font-size: 14px;
+      }
+
+      .focus-heading h2 {
+        margin: 0;
+        font-size: 26px;
+      }
+
+      .badge {
+        border-radius: 8px;
+        padding: 7px 10px;
+        background: var(--gold);
+        color: var(--ink);
+        font-weight: 900;
+      }
+
+      .progress-track {
+        height: 12px;
+        margin-top: 34px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .progress-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: var(--mint);
+      }
+
+      .mini-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 16px;
+      }
+
+      .mini-card,
+      .metric-card,
+      .objective-list,
+      .rhythm-card {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--white);
+      }
+
+      .mini-card {
+        padding: 16px;
+      }
+
+      .mini-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .mini-card strong {
+        display: block;
+        margin-top: 12px;
+        color: var(--navy);
+        font-size: 32px;
+      }
+
+      .mini-card span {
+        display: block;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .section-title {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 36px 0 20px;
+        border-top: 1px solid rgba(219, 227, 234, 0.85);
+      }
+
+      .section-title h2 {
+        margin: 0;
+        font-size: 32px;
+      }
+
+      .section-title p {
+        margin: 8px 0 0;
+        color: var(--muted);
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+      }
+
+      .metric-card {
+        padding: 20px;
+        box-shadow: 0 14px 42px rgba(23, 32, 42, 0.07);
+      }
+
+      .metric-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .metric-head span:first-child {
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .trend {
+        border-radius: 7px;
+        padding: 6px 8px;
+        background: #e9f8f1;
+        color: #166444;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .metric-value {
+        margin: 18px 0 0;
+        font-size: 34px;
+        font-weight: 900;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 22px;
+        margin-top: 22px;
+      }
+
+      .objective-list,
+      .rhythm-card {
+        padding: 24px;
+        box-shadow: 0 14px 42px rgba(23, 32, 42, 0.07);
+      }
+
+      .objective-list h3,
+      .rhythm-card h3 {
+        margin: 0;
+        font-size: 21px;
+      }
+
+      .objective-list > p,
+      .rhythm-card > p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .objective {
+        padding: 22px 0;
+        border-bottom: 1px solid #edf1f4;
+      }
+
+      .objective:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .objective-title {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .objective-title strong {
+        display: block;
+        line-height: 1.45;
+      }
+
+      .objective-title span {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .status {
+        width: fit-content;
+        border-radius: 7px;
+        padding: 6px 9px;
+        background: #e9f8f1;
+        color: #166444;
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .status.warning {
+        background: #fff5db;
+        color: #8a5b00;
+      }
+
+      .objective-progress {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .objective-progress .progress-track {
+        flex: 1;
+        height: 9px;
+        margin: 0;
+        background: #edf1f4;
+      }
+
+      .objective-progress .progress-fill {
+        background: var(--teal);
+      }
+
+      .objective-progress b {
+        width: 44px;
+        text-align: right;
+        color: var(--navy);
+        font-size: 14px;
+      }
+
+      .rhythm-list {
+        display: grid;
+        gap: 18px;
+        margin-top: 22px;
+      }
+
+      .rhythm-item {
+        display: flex;
+        gap: 13px;
+      }
+
+      .rhythm-number {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--cloud);
+        color: var(--navy);
+        font-weight: 900;
+      }
+
+      .rhythm-item strong {
+        display: block;
+      }
+
+      .rhythm-item span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      @media (max-width: 920px) {
+        .hero,
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .metrics {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 640px) {
+        .topbar,
+        .section-title,
+        .objective-title {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .nav-actions,
+        .hero-actions {
+          width: 100%;
+        }
+
+        .btn {
+          width: 100%;
+        }
+
+        .hero {
+          padding-top: 48px;
+        }
+
+        .mini-grid,
+        .metrics {
+          grid-template-columns: 1fr;
+        }
+
+        .focus-heading {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div class="brand" aria-label="RISE 성과관리">
+          <div class="brand-mark">R</div>
+          <div>
+            <strong>RISE</strong>
+            <span>성과관리 플랫폼</span>
+          </div>
+        </div>
+        <div class="nav-actions">
+          <button class="btn btn-secondary" type="button">목표 보기</button>
+          <button class="btn btn-primary" type="button">새 체크인</button>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Review · Insight · Support · Execution</p>
+          <h1>목표와 성장을 같은 화면에서 관리하세요.</h1>
+          <p class="lead">
+            RISE는 조직 목표, 개인 성과, 주간 체크인, 코칭 피드백을 연결해
+            성과관리를 더 명확하고 꾸준하게 만드는 웹앱입니다.
+          </p>
+          <div class="hero-actions">
+            <button class="btn btn-primary" type="button">대시보드 시작</button>
+            <button class="btn btn-secondary" type="button">구성 살펴보기</button>
+          </div>
+        </div>
+
+        <aside class="panel focus-card">
+          <div class="focus-inner">
+            <div class="focus-heading">
+              <div>
+                <p>Quarter Focus</p>
+                <h2>고객 성공 지표 개선</h2>
+              </div>
+              <div class="badge">72%</div>
+            </div>
+            <div class="progress-track" aria-label="고객 성공 지표 개선 진행률 72%">
+              <div class="progress-fill" style="width: 72%"></div>
+            </div>
+          </div>
+
+          <div class="mini-grid">
+            <article class="mini-card">
+              <p>정렬된 목표</p>
+              <strong>12</strong>
+              <span>이번 분기 핵심 목표</span>
+            </article>
+            <article class="mini-card">
+              <p>진행 체크인</p>
+              <strong>84%</strong>
+              <span>주간 업데이트 완료율</span>
+            </article>
+            <article class="mini-card">
+              <p>피드백 루프</p>
+              <strong>37</strong>
+              <span>최근 30일 코칭 기록</span>
+            </article>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section-title">
+        <div>
+          <h2>성과관리 현황</h2>
+          <p>분기 목표, 주간 체크인, 피드백 흐름을 한곳에서 확인합니다.</p>
+        </div>
+        <button class="btn btn-primary" type="button">리포트 생성</button>
+      </section>
+
+      <section class="metrics" aria-label="성과 지표">
+        <article class="metric-card">
+          <div class="metric-head">
+            <span>목표 달성률</span>
+            <span class="trend">+8%p</span>
+          </div>
+          <p class="metric-value">76%</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-head">
+            <span>체크인 완료</span>
+            <span class="trend">+6건</span>
+          </div>
+          <p class="metric-value">42/50</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-head">
+            <span>코칭 피드백</span>
+            <span class="trend">+4건</span>
+          </div>
+          <p class="metric-value">18</p>
+        </article>
+        <article class="metric-card">
+          <div class="metric-head">
+            <span>리스크 목표</span>
+            <span class="trend">-2건</span>
+          </div>
+          <p class="metric-value">3</p>
+        </article>
+      </section>
+
+      <section class="dashboard-grid">
+        <div class="objective-list">
+          <h3>핵심 목표</h3>
+          <p>진행률과 리스크 신호를 빠르게 확인하세요.</p>
+
+          <article class="objective">
+            <div class="objective-title">
+              <div>
+                <strong>신규 고객 온보딩 리드타임 20% 단축</strong>
+                <span>Customer Success</span>
+              </div>
+              <span class="status">정상</span>
+            </div>
+            <div class="objective-progress">
+              <div class="progress-track">
+                <div class="progress-fill" style="width: 82%"></div>
+              </div>
+              <b>82%</b>
+            </div>
+          </article>
+
+          <article class="objective">
+            <div class="objective-title">
+              <div>
+                <strong>핵심 인재 성장 계획 100% 수립</strong>
+                <span>People Team</span>
+              </div>
+              <span class="status warning">주의</span>
+            </div>
+            <div class="objective-progress">
+              <div class="progress-track">
+                <div class="progress-fill" style="width: 64%"></div>
+              </div>
+              <b>64%</b>
+            </div>
+          </article>
+
+          <article class="objective">
+            <div class="objective-title">
+              <div>
+                <strong>제품 품질 회귀 이슈 30% 감소</strong>
+                <span>Product Engineering</span>
+              </div>
+              <span class="status">정상</span>
+            </div>
+            <div class="objective-progress">
+              <div class="progress-track">
+                <div class="progress-fill" style="width: 71%"></div>
+              </div>
+              <b>71%</b>
+            </div>
+          </article>
+        </div>
+
+        <aside class="rhythm-card">
+          <h3>이번 주 리듬</h3>
+          <p>성과관리 루틴을 놓치지 않도록 정리했습니다.</p>
+          <div class="rhythm-list">
+            <div class="rhythm-item">
+              <div class="rhythm-number">1</div>
+              <div>
+                <strong>팀 목표 리뷰</strong>
+                <span>분기 목표와 핵심 결과의 진행률을 업데이트하세요.</span>
+              </div>
+            </div>
+            <div class="rhythm-item">
+              <div class="rhythm-number">2</div>
+              <div>
+                <strong>1:1 성장 대화</strong>
+                <span>최근 체크인과 피드백을 바탕으로 다음 행동을 정합니다.</span>
+              </div>
+            </div>
+            <div class="rhythm-item">
+              <div class="rhythm-number">3</div>
+              <div>
+                <strong>리스크 목표 코칭</strong>
+                <span>주의 상태 목표의 장애물과 지원 요청을 확인하세요.</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>
