@@ -20,13 +20,14 @@ export default function Dashboard() {
   const [selectedProjectId, setSelectedProjectId] = useState("all");
   const [selectedTaskId, setSelectedTaskId] = useState("all");
 
+  const trendQuery = selectedProjectId === "all"
+    ? { year: currentYear }
+    : { year: currentYear, projectId: Number(selectedProjectId) };
+
   const { data: projects, isLoading: isLoadingProjects } = useGetDashboardProjects({ year: currentYear });
   const { data: tasks, isLoading: isLoadingTasks } = useGetDashboardTasks({ year: currentYear });
   const { data: alerts, isLoading: isLoadingAlerts } = useGetDashboardAlerts({ year: currentYear });
-  const { data: trend, isLoading: isLoadingTrend } = useGetDashboardTrend({
-    year: currentYear,
-    projectId: selectedProjectId === "all" ? undefined : Number(selectedProjectId),
-  });
+  const { data: trend, isLoading: isLoadingTrend } = useGetDashboardTrend(trendQuery);
 
   const projectRows = Array.isArray(projects) ? projects : [];
   const taskRows = Array.isArray(tasks) ? tasks : [];
@@ -53,15 +54,15 @@ export default function Dashboard() {
   }, [projectRows, selectedProjectId, selectedTaskId, taskRows]);
 
   const filteredAlerts = useMemo(() => {
-    const selectedProject = filteredProjects[0];
     const selectedTask = selectedTaskId !== "all" ? filteredTasks[0] : null;
+    const taskNames = new Set(filteredTasks.map((task) => task.taskName));
     const items = alerts?.atRiskIndicators ?? [];
     return items.filter((item) => {
       if (selectedTask) return item.taskName === selectedTask.taskName;
-      if (selectedProject) return item.projectName === selectedProject.projectName;
+      if (selectedProjectId !== "all") return taskNames.has(item.taskName);
       return true;
     });
-  }, [alerts?.atRiskIndicators, filteredProjects, filteredTasks, selectedTaskId]);
+  }, [alerts?.atRiskIndicators, filteredTasks, selectedProjectId, selectedTaskId]);
 
   const summary = useMemo(() => {
     const projectCount = selectedTaskId !== "all" ? (filteredTasks.length > 0 ? 1 : 0) : filteredProjects.length;
