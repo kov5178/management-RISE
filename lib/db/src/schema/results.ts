@@ -7,6 +7,7 @@ export const indicatorResultsTable = pgTable("indicator_results", {
   id: serial("id").primaryKey(),
   indicatorId: integer("indicator_id").notNull().references(() => indicatorsTable.id, { onDelete: "cascade" }),
   year: integer("year").notNull(),
+  valueSource: text("value_source").notNull().default("MANUAL"),
   marValue: real("mar_value"),
   aprValue: real("apr_value"),
   mayValue: real("may_value"),
