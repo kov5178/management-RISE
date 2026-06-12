@@ -17,8 +17,6 @@ import Tasks from "@/pages/tasks";
 import Indicators from "@/pages/indicators";
 import Targets from "@/pages/targets";
 import Results from "@/pages/results";
-import Reviews from "@/pages/reviews";
-import Feedback from "@/pages/feedback";
 import Users from "@/pages/users";
 import UserRequests from "@/pages/user-requests";
 import RoleChangeLogs from "@/pages/role-change-logs";
@@ -167,12 +165,6 @@ function AppRoutes() {
         </Route>
         <Route path="/results">
           <RequireAuth><Results /></RequireAuth>
-        </Route>
-        <Route path="/reviews">
-          <RequireAuth><Reviews /></RequireAuth>
-        </Route>
-        <Route path="/feedback">
-          <RequireAuth><Feedback /></RequireAuth>
         </Route>
         <Route path="/users">
           <RequireAdmin><Users /></RequireAdmin>
