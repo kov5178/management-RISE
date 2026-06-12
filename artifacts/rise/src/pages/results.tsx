@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
-import { useListResults, useCreateResult, useUpdateResult, useListIndicators, useListTargets, getListResultsQueryKey } from "@workspace/api-client-react";
+import { useListResults, useCreateResult, useUpdateResult, useListIndicators, useListTargets, useListTasks, getListResultsQueryKey } from "@workspace/api-client-react";
 import type { Indicator, IndicatorResult } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,6 +19,7 @@ import { BUSINESS_MONTHS, type BusinessMonthKey, formatBusinessPeriod, getBusine
 
 type MonthlyDraft = Record<BusinessMonthKey, number | "">;
 type MonthlyValues = Record<BusinessMonthKey, number>;
+type FormulaChild = { indicator: Indicator; value: number };
 
 const emptyMonthlyDraft = (): MonthlyDraft =>
   Object.fromEntries(BUSINESS_MONTHS.map((month) => [month.key, ""])) as MonthlyDraft;
@@ -33,33 +34,61 @@ function calculateProgress(value: number, targetValue: number | null | undefined
   return targetValue ? Math.round((value / targetValue) * 1000) / 10 : null;
 }
 
-function evaluateFormula(formula: string | null | undefined, childValues: number[]) {
-  if (!childValues.length) return 0;
-  if (!formula?.trim()) return childValues.reduce((total, value) => total + value, 0);
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
-  const vars = Object.fromEntries(childValues.map((value, index) => [`child_${index + 1}`, value]));
-  const expression = formula
-    .replace(/\bsum\(children\)/gi, String(childValues.reduce((total, value) => total + value, 0)))
-    .replace(/\bavg\(children\)/gi, String(childValues.reduce((total, value) => total + value, 0) / childValues.length))
+function normalizeAlias(value: string) {
+  return value.trim().replace(/[^0-9a-zA-Z가-힣_]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+function fallbackFormulaValue(children: FormulaChild[]) {
+  return children.reduce((total, child) => total + child.value, 0);
+}
+
+function evaluateFormula(formula: string | null | undefined, children: FormulaChild[]) {
+  if (!children.length) return 0;
+  if (!formula?.trim()) return fallbackFormulaValue(children);
+
+  const vars: Record<string, number> = {};
+  children.forEach((child, index) => {
+    const letterAlias = String.fromCharCode(65 + index);
+    vars[`child_${index + 1}`] = child.value;
+    vars[letterAlias] = child.value;
+    const normalizedName = normalizeAlias(child.indicator.name);
+    if (normalizedName) vars[normalizedName] = child.value;
+  });
+
+  let expression = formula.trim();
+  const namedChildren = [...children].sort((a, b) => b.indicator.name.length - a.indicator.name.length);
+  namedChildren.forEach((child) => {
+    expression = expression.replace(new RegExp(`\\[${escapeRegExp(child.indicator.name)}\\]`, "g"), String(child.value));
+    expression = expression.replace(new RegExp(escapeRegExp(child.indicator.name), "g"), String(child.value));
+  });
+
+  expression = expression
+    .replace(/\bsum\(children\)/gi, String(fallbackFormulaValue(children)))
+    .replace(/\bavg\(children\)/gi, String(fallbackFormulaValue(children) / children.length))
     .replace(/\bavg\(([^)]+)\)/gi, (_, inner: string) => {
       const values = inner.split(",").map((key) => Number(vars[key.trim()] ?? 0));
       return String(values.reduce((total, value) => total + value, 0) / Math.max(values.length, 1));
     });
 
   if (!/^[\d\s+\-*/()._a-zA-Z]+$/.test(expression)) {
-    return childValues.reduce((total, value) => total + value, 0);
+    return fallbackFormulaValue(children);
   }
 
   try {
     return Number(Function(...Object.keys(vars), `"use strict"; return (${expression});`)(...Object.values(vars))) || 0;
   } catch {
-    return childValues.reduce((total, value) => total + value, 0);
+    return fallbackFormulaValue(children);
   }
 }
 
 export default function Results() {
   const currentBusinessYear = getBusinessYearFromDate(new Date());
   const [filterYear, setFilterYear] = useState<string>(currentBusinessYear.toString());
+  const [filterTaskId, setFilterTaskId] = useState<string>("all");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingResult, setEditingResult] = useState<IndicatorResult | null>(null);
   const [indicatorId, setIndicatorId] = useState("");
@@ -68,6 +97,7 @@ export default function Results() {
   const [note, setNote] = useState("");
   const [status, setStatus] = useState("draft");
 
+  const { data: tasks } = useListTasks();
   const { data: indicators } = useListIndicators();
   const { data: targets } = useListTargets({ year: Number(filterYear) });
   const { data: results, isLoading } = useListResults({ year: Number(filterYear) });
@@ -76,11 +106,13 @@ export default function Results() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const taskRows = Array.isArray(tasks) ? tasks : [];
   const indicatorRows = Array.isArray(indicators) ? indicators : [];
   const targetRows = Array.isArray(targets) ? targets : [];
   const resultRows = Array.isArray(results) ? results : [];
-  const parentIndicators = indicatorRows.filter((item) => item.indicatorType === "parent");
-  const childIndicators = indicatorRows.filter((item) => item.indicatorType === "child");
+  const parentIndicators = indicatorRows.filter((item) => item.indicatorType === "parent" && (filterTaskId === "all" || item.taskId === Number(filterTaskId)));
+  const childIndicators = indicatorRows.filter((item) => item.indicatorType === "child" && (filterTaskId === "all" || item.taskId === Number(filterTaskId)));
+  const allChildIndicators = indicatorRows.filter((item) => item.indicatorType === "child");
   const years = Array.from({ length: 5 }, (_, index) => currentBusinessYear - 1 + index);
 
   const resultByIndicator = useMemo(
@@ -92,21 +124,21 @@ export default function Results() {
     targetRows.find((target) => target.indicatorId === indicatorIdValue)?.targetValue ?? null;
 
   const getChildMonthlyValues = (childId: number) => toMonthlyValues(resultByIndicator.get(childId));
-  const getParentChildren = (parentId: number) => childIndicators.filter((child) => child.parentId === parentId);
+  const getParentChildren = (parentId: number) => allChildIndicators.filter((child) => child.parentId === parentId);
 
   const getParentMonthlyValues = (parent: Indicator): MonthlyValues => {
     const children = getParentChildren(parent.id);
     return Object.fromEntries(
       BUSINESS_MONTHS.map((month) => {
-        const values = children.map((child) => getChildMonthlyValues(child.id)[month.key]);
-        return [month.key, evaluateFormula(parent.formula, values)];
+        const formulaChildren = children.map((child) => ({ indicator: child, value: getChildMonthlyValues(child.id)[month.key] }));
+        return [month.key, evaluateFormula(parent.formula, formulaChildren)];
       }),
     ) as MonthlyValues;
   };
 
   const getParentTarget = (parent: Indicator) => {
-    const values = getParentChildren(parent.id).map((child) => findTargetValue(child.id) ?? 0);
-    return evaluateFormula(parent.formula, values);
+    const formulaChildren = getParentChildren(parent.id).map((child) => ({ indicator: child, value: findTargetValue(child.id) ?? 0 }));
+    return evaluateFormula(parent.formula, formulaChildren);
   };
 
   const openEdit = (child: Indicator) => {
@@ -151,7 +183,8 @@ export default function Results() {
 
   const handleExport = () => {
     const rows = childIndicators.map((child) => {
-      const parent = parentIndicators.find((item) => item.id === child.parentId);
+      const parent = indicatorRows.find((item) => item.id === child.parentId);
+      const task = taskRows.find((item) => item.id === child.taskId);
       const result = resultByIndicator.get(child.id);
       const monthly = toMonthlyValues(result);
       const total = sumBusinessMonthValues(monthly);
@@ -159,6 +192,7 @@ export default function Results() {
       const progress = calculateProgress(total, targetValue);
       return {
         "사업연도": filterYear,
+        "단위과제": task?.name ?? "",
         "유형": "하위지표",
         "상위지표": parent?.name ?? "",
         "하위지표": child.name,
@@ -174,6 +208,7 @@ export default function Results() {
   };
 
   const selectedIndicator = childIndicators.find((item) => item.id === Number(indicatorId));
+  const selectedTask = taskRows.find((task) => task.id === Number(filterTaskId));
   const selectedMonthMeta = BUSINESS_MONTHS.find((month) => month.key === selectedMonth);
   const draftTotal = sumBusinessMonthValues(toPayloadValues(monthlyValues));
 
@@ -182,10 +217,17 @@ export default function Results() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">실적 입력</h2>
-          <p className="text-muted-foreground">하위지표별 월간 실적을 입력하고 상위지표 실적은 산출식 기준으로 자동 표시합니다.</p>
+          <p className="text-muted-foreground">단위과제별 하위지표 실적을 입력하면 상위지표 실적은 산출식 기준으로 자동 표시됩니다.</p>
           <p className="text-sm text-muted-foreground mt-1">사업기간: {formatBusinessPeriod(Number(filterYear))}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <Select value={filterTaskId} onValueChange={setFilterTaskId}>
+            <SelectTrigger className="w-[220px]"><SelectValue placeholder="단위과제 선택" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 단위과제</SelectItem>
+              {taskRows.map((task) => <SelectItem key={task.id} value={task.id.toString()}>{task.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Button onClick={handleExport} variant="outline" className="gap-2"><Download className="w-4 h-4" /> CSV 다운로드</Button>
           <Select value={filterYear} onValueChange={setFilterYear}>
             <SelectTrigger className="w-[125px]"><SelectValue /></SelectTrigger>
@@ -193,6 +235,12 @@ export default function Results() {
           </Select>
         </div>
       </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">입력 단위: {selectedTask?.name ?? "전체 단위과제"}</CardTitle>
+        </CardHeader>
+      </Card>
 
       <div className="border rounded-md bg-card overflow-x-auto">
         <Table>
@@ -214,17 +262,21 @@ export default function Results() {
             {isLoading ? (
               Array.from({ length: 4 }).map((_, index) => <TableRow key={index}><TableCell colSpan={8}><Skeleton className="h-5 w-full" /></TableCell></TableRow>)
             ) : parentIndicators.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">등록된 지표가 없습니다.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">선택 단위과제에 등록된 지표가 없습니다.</TableCell></TableRow>
             ) : parentIndicators.map((parent) => {
               const parentMonthly = getParentMonthlyValues(parent);
               const parentTotal = sumBusinessMonthValues(parentMonthly);
               const parentTarget = getParentTarget(parent);
               const parentProgress = calculateProgress(parentTotal, parentTarget);
+              const parentChildren = getParentChildren(parent.id);
               return (
                 <Fragment key={parent.id}>
                   <TableRow className="bg-muted/60">
                     <TableCell><span className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">상위지표</span></TableCell>
-                    <TableCell className="font-semibold">{parent.name}</TableCell>
+                    <TableCell className="font-semibold">
+                      <div>{parent.name}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">산출식: {parent.formula || "하위지표 합계"}</div>
+                    </TableCell>
                     <TableCell><Progress value={Math.min(parentProgress ?? 0, 100)} className="h-2" /><div className="mt-1 text-xs">{parentProgress == null ? "목표 미설정" : `${parentProgress.toFixed(1)}%`}</div></TableCell>
                     <TableCell className="text-right font-semibold">{parentTarget ? parentTarget.toLocaleString() : "-"}</TableCell>
                     <TableCell><MonthlySummary monthly={parentMonthly} total={parentTotal} /></TableCell>
@@ -232,7 +284,7 @@ export default function Results() {
                     <TableCell>-</TableCell>
                     <TableCell className="text-right text-sm text-muted-foreground">지표관리 산출식 기준</TableCell>
                   </TableRow>
-                  {getParentChildren(parent.id).map((child) => {
+                  {parentChildren.map((child) => {
                     const result = resultByIndicator.get(child.id);
                     const monthly = toMonthlyValues(result);
                     const total = sumBusinessMonthValues(monthly);
