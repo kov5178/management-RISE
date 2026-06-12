@@ -15,6 +15,17 @@ import {
 import { serialize } from "../lib/serialize.js";
 
 const router: IRouter = Router();
+const AUTO_FROM_CHILDREN = "AUTO_FROM_CHILDREN";
+const DIRECT_INPUT = "DIRECT_INPUT";
+
+async function syncParentCalculationMode(parentId: number | null | undefined): Promise<void> {
+  if (parentId == null) return;
+  const children = await db.select().from(indicatorsTable).where(eq(indicatorsTable.parentId, parentId));
+  await db
+    .update(indicatorsTable)
+    .set({ calculationMode: children.length > 0 ? AUTO_FROM_CHILDREN : DIRECT_INPUT, updatedAt: new Date() })
+    .where(eq(indicatorsTable.id, parentId));
+}
 
 async function validateIndicatorParent(
   indicatorType: string,
@@ -76,7 +87,15 @@ router.post("/indicators", async (req, res): Promise<void> => {
     res.status(400).json({ error: hierarchyError });
     return;
   }
-  const [indicator] = await db.insert(indicatorsTable).values(parsed.data).returning();
+
+  const values = {
+    ...parsed.data,
+    calculationMode: parsed.data.indicatorType === "parent" ? DIRECT_INPUT : DIRECT_INPUT,
+  };
+  const [indicator] = await db.insert(indicatorsTable).values(values).returning();
+  if (indicator.indicatorType === "child") {
+    await syncParentCalculationMode(indicator.parentId);
+  }
   res.status(201).json(GetIndicatorResponse.parse(serialize(indicator)));
 });
 
@@ -110,15 +129,17 @@ router.patch("/indicators/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "지표를 찾을 수 없습니다." });
     return;
   }
+  const nextParentId = parsed.data.parentId === undefined ? existing.parentId : parsed.data.parentId;
   const hierarchyError = await validateIndicatorParent(
     parsed.data.indicatorType ?? existing.indicatorType,
-    parsed.data.parentId === undefined ? existing.parentId : parsed.data.parentId,
+    nextParentId,
     existing.taskId,
   );
   if (hierarchyError) {
     res.status(400).json({ error: hierarchyError });
     return;
   }
+
   const [indicator] = await db
     .update(indicatorsTable)
     .set({ ...parsed.data, updatedAt: new Date() })
@@ -127,6 +148,10 @@ router.patch("/indicators/:id", async (req, res): Promise<void> => {
   if (!indicator) {
     res.status(404).json({ error: "지표를 찾을 수 없습니다." });
     return;
+  }
+  if (existing.indicatorType === "child" || indicator.indicatorType === "child") {
+    await syncParentCalculationMode(existing.parentId);
+    await syncParentCalculationMode(indicator.parentId);
   }
   res.json(UpdateIndicatorResponse.parse(serialize(indicator)));
 });
@@ -141,6 +166,9 @@ router.delete("/indicators/:id", async (req, res): Promise<void> => {
   if (!indicator) {
     res.status(404).json({ error: "지표를 찾을 수 없습니다." });
     return;
+  }
+  if (indicator.indicatorType === "child") {
+    await syncParentCalculationMode(indicator.parentId);
   }
   res.sendStatus(204);
 });
