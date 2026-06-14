@@ -8,9 +8,6 @@ import {
   UpdateIndicatorParams,
   DeleteIndicatorParams,
   ListIndicatorsQueryParams,
-  ListIndicatorsResponse,
-  GetIndicatorResponse,
-  UpdateIndicatorResponse,
 } from "@workspace/api-zod";
 import { serialize } from "../lib/serialize.js";
 
@@ -62,7 +59,7 @@ router.get("/indicators", async (req, res): Promise<void> => {
     q = q.where(and(...conditions));
   }
   const indicators = await q.orderBy(indicatorsTable.createdAt);
-  res.json(ListIndicatorsResponse.parse(serialize(indicators)));
+  res.json(serialize(indicators));
 });
 
 router.post("/indicators", async (req, res): Promise<void> => {
@@ -76,8 +73,12 @@ router.post("/indicators", async (req, res): Promise<void> => {
     res.status(400).json({ error: hierarchyError });
     return;
   }
-  const [indicator] = await db.insert(indicatorsTable).values(parsed.data).returning();
-  res.status(201).json(GetIndicatorResponse.parse(serialize(indicator)));
+  const [indicator] = await db.insert(indicatorsTable).values({
+    ...parsed.data,
+    sourceIndicatorId: `manual-${Date.now()}`,
+    calculationMode: parsed.data.indicatorType === "parent" ? "AUTO_FROM_CHILDREN" : "DIRECT_INPUT",
+  }).returning();
+  res.status(201).json(serialize(indicator));
 });
 
 router.get("/indicators/:id", async (req, res): Promise<void> => {
@@ -91,7 +92,7 @@ router.get("/indicators/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "지표를 찾을 수 없습니다." });
     return;
   }
-  res.json(GetIndicatorResponse.parse(serialize(indicator)));
+  res.json(serialize(indicator));
 });
 
 router.patch("/indicators/:id", async (req, res): Promise<void> => {
@@ -128,7 +129,7 @@ router.patch("/indicators/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "지표를 찾을 수 없습니다." });
     return;
   }
-  res.json(UpdateIndicatorResponse.parse(serialize(indicator)));
+  res.json(serialize(indicator));
 });
 
 router.delete("/indicators/:id", async (req, res): Promise<void> => {
