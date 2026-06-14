@@ -34,8 +34,9 @@ const monthlyKeys = [
 ] as const;
 
 type MonthlyKey = (typeof monthlyKeys)[number];
+type ResultValues = Partial<Record<MonthlyKey, number | null | undefined>>;
 
-function sumMonthlyValues(values: Partial<Record<MonthlyKey, number | null | undefined>>): number {
+function sumMonthlyValues(values: ResultValues): number {
   return monthlyKeys.reduce((total, key) => total + Number(values[key] ?? 0), 0);
 }
 
@@ -50,6 +51,88 @@ async function getTargetValue(indicatorId: number, year: number): Promise<number
     .from(indicatorTargetsTable)
     .where(and(eq(indicatorTargetsTable.indicatorId, indicatorId), eq(indicatorTargetsTable.year, year)));
   return target?.targetValue ?? null;
+}
+
+async function recalculateAutoParents(indicatorId: number, year: number): Promise<void> {
+  let [current] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, indicatorId));
+
+  while (current?.parentId != null) {
+    const [parent] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, current.parentId));
+    if (!parent) return;
+
+    if (parent.calculationMode !== "AUTO_FROM_CHILDREN") {
+      current = parent;
+      continue;
+    }
+
+    const children = await db.select().from(indicatorsTable).where(eq(indicatorsTable.parentId, parent.id));
+    const childResults = [];
+    for (const child of children) {
+      const [result] = await db
+        .select()
+        .from(indicatorResultsTable)
+        .where(and(eq(indicatorResultsTable.indicatorId, child.id), eq(indicatorResultsTable.year, year)));
+      if (result) childResults.push(result);
+    }
+
+    if (childResults.length === 0) {
+      current = parent;
+      continue;
+    }
+
+    const monthlyValues = Object.fromEntries(
+      monthlyKeys.map((key) => [key, childResults.reduce((sum, result) => sum + Number(result[key] ?? 0), 0)]),
+    ) as Record<MonthlyKey, number>;
+    const calculatedValue = childResults.reduce((sum, result) => sum + Number(result.calculatedValue ?? 0), 0);
+    const targetValue = await getTargetValue(parent.id, year);
+    const progressRate = calculateProgress(calculatedValue, targetValue);
+    const status = childResults.every((result) => result.status === "submitted") ? "submitted" : "draft";
+
+    await db
+      .insert(indicatorResultsTable)
+      .values({
+        indicatorId: parent.id,
+        year,
+        ...monthlyValues,
+        note: "하위지표 실적 기반 자동산출",
+        calculatedValue,
+        progressRate,
+        status,
+      })
+      .onConflictDoUpdate({
+        target: [indicatorResultsTable.indicatorId, indicatorResultsTable.year],
+        set: {
+          marValue: monthlyValues.marValue,
+          aprValue: monthlyValues.aprValue,
+          mayValue: monthlyValues.mayValue,
+          junValue: monthlyValues.junValue,
+          julValue: monthlyValues.julValue,
+          augValue: monthlyValues.augValue,
+          sepValue: monthlyValues.sepValue,
+          octValue: monthlyValues.octValue,
+          novValue: monthlyValues.novValue,
+          decValue: monthlyValues.decValue,
+          janValue: monthlyValues.janValue,
+          febValue: monthlyValues.febValue,
+          note: "하위지표 실적 기반 자동산출",
+          calculatedValue,
+          progressRate,
+          status,
+          updatedAt: new Date(),
+        },
+      });
+
+    current = parent;
+  }
+}
+
+async function assertDirectInputIndicator(indicatorId: number): Promise<string | null> {
+  const [indicator] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, indicatorId));
+  if (!indicator) return "지표를 찾을 수 없습니다.";
+  if (indicator.calculationMode === "AUTO_FROM_CHILDREN") {
+    return "자동산출 지표는 하위지표 실적으로 계산되므로 직접 입력할 수 없습니다.";
+  }
+  return null;
 }
 
 router.get("/results", async (req, res): Promise<void> => {
@@ -77,9 +160,9 @@ router.post("/results", async (req, res): Promise<void> => {
     return;
   }
 
-  const [detailIndicator] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, parsed.data.indicatorId));
-  if (!detailIndicator || detailIndicator.indicatorType !== "child") {
-    res.status(400).json({ error: "하위지표에 대해서만 월별 실적을 입력할 수 있습니다." });
+  const inputError = await assertDirectInputIndicator(parsed.data.indicatorId);
+  if (inputError) {
+    res.status(400).json({ error: inputError });
     return;
   }
 
@@ -113,6 +196,8 @@ router.post("/results", async (req, res): Promise<void> => {
       },
     })
     .returning();
+
+  await recalculateAutoParents(parsed.data.indicatorId, parsed.data.year);
   res.status(201).json(GetResultResponse.parse(serialize(result)));
 });
 
@@ -149,6 +234,12 @@ router.patch("/results/:id", async (req, res): Promise<void> => {
     return;
   }
 
+  const inputError = await assertDirectInputIndicator(existing.indicatorId);
+  if (inputError) {
+    res.status(400).json({ error: inputError });
+    return;
+  }
+
   const mergedValues = Object.fromEntries(
     monthlyKeys.map((key) => [key, parsed.data[key] === undefined ? existing[key] : parsed.data[key]]),
   ) as Record<MonthlyKey, number | null | undefined>;
@@ -163,6 +254,7 @@ router.patch("/results/:id", async (req, res): Promise<void> => {
     .where(eq(indicatorResultsTable.id, params.data.id))
     .returning();
 
+  await recalculateAutoParents(existing.indicatorId, year);
   res.json(UpdateResultResponse.parse(serialize(result)));
 });
 
