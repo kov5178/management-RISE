@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useListTasks, useCreateTask, useUpdateTask, useDeleteTask, useListProjects, getListTasksQueryKey } from "@workspace/api-client-react";
+import { useListTasks, useCreateTask, useDeleteTask, useListProjects, getListTasksQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const allowedTaskStatuses = ["active", "completed", "planned"] as const;
 type TaskStatus = (typeof allowedTaskStatuses)[number];
+
+type TaskUpdatePayload = {
+  projectId: number;
+  name: string;
+  description: string | null;
+  managerName: string | null;
+  status: TaskStatus;
+};
 
 function isTaskStatus(value: string): value is TaskStatus {
   return allowedTaskStatuses.includes(value as TaskStatus);
@@ -37,22 +45,44 @@ function extractApiErrorMessage(error: unknown): string | null {
   return typeof message === "string" && message.trim() ? message : null;
 }
 
+async function updateTaskRequest(id: number, data: TaskUpdatePayload) {
+  const response = await fetch(`/api/tasks/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  const responseText = await response.text();
+  const responseData = responseText ? JSON.parse(responseText) : null;
+
+  if (!response.ok) {
+    const message =
+      typeof responseData?.error === "string"
+        ? responseData.error
+        : typeof responseData?.message === "string"
+          ? responseData.message
+          : "단위과제 수정에 실패했습니다.";
+    throw new Error(message);
+  }
+
+  return responseData;
+}
+
 export default function Tasks() {
   const [filterProjectId, setFilterProjectId] = useState<string>("all");
   const { data: projects } = useListProjects();
   const { data: tasks, isLoading } = useListTasks(filterProjectId !== "all" ? { projectId: Number(filterProjectId) } : undefined);
   
   const createTask = useCreateTask();
-  const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isEditSaving, setIsEditSaving] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
 
-  // Form states
   const [projectId, setProjectId] = useState<string>("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -73,7 +103,7 @@ export default function Tasks() {
       await createTask.mutateAsync({
         data: { projectId: Number(projectId), name, description, managerName, status }
       });
-      queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: getListTasksQueryKey(), refetchType: "all" });
       toast({ title: "단위과제 생성 성공", description: "새 단위과제가 생성되었습니다." });
       setIsCreateOpen(false);
       resetForm();
@@ -94,26 +124,26 @@ export default function Tasks() {
 
   const handleEdit = async () => {
     if (!editingTask || !projectId || !name.trim() || !isTaskStatus(status)) return;
+
+    setIsEditSaving(true);
     try {
-      await updateTask.mutateAsync({
-        id: editingTask.id,
-        data: {
-          projectId: Number(projectId),
-          name: name.trim(),
-          description: description || null,
-          managerName: managerName || null,
-          status,
-        } as any,
+      await updateTaskRequest(editingTask.id, {
+        projectId: Number(projectId),
+        name: name.trim(),
+        description: description || null,
+        managerName: managerName || null,
+        status,
       });
-      queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() });
-      if (filterProjectId !== "all") {
-        queryClient.invalidateQueries({ queryKey: getListTasksQueryKey({ projectId: Number(filterProjectId) }) });
-      }
+
+      await queryClient.invalidateQueries({ queryKey: getListTasksQueryKey(), refetchType: "all" });
       toast({ title: "단위과제 수정 성공", description: "단위과제 정보가 수정되었습니다." });
       setIsEditOpen(false);
+      setEditingTask(null);
     } catch (e) {
       const message = extractApiErrorMessage(e) ?? "단위과제 수정에 실패했습니다.";
       toast({ title: "수정 실패", description: message, variant: "destructive" });
+    } finally {
+      setIsEditSaving(false);
     }
   };
 
@@ -121,7 +151,7 @@ export default function Tasks() {
     if (!confirm("정말 이 단위과제를 삭제하시겠습니까? 연관된 하위 지표도 영향을 받을 수 있습니다.")) return;
     try {
       await deleteTask.mutateAsync({ id });
-      queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() });
+      await queryClient.invalidateQueries({ queryKey: getListTasksQueryKey(), refetchType: "all" });
       toast({ title: "단위과제 삭제 성공", description: "단위과제가 삭제되었습니다." });
     } catch (e) {
       toast({ title: "삭제 실패", description: "단위과제 삭제에 실패했습니다.", variant: "destructive" });
@@ -327,7 +357,7 @@ export default function Tasks() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
-            <Button onClick={handleEdit} disabled={updateTask.isPending || !name || !projectId || !isTaskStatus(status)}>저장</Button>
+            <Button onClick={handleEdit} disabled={isEditSaving || !name.trim() || !projectId || !isTaskStatus(status)}>저장</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
