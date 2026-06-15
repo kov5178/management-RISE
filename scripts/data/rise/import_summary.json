@@ -1,0 +1,77 @@
+{
+  "source_file": "/mnt/data/성과지표 관리 현황표(260514) 최종_늘봄 수정.xlsm",
+  "source_sheet_used": "2026",
+  "total_indicator_rows": 359,
+  "projects": 6,
+  "tasks": 24,
+  "targets": 1190,
+  "actuals": 217,
+  "indicator_scope_counts": {
+    "PROJECT": 57,
+    "CHUNGBUK": 195,
+    "UNIVERSITY": 107
+  },
+  "source_scope_counts": {
+    "지역 전체": 57,
+    "단위과제 자율": 113,
+    "대학 자율": 107,
+    "지역 전체, 단위과제 자율": 82
+  },
+  "indicator_level_counts": {
+    "PARENT": 110,
+    "CHILD": 249
+  },
+  "calculation_mode_counts": {
+    "AUTO_FROM_CHILDREN": 87,
+    "CHILD": 249,
+    "DIRECT_INPUT": 23
+  },
+  "level_confidence_counts": {
+    "EXPLICIT": 59,
+    "INFERRED": 300
+  },
+  "notes": [
+    "2026 시트를 기준 마스터로 사용했습니다.",
+    "구분2가 비어 있는 행은 지표명, 단위, 행 순서 기준으로 상위/하위지표를 추정했습니다.",
+    "source_level_confidence=INFERRED 행은 서비스 반영 전 관리자 검토가 필요합니다.",
+    "지역 전체, 단위과제 자율은 indicator_scope=CHUNGBUK, is_regional_aggregate=true로 보존했습니다.",
+    "2025 실적은 2026 시트의 '실적값' 후반 컬럼(AH)에서 추출했습니다."
+  ],
+  "classification_revision": "2025_L_formula_based_v2",
+  "formula_parent_count_2025_L": 26,
+  "formula_child_count_2025_L": 59,
+  "formula_component_count_2025_L": 59,
+  "note": "2025 시트 L열 수식이 있는 행을 자동산출 상위지표로, 해당 수식에서 참조된 L행을 하위지표로 확정했습니다. 수식 근거가 없는 기존 추정 행은 INFERRED_NO_2025_L_FORMULA로 표시했습니다.",
+  "known_formula_reference_anomalies": [
+    {
+      "parent_indicator_id": "ind_0226a317b4",
+      "component_indicator_id": "ind_33f5a53d0c",
+      "parent_source_excel_row": "229",
+      "component_source_excel_row": "230",
+      "component_order": "1",
+      "component_role": "VALUE",
+      "weight_cell_2025": "O243",
+      "weight_value_2025": "0.5",
+      "baseline_cell_2025": "",
+      "baseline_value_2025": "",
+      "source_formula_2025_l": "SUM((L230*$O$243)+(L231*$O$244))",
+      "formula_type_from_2025_l": "WEIGHTED_SUM",
+      "component_confidence": "FORMULA_2025_L"
+    },
+    {
+      "parent_indicator_id": "ind_0226a317b4",
+      "component_indicator_id": "ind_74fe936f82",
+      "parent_source_excel_row": "229",
+      "component_source_excel_row": "231",
+      "component_order": "2",
+      "component_role": "VALUE",
+      "weight_cell_2025": "O244",
+      "weight_value_2025": "0.5",
+      "baseline_cell_2025": "",
+      "baseline_value_2025": "",
+      "source_formula_2025_l": "SUM((L230*$O$243)+(L231*$O$244))",
+      "formula_type_from_2025_l": "WEIGHTED_SUM",
+      "component_confidence": "FORMULA_2025_L"
+    }
+  ]
+}
