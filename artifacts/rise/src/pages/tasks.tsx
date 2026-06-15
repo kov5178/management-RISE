@@ -12,6 +12,31 @@ import { Plus, Edit2, Trash2, Filter } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const allowedTaskStatuses = ["active", "completed", "planned"] as const;
+type TaskStatus = (typeof allowedTaskStatuses)[number];
+
+function isTaskStatus(value: string): value is TaskStatus {
+  return allowedTaskStatuses.includes(value as TaskStatus);
+}
+
+function extractApiErrorMessage(error: unknown): string | null {
+  if (!error || typeof error !== "object") return null;
+  const candidate = error as {
+    error?: unknown;
+    message?: unknown;
+    data?: { error?: unknown; message?: unknown };
+    response?: { data?: { error?: unknown; message?: unknown } };
+  };
+  const message =
+    candidate.response?.data?.error ??
+    candidate.response?.data?.message ??
+    candidate.data?.error ??
+    candidate.data?.message ??
+    candidate.error ??
+    candidate.message;
+  return typeof message === "string" && message.trim() ? message : null;
+}
+
 export default function Tasks() {
   const [filterProjectId, setFilterProjectId] = useState<string>("all");
   const { data: projects } = useListProjects();
@@ -68,17 +93,27 @@ export default function Tasks() {
   };
 
   const handleEdit = async () => {
-    if (!editingTask || !name) return;
+    if (!editingTask || !projectId || !name.trim() || !isTaskStatus(status)) return;
     try {
       await updateTask.mutateAsync({
         id: editingTask.id,
-        data: { name, description, managerName, status }
+        data: {
+          projectId: Number(projectId),
+          name: name.trim(),
+          description: description || null,
+          managerName: managerName || null,
+          status,
+        } as any,
       });
       queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() });
+      if (filterProjectId !== "all") {
+        queryClient.invalidateQueries({ queryKey: getListTasksQueryKey({ projectId: Number(filterProjectId) }) });
+      }
       toast({ title: "단위과제 수정 성공", description: "단위과제 정보가 수정되었습니다." });
       setIsEditOpen(false);
     } catch (e) {
-      toast({ title: "수정 실패", description: "단위과제 수정에 실패했습니다.", variant: "destructive" });
+      const message = extractApiErrorMessage(e) ?? "단위과제 수정에 실패했습니다.";
+      toast({ title: "수정 실패", description: message, variant: "destructive" });
     }
   };
 
@@ -251,8 +286,8 @@ export default function Tasks() {
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>소속 프로젝트</Label>
-              <Select value={projectId} onValueChange={setProjectId} disabled>
-                <SelectTrigger className="bg-muted">
+              <Select value={projectId} onValueChange={setProjectId}>
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -292,7 +327,7 @@ export default function Tasks() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
-            <Button onClick={handleEdit} disabled={updateTask.isPending || !name}>저장</Button>
+            <Button onClick={handleEdit} disabled={updateTask.isPending || !name || !projectId || !isTaskStatus(status)}>저장</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
