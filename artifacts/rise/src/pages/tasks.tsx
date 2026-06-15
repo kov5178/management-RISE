@@ -68,11 +68,11 @@ export default function Tasks() {
   };
 
   const handleEdit = async () => {
-    if (!editingTask || !name) return;
+    if (!editingTask || !name || !projectId) return;
     try {
       await updateTask.mutateAsync({
         id: editingTask.id,
-        data: { name, description, managerName, status }
+        data: { projectId: Number(projectId), name, description, managerName, status } as any
       });
       queryClient.invalidateQueries({ queryKey: getListTasksQueryKey() });
       toast({ title: "단위과제 수정 성공", description: "단위과제 정보가 수정되었습니다." });
@@ -251,8 +251,8 @@ export default function Tasks() {
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>소속 프로젝트</Label>
-              <Select value={projectId} onValueChange={setProjectId} disabled>
-                <SelectTrigger className="bg-muted">
+              <Select value={projectId} onValueChange={setProjectId}>
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -292,7 +292,7 @@ export default function Tasks() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>취소</Button>
-            <Button onClick={handleEdit} disabled={updateTask.isPending || !name}>저장</Button>
+            <Button onClick={handleEdit} disabled={updateTask.isPending || !name || !projectId}>저장</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
