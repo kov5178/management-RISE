@@ -13,6 +13,8 @@ export type IndicatorScope = (typeof indicatorScopeEnum.enumValues)[number];
 
 export const indicatorsTable = pgTable("indicators", {
   id: serial("id").primaryKey(),
+  sourceIndicatorId: text("source_indicator_id").unique(),
+  sourceParentIndicatorId: text("source_parent_indicator_id"),
   taskId: integer("task_id").notNull().references(() => tasksTable.id, { onDelete: "cascade" }),
   parentId: integer("parent_id"),
   indicatorType: text("indicator_type").notNull().default("child"),
