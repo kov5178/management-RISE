@@ -1,10 +1,10 @@
-import { pgTable, text, serial, timestamp, integer, real, unique } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, text, serial, timestamp, integer, real, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { indicatorsTable } from "./indicators";
 
-export const indicatorResultValueSources = ["MANUAL", "CALCULATED", "IMPORTED"] as const;
-export type IndicatorResultValueSource = (typeof indicatorResultValueSources)[number];
+export const indicatorResultValueSourceEnum = pgEnum("indicator_result_value_source", ["MANUAL", "CALCULATED", "IMPORTED"]);
+export type IndicatorResultValueSource = (typeof indicatorResultValueSourceEnum.enumValues)[number];
 
 export const indicatorResultsTable = pgTable("indicator_results", {
   id: serial("id").primaryKey(),
@@ -25,7 +25,7 @@ export const indicatorResultsTable = pgTable("indicator_results", {
   note: text("note"),
   calculatedValue: real("calculated_value"),
   progressRate: real("progress_rate"),
-  valueSource: text("value_source").$type<IndicatorResultValueSource>().notNull().default("MANUAL"),
+  valueSource: indicatorResultValueSourceEnum("value_source").notNull().default("MANUAL"),
   status: text("status").notNull().default("draft"),
   selfEvaluation: text("self_evaluation"),
   submittedAt: timestamp("submitted_at", { withTimezone: true }),
