@@ -53,7 +53,8 @@ export function calculateProgress(actualTotal: number | null, targetValue: numbe
   if (actualTotal == null || targetValue == null || targetValue === 0) return null;
   const value = Math.round((actualTotal / targetValue) * 1000) / 10;
   return Number.isFinite(value) ? value : null;
-}\n
+}
+
 function sanitizeResult(value: number): number | null {
   return Number.isFinite(value) ? value : null;
 }
