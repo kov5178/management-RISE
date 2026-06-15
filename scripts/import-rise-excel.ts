@@ -15,7 +15,7 @@ import {
   type IndicatorComponentRole,
   type IndicatorLevel,
   type IndicatorScope,
-} from "@workspace/db";
+} from "../lib/db/src/index";
 
 type CsvRow = Record<string, string>;
 
