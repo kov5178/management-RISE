@@ -15,45 +15,65 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { exportToCsv } from "@/lib/export-excel";
 import { Progress } from "@/components/ui/progress";
-import { BUSINESS_MONTHS, type BusinessMonthKey, formatBusinessPeriod, getBusinessYearFromDate, sumBusinessMonthValues } from "@/lib/business-year";
+import { BUSINESS_MONTHS, type BusinessMonthKey, formatBusinessPeriod, getBusinessYearFromDate } from "@/lib/business-year";
 
 type MonthlyDraft = Record<BusinessMonthKey, number | "">;
-type MonthlyValues = Record<BusinessMonthKey, number>;
+type MonthlyValues = Record<BusinessMonthKey, number | null>;
 
 const emptyMonthlyDraft = (): MonthlyDraft =>
   Object.fromEntries(BUSINESS_MONTHS.map((month) => [month.key, ""])) as MonthlyDraft;
 
 const toMonthlyValues = (row?: Partial<Record<BusinessMonthKey, number | null>>): MonthlyValues =>
-  Object.fromEntries(BUSINESS_MONTHS.map((month) => [month.key, Number(row?.[month.key] ?? 0)])) as MonthlyValues;
+  Object.fromEntries(BUSINESS_MONTHS.map((month) => [month.key, row?.[month.key] ?? null])) as MonthlyValues;
 
 const toPayloadValues = (draft: MonthlyDraft) =>
   Object.fromEntries(BUSINESS_MONTHS.map((month) => [month.key, draft[month.key] === "" ? null : Number(draft[month.key])])) as Record<BusinessMonthKey, number | null>;
 
-function calculateProgress(value: number, targetValue: number | null | undefined) {
-  return targetValue ? Math.round((value / targetValue) * 1000) / 10 : null;
+function sumDefinedMonthlyValues(values: Partial<Record<BusinessMonthKey, number | null | undefined>>) {
+  let total = 0;
+  let hasValue = false;
+  for (const month of BUSINESS_MONTHS) {
+    const value = values[month.key];
+    if (value == null) continue;
+    total += Number(value);
+    hasValue = true;
+  }
+  return hasValue ? total : null;
 }
 
-function evaluateFormula(formula: string | null | undefined, childValues: number[]) {
-  if (!childValues.length) return 0;
-  if (!formula?.trim()) return childValues.reduce((total, value) => total + value, 0);
+function calculateProgress(value: number | null, targetValue: number | null | undefined) {
+  return value != null && targetValue ? Math.round((value / targetValue) * 1000) / 10 : null;
+}
 
-  const vars = Object.fromEntries(childValues.map((value, index) => [`child_${index + 1}`, value]));
-  const expression = formula
-    .replace(/\bsum\(children\)/gi, String(childValues.reduce((total, value) => total + value, 0)))
-    .replace(/\bavg\(children\)/gi, String(childValues.reduce((total, value) => total + value, 0) / childValues.length))
-    .replace(/\bavg\(([^)]+)\)/gi, (_, inner: string) => {
-      const values = inner.split(",").map((key) => Number(vars[key.trim()] ?? 0));
-      return String(values.reduce((total, value) => total + value, 0) / Math.max(values.length, 1));
-    });
+function evaluateFormula(formula: string | null | undefined, children: Array<{ value: number | null; weight?: number | null }>) {
+  if (!children.length) return null;
+  if (children.some((child) => child.value == null)) return null;
 
-  if (!/^[\d\s+\-*/()._a-zA-Z]+$/.test(expression)) {
+  const childValues = children.map((child) => Number(child.value));
+  if (!formula?.trim()) {
+    if (children.some((child) => child.weight != null)) {
+      if (children.some((child) => child.weight == null)) return null;
+      const weighted = children.reduce((total, child) => total + Number(child.value) * Number(child.weight), 0);
+      return Number.isFinite(weighted) ? weighted : null;
+    }
     return childValues.reduce((total, value) => total + value, 0);
   }
 
+  const vars = Object.fromEntries(childValues.map((value, index) => [`child_${index + 1}`, value]));
+  const sum = childValues.reduce((total, value) => total + value, 0);
+  const expression = formula
+    .replace(/\bsum\(children\)/gi, String(sum))
+    .replace(/\bavg\(children\)/gi, String(sum / childValues.length));
+
+  if (!/^[\d\s+\-*/()._a-zA-Z]+$/.test(expression)) {
+    return null;
+  }
+
   try {
-    return Number(Function(...Object.keys(vars), `"use strict"; return (${expression});`)(...Object.values(vars))) || 0;
+    const value = Number(Function(...Object.keys(vars), `"use strict"; return (${expression});`)(...Object.values(vars)));
+    return Number.isFinite(value) ? value : null;
   } catch {
-    return childValues.reduce((total, value) => total + value, 0);
+    return null;
   }
 }
 
@@ -94,25 +114,33 @@ export default function Results() {
   const getChildMonthlyValues = (childId: number) => toMonthlyValues(resultByIndicator.get(childId));
   const getParentChildren = (parentId: number) => childIndicators.filter((child) => child.parentId === parentId);
 
-  const getParentMonthlyValues = (parent: Indicator): MonthlyValues => {
+  const calculateChildrenMonthlyValues = (parent: Indicator): MonthlyValues => {
     const children = getParentChildren(parent.id);
     return Object.fromEntries(
       BUSINESS_MONTHS.map((month) => {
-        const values = children.map((child) => getChildMonthlyValues(child.id)[month.key]);
+        const values = children.map((child) => ({ value: getChildMonthlyValues(child.id)[month.key], weight: child.weight }));
         return [month.key, evaluateFormula(parent.formula, values)];
       }),
     ) as MonthlyValues;
   };
 
-  const getParentTarget = (parent: Indicator) => {
-    const values = getParentChildren(parent.id).map((child) => findTargetValue(child.id) ?? 0);
+  const getParentMonthlyValues = (parent: Indicator): MonthlyValues => {
+    const storedResult = resultByIndicator.get(parent.id);
+    if (storedResult) return toMonthlyValues(storedResult);
+    return calculateChildrenMonthlyValues(parent);
+  };
+
+  const getParentTarget = (parent: Indicator, hasChildren: boolean) => {
+    const directTarget = findTargetValue(parent.id);
+    if (directTarget != null || !hasChildren) return directTarget;
+    const values = getParentChildren(parent.id).map((child) => ({ value: findTargetValue(child.id), weight: child.weight }));
     return evaluateFormula(parent.formula, values);
   };
 
-  const openEdit = (child: Indicator) => {
-    const result = resultByIndicator.get(child.id) ?? null;
+  const openEdit = (indicator: Indicator) => {
+    const result = resultByIndicator.get(indicator.id) ?? null;
     setEditingResult(result);
-    setIndicatorId(child.id.toString());
+    setIndicatorId(indicator.id.toString());
     setMonthlyValues(
       Object.fromEntries(BUSINESS_MONTHS.map((month) => [month.key, result?.[month.key] ?? ""])) as MonthlyDraft,
     );
@@ -124,7 +152,7 @@ export default function Results() {
 
   const handleSave = async () => {
     if (!indicatorId) {
-      toast({ title: "하위지표 확인", description: "월별 실적을 입력할 하위지표를 선택해주세요.", variant: "destructive" });
+      toast({ title: "지표 확인", description: "월별 실적을 입력할 지표를 선택해주세요.", variant: "destructive" });
       return;
     }
 
@@ -154,7 +182,7 @@ export default function Results() {
       const parent = parentIndicators.find((item) => item.id === child.parentId);
       const result = resultByIndicator.get(child.id);
       const monthly = toMonthlyValues(result);
-      const total = sumBusinessMonthValues(monthly);
+      const total = sumDefinedMonthlyValues(monthly);
       const targetValue = findTargetValue(child.id);
       const progress = calculateProgress(total, targetValue);
       return {
@@ -163,9 +191,9 @@ export default function Results() {
         "상위지표": parent?.name ?? "",
         "하위지표": child.name,
         "목표값": targetValue ?? "",
-        "실적합계": total,
+        "실적합계": total ?? "",
         "진척도": progress == null ? "" : `${progress}%`,
-        ...Object.fromEntries(BUSINESS_MONTHS.map((month) => [month.label, monthly[month.key]])),
+        ...Object.fromEntries(BUSINESS_MONTHS.map((month) => [month.label, monthly[month.key] ?? ""])),
         "비고": result?.note ?? "",
         "상태": result?.status ?? "",
       };
@@ -173,9 +201,9 @@ export default function Results() {
     exportToCsv(`monthly_results_${filterYear}`, rows);
   };
 
-  const selectedIndicator = childIndicators.find((item) => item.id === Number(indicatorId));
+  const selectedIndicator = indicatorRows.find((item) => item.id === Number(indicatorId));
   const selectedMonthMeta = BUSINESS_MONTHS.find((month) => month.key === selectedMonth);
-  const draftTotal = sumBusinessMonthValues(toPayloadValues(monthlyValues));
+  const draftTotal = sumDefinedMonthlyValues(toPayloadValues(monthlyValues));
 
   return (
     <div className="space-y-6">
@@ -216,28 +244,44 @@ export default function Results() {
             ) : parentIndicators.length === 0 ? (
               <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">등록된 지표가 없습니다.</TableCell></TableRow>
             ) : parentIndicators.map((parent) => {
+              const children = getParentChildren(parent.id);
+              const isAutoCalculated = children.length > 0;
+              const parentResult = resultByIndicator.get(parent.id);
               const parentMonthly = getParentMonthlyValues(parent);
-              const parentTotal = sumBusinessMonthValues(parentMonthly);
-              const parentTarget = getParentTarget(parent);
-              const parentProgress = calculateProgress(parentTotal, parentTarget);
+              const parentTotal = parentResult?.calculatedValue ?? sumDefinedMonthlyValues(parentMonthly);
+              const parentTarget = getParentTarget(parent, isAutoCalculated);
+              const parentProgress = parentResult?.progressRate ?? calculateProgress(parentTotal, parentTarget);
               return (
                 <Fragment key={parent.id}>
                   <TableRow className="bg-muted/60">
                     <TableCell><span className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">상위지표</span></TableCell>
-                    <TableCell className="font-semibold">{parent.name}</TableCell>
+                    <TableCell className="font-semibold">
+                      <div>{parent.name}</div>
+                      <span className={`mt-1 inline-block rounded px-2 py-0.5 text-xs font-medium ${isAutoCalculated ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+                        {isAutoCalculated ? "자동산출" : "직접입력"}
+                      </span>
+                    </TableCell>
                     <TableCell><Progress value={Math.min(parentProgress ?? 0, 100)} className="h-2" /><div className="mt-1 text-xs">{parentProgress == null ? "목표 미설정" : `${parentProgress.toFixed(1)}%`}</div></TableCell>
-                    <TableCell className="text-right font-semibold">{parentTarget ? parentTarget.toLocaleString() : "-"}</TableCell>
+                    <TableCell className="text-right font-semibold">{parentTarget != null ? parentTarget.toLocaleString() : "-"}</TableCell>
                     <TableCell><MonthlySummary monthly={parentMonthly} total={parentTotal} /></TableCell>
-                    <TableCell className="text-muted-foreground">하위지표 기준 자동산출</TableCell>
-                    <TableCell>-</TableCell>
-                    <TableCell className="text-right text-sm text-muted-foreground">지표관리 산출식 기준</TableCell>
+                    <TableCell className="text-muted-foreground">{parentResult?.note || (isAutoCalculated ? "하위지표 기준 자동산출" : "-")}</TableCell>
+                    <TableCell>{parentResult ? <StatusBadge status={parentResult.status} /> : "-"}</TableCell>
+                    <TableCell className="text-right">
+                      {isAutoCalculated ? (
+                        <span className="text-sm text-muted-foreground">입력 불가</span>
+                      ) : (
+                        <Button variant="outline" size="sm" onClick={() => openEdit(parent)}>
+                          <Edit2 className="w-4 h-4 mr-2" /> 입력/수정
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
-                  {getParentChildren(parent.id).map((child) => {
+                  {children.map((child) => {
                     const result = resultByIndicator.get(child.id);
                     const monthly = toMonthlyValues(result);
-                    const total = sumBusinessMonthValues(monthly);
+                    const total = result?.calculatedValue ?? sumDefinedMonthlyValues(monthly);
                     const targetValue = findTargetValue(child.id);
-                    const progress = calculateProgress(total, targetValue);
+                    const progress = result?.progressRate ?? calculateProgress(total, targetValue);
                     return (
                       <TableRow key={child.id}>
                         <TableCell><span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">하위지표</span></TableCell>
@@ -311,7 +355,7 @@ export default function Results() {
               </div>
               <div className="space-y-2">
                 <Label>합계</Label>
-                <div className="rounded border bg-muted px-3 py-2 text-sm font-semibold">{draftTotal.toLocaleString()}</div>
+                <div className="rounded border bg-muted px-3 py-2 text-sm font-semibold">{draftTotal?.toLocaleString() ?? "-"}</div>
               </div>
             </div>
             <div className="space-y-2">
@@ -343,13 +387,13 @@ function MonthlyHeader() {
   );
 }
 
-function MonthlySummary({ monthly, total }: { monthly: MonthlyValues; total: number }) {
+function MonthlySummary({ monthly, total }: { monthly: MonthlyValues; total: number | null }) {
   return (
     <div className="grid grid-cols-[repeat(13,minmax(44px,1fr))] gap-1 text-xs">
-      <div className="rounded bg-muted px-2 py-1 text-center font-semibold">{total.toLocaleString()}</div>
+      <div className="rounded bg-muted px-2 py-1 text-center font-semibold">{total?.toLocaleString() ?? "-"}</div>
       {BUSINESS_MONTHS.map((month) => (
         <div key={month.key} className="rounded bg-muted px-2 py-1 text-center">
-          {monthly[month.key].toLocaleString()}
+          {monthly[month.key]?.toLocaleString() ?? "-"}
         </div>
       ))}
     </div>
