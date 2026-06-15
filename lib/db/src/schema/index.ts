@@ -1,6 +1,7 @@
 export * from "./projects";
 export * from "./tasks";
 export * from "./indicators";
+export * from "./indicator-components";
 export * from "./targets";
 export * from "./results";
 export * from "./evidence";
