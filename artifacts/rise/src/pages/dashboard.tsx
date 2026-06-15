@@ -1,32 +1,95 @@
-import { useGetDashboardSummary, useGetDashboardProjects, useGetDashboardTasks, useGetDashboardAlerts, useGetDashboardTrend } from "@workspace/api-client-react";
+import { useMemo, useState } from "react";
+import { useGetDashboardProjects, useGetDashboardTasks, useGetDashboardAlerts, useGetDashboardTrend } from "@workspace/api-client-react";
 import type { ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { exportToCsv } from "@/lib/export-excel";
 import { Button } from "@/components/ui/button";
-import { Download, AlertTriangle, RefreshCcw } from "lucide-react";
+import { Download, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatBusinessPeriod, getBusinessYearFromDate } from "@/lib/business-year";
 
 const formatPercent = (value: number | null | undefined) => `${(value ?? 0).toFixed(1)}%`;
+const average = (values: number[]) => values.length > 0 ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 
 export default function Dashboard() {
   const currentYear = getBusinessYearFromDate(new Date());
+  const [selectedProjectId, setSelectedProjectId] = useState("all");
+  const [selectedTaskId, setSelectedTaskId] = useState("all");
 
-  const { data: summary, isLoading: isLoadingSummary } = useGetDashboardSummary({ year: currentYear });
+  const trendQuery = selectedProjectId === "all"
+    ? { year: currentYear }
+    : { year: currentYear, projectId: Number(selectedProjectId) };
+
   const { data: projects, isLoading: isLoadingProjects } = useGetDashboardProjects({ year: currentYear });
   const { data: tasks, isLoading: isLoadingTasks } = useGetDashboardTasks({ year: currentYear });
   const { data: alerts, isLoading: isLoadingAlerts } = useGetDashboardAlerts({ year: currentYear });
-  const { data: trend, isLoading: isLoadingTrend } = useGetDashboardTrend({ year: currentYear });
+  const { data: trend, isLoading: isLoadingTrend } = useGetDashboardTrend(trendQuery);
+
   const projectRows = Array.isArray(projects) ? projects : [];
   const taskRows = Array.isArray(tasks) ? tasks : [];
   const trendRows = Array.isArray(trend) ? trend : [];
 
+  const availableTasks = useMemo(
+    () => selectedProjectId === "all" ? taskRows : taskRows.filter((task) => task.projectId === Number(selectedProjectId)),
+    [selectedProjectId, taskRows],
+  );
+
+  const filteredTasks = useMemo(() => {
+    if (selectedTaskId !== "all") return taskRows.filter((task) => task.taskId === Number(selectedTaskId));
+    if (selectedProjectId !== "all") return taskRows.filter((task) => task.projectId === Number(selectedProjectId));
+    return taskRows;
+  }, [selectedProjectId, selectedTaskId, taskRows]);
+
+  const filteredProjects = useMemo(() => {
+    if (selectedTaskId !== "all") {
+      const task = taskRows.find((item) => item.taskId === Number(selectedTaskId));
+      return task ? projectRows.filter((project) => project.projectId === task.projectId) : [];
+    }
+    if (selectedProjectId !== "all") return projectRows.filter((project) => project.projectId === Number(selectedProjectId));
+    return projectRows;
+  }, [projectRows, selectedProjectId, selectedTaskId, taskRows]);
+
+  const filteredAlerts = useMemo(() => {
+    const selectedTask = selectedTaskId !== "all" ? filteredTasks[0] : null;
+    const taskNames = new Set(filteredTasks.map((task) => task.taskName));
+    const items = alerts?.atRiskIndicators ?? [];
+    return items.filter((item) => {
+      if (selectedTask) return item.taskName === selectedTask.taskName;
+      if (selectedProjectId !== "all") return taskNames.has(item.taskName);
+      return true;
+    });
+  }, [alerts?.atRiskIndicators, filteredTasks, selectedProjectId, selectedTaskId]);
+
+  const summary = useMemo(() => {
+    const projectCount = selectedTaskId !== "all" ? (filteredTasks.length > 0 ? 1 : 0) : filteredProjects.length;
+    const progressValues = filteredTasks.map((task) => task.progress ?? 0);
+    return {
+      overallProgress: Math.round(average(progressValues) * 10) / 10,
+      totalProjects: projectCount,
+      totalTasks: filteredTasks.length,
+      totalIndicators: filteredTasks.reduce((sum, task) => sum + (task.indicatorCount ?? 0), 0),
+      approvedCount: filteredTasks.reduce((sum, task) => sum + (task.approvedCount ?? 0), 0),
+    };
+  }, [filteredProjects.length, filteredTasks, selectedTaskId]);
+
+  const selectedScopeLabel = selectedTaskId !== "all"
+    ? filteredTasks[0]?.taskName ?? "선택 단위과제"
+    : selectedProjectId !== "all"
+      ? filteredProjects[0]?.projectName ?? "선택 프로젝트"
+      : "전체 프로젝트";
+
+  const handleProjectChange = (value: string) => {
+    setSelectedProjectId(value);
+    setSelectedTaskId("all");
+  };
+
   const handleExport = () => {
-    if (taskRows.length === 0) return;
-    exportToCsv(`dashboard_tasks_${currentYear}`, taskRows.map((task) => ({
+    if (filteredTasks.length === 0) return;
+    exportToCsv(`dashboard_tasks_${currentYear}`, filteredTasks.map((task) => ({
       "프로젝트명": task.projectName,
       "단위과제명": task.taskName,
       "진척도(%)": task.progress,
@@ -35,24 +98,46 @@ export default function Dashboard() {
     })));
   };
 
+  const isLoadingSummary = isLoadingProjects || isLoadingTasks;
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">대시보드</h2>
-          <p className="text-muted-foreground">{currentYear}년도 RISE 성과 종합 현황</p>
+          <p className="text-muted-foreground">프로젝트 관리와 단위과제 관리에 입력된 데이터 기준으로 현황을 확인합니다.</p>
           <p className="text-sm text-muted-foreground mt-1">사업기간: {formatBusinessPeriod(currentYear)}</p>
         </div>
-        <Button onClick={handleExport} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" /> CSV 다운로드
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Select value={selectedProjectId} onValueChange={handleProjectChange}>
+            <SelectTrigger className="w-[220px]"><SelectValue placeholder="프로젝트 선택" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 프로젝트</SelectItem>
+              {projectRows.map((project) => <SelectItem key={project.projectId} value={project.projectId.toString()}>{project.projectName}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={selectedTaskId} onValueChange={setSelectedTaskId}>
+            <SelectTrigger className="w-[220px]"><SelectValue placeholder="단위과제 선택" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 단위과제</SelectItem>
+              {availableTasks.map((task) => <SelectItem key={task.taskId} value={task.taskId.toString()}>{task.taskName}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button onClick={handleExport} variant="outline" className="gap-2">
+            <Download className="w-4 h-4" /> CSV 다운로드
+          </Button>
+        </div>
       </div>
 
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-base">현재 확인 범위: {selectedScopeLabel}</CardTitle></CardHeader>
+      </Card>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard title="전체 진척도" loading={isLoadingSummary} value={formatPercent(summary?.overallProgress)} />
-        <SummaryCard title="프로젝트 / 과제" loading={isLoadingSummary} value={`${summary?.totalProjects ?? 0} / ${summary?.totalTasks ?? 0}`} />
-        <SummaryCard title="총 지표수" loading={isLoadingSummary} value={String(summary?.totalIndicators ?? 0)} />
-        <SummaryCard title="승인 완료" loading={isLoadingSummary} value={String(summary?.approvedCount ?? 0)} className="text-green-600" />
+        <SummaryCard title="진척도" loading={isLoadingSummary} value={formatPercent(summary.overallProgress)} />
+        <SummaryCard title="프로젝트 / 과제" loading={isLoadingSummary} value={`${summary.totalProjects} / ${summary.totalTasks}`} />
+        <SummaryCard title="총 지표수" loading={isLoadingSummary} value={String(summary.totalIndicators)} />
+        <SummaryCard title="승인 완료" loading={isLoadingSummary} value={String(summary.approvedCount)} className="text-green-600" />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -62,7 +147,7 @@ export default function Dashboard() {
             {isLoadingProjects ? <Skeleton className="h-[300px] w-full" /> : (
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={projectRows} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                  <BarChart data={filteredProjects} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" domain={[0, 100]} />
                     <YAxis dataKey="projectName" type="category" width={150} tick={{ fontSize: 12 }} />
@@ -113,7 +198,7 @@ export default function Dashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {taskRows.map((task) => (
+                    {filteredTasks.map((task) => (
                       <TableRow key={task.taskId}>
                         <TableCell className="font-medium">{task.taskName}</TableCell>
                         <TableCell className="text-muted-foreground">{task.projectName}</TableCell>
@@ -126,8 +211,8 @@ export default function Dashboard() {
                         <TableCell className="text-right">{task.approvedCount} / {task.indicatorCount}</TableCell>
                       </TableRow>
                     ))}
-                    {taskRows.length === 0 && (
-                      <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">데이터가 없습니다.</TableCell></TableRow>
+                    {filteredTasks.length === 0 && (
+                      <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">선택 범위에 데이터가 없습니다.</TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -136,22 +221,13 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <AlertCard
-            title="위험지표 알림"
-            icon={<AlertTriangle className="w-5 h-5 text-red-500" />}
-            loading={isLoadingAlerts}
-            items={alerts?.atRiskIndicators ?? []}
-            emptyText="위험지표가 없습니다."
-          />
-          <AlertCard
-            title="보완요청 알림"
-            icon={<RefreshCcw className="w-5 h-5 text-blue-500" />}
-            loading={isLoadingAlerts}
-            items={alerts?.revisionRequestedIndicators ?? []}
-            emptyText="보완요청 건이 없습니다."
-          />
-        </div>
+        <AlertCard
+          title="위험지표 알림"
+          icon={<AlertTriangle className="w-5 h-5 text-red-500" />}
+          loading={isLoadingAlerts}
+          items={filteredAlerts}
+          emptyText="선택 범위에 위험지표가 없습니다."
+        />
       </div>
     </div>
   );
@@ -189,7 +265,7 @@ function AlertCard({
       <CardContent>
         {loading ? <Skeleton className="h-20 w-full" /> : (
           <div className="space-y-3">
-            {items.slice(0, 3).map((indicator) => (
+            {items.slice(0, 5).map((indicator) => (
               <div key={indicator.indicatorId} className="flex justify-between items-start border-b pb-3 last:border-0 last:pb-0">
                 <div>
                   <div className="font-medium text-sm">{indicator.indicatorName}</div>
