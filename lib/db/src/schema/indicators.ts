@@ -1,24 +1,33 @@
-import { pgTable, text, serial, timestamp, integer, real, boolean, unique } from "drizzle-orm/pg-core";
+import { pgTable, pgEnum, text, serial, timestamp, integer, real, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { tasksTable } from "./tasks";
 
+export const indicatorCalculationModeEnum = pgEnum("indicator_calculation_mode", ["AUTO_FROM_CHILDREN", "DIRECT_INPUT"]);
+export const indicatorLevelEnum = pgEnum("indicator_level", ["PARENT", "CHILD"]);
+export const indicatorScopeEnum = pgEnum("indicator_scope", ["PROJECT", "CHUNGBUK", "UNIVERSITY"]);
+
+export type IndicatorCalculationMode = (typeof indicatorCalculationModeEnum.enumValues)[number];
+export type IndicatorLevel = (typeof indicatorLevelEnum.enumValues)[number];
+export type IndicatorScope = (typeof indicatorScopeEnum.enumValues)[number];
+
 export const indicatorsTable = pgTable("indicators", {
   id: serial("id").primaryKey(),
+  sourceIndicatorId: text("source_indicator_id").unique(),
+  sourceParentIndicatorId: text("source_parent_indicator_id"),
   taskId: integer("task_id").notNull().references(() => tasksTable.id, { onDelete: "cascade" }),
   parentId: integer("parent_id"),
-  sourceIndicatorId: text("source_indicator_id").notNull(),
   indicatorType: text("indicator_type").notNull().default("child"),
-  indicatorScope: text("indicator_scope").notNull().default("PROJECT"),
+  indicatorScope: indicatorScopeEnum("indicator_scope").notNull().default("PROJECT"),
   sourceScopeName: text("source_scope_name"),
-  calculationMode: text("calculation_mode").notNull().default("DIRECT_INPUT"),
-  sourceLevelConfidence: text("source_level_confidence").notNull().default("EXPLICIT"),
-  sourceLevelName: text("source_level_name"),
-  sourceExcelRow: integer("source_excel_row"),
   isRegionalAggregate: boolean("is_regional_aggregate").notNull().default(false),
+  indicatorLevel: indicatorLevelEnum("indicator_level").notNull().default("CHILD"),
+  calculationMode: indicatorCalculationModeEnum("calculation_mode").notNull().default("DIRECT_INPUT"),
   formulaType: text("formula_type"),
-  baselineValue: real("baseline_value"),
-  ownerName: text("owner_name"),
+  sourceLevelConfidence: text("source_level_confidence").notNull().default("EXPLICIT"),
+  sourceExcelRow: integer("source_excel_row"),
+  normalizedIndicatorName: text("normalized_indicator_name"),
+  reviewRequired: boolean("review_required").notNull().default(false),
   name: text("name").notNull(),
   unit: text("unit"),
   formula: text("formula"),
@@ -26,9 +35,7 @@ export const indicatorsTable = pgTable("indicators", {
   description: text("description"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-}, (t) => [
-  unique("uq_indicators_source_indicator_id").on(t.sourceIndicatorId),
-]);
+});
 
 export const insertIndicatorSchema = createInsertSchema(indicatorsTable).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertIndicator = z.infer<typeof insertIndicatorSchema>;
