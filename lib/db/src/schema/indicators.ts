@@ -8,6 +8,7 @@ export const indicatorsTable = pgTable("indicators", {
   taskId: integer("task_id").notNull().references(() => tasksTable.id, { onDelete: "cascade" }),
   parentId: integer("parent_id"),
   indicatorType: text("indicator_type").notNull().default("child"),
+  calculationMode: text("calculation_mode").notNull().default("DIRECT_INPUT"),
   name: text("name").notNull(),
   unit: text("unit"),
   formula: text("formula"),

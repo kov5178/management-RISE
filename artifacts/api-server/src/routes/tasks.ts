@@ -65,9 +65,20 @@ router.patch("/tasks/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+
+  const projectId = req.body?.projectId === undefined ? undefined : Number(req.body.projectId);
+  if (projectId !== undefined && (!Number.isInteger(projectId) || projectId <= 0)) {
+    res.status(400).json({ error: "유효한 소속 프로젝트를 선택해주세요." });
+    return;
+  }
+
   const [task] = await db
     .update(tasksTable)
-    .set({ ...parsed.data, updatedAt: new Date() })
+    .set({
+      ...parsed.data,
+      ...(projectId !== undefined ? { projectId } : {}),
+      updatedAt: new Date(),
+    })
     .where(eq(tasksTable.id, params.data.id))
     .returning();
   if (!task) {

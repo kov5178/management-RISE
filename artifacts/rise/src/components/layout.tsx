@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Folder, CheckSquare, BarChart, Target, FileText,
-  MessageSquare, RefreshCw, Users, LogOut, LogIn, UserPlus,
+  Users, LogOut, LogIn, UserPlus,
   ClipboardList, ShieldCheck, History, ChevronRight, Clock, AlertTriangle, Settings2
 } from "lucide-react";
 import {
@@ -38,8 +38,6 @@ const NAV_ITEMS = [
   { title: "지표관리", href: "/indicators", icon: BarChart },
   { title: "목표값 관리", href: "/targets", icon: Target },
   { title: "실적 입력", href: "/results", icon: FileText },
-  { title: "검토 관리", href: "/reviews", icon: MessageSquare },
-  { title: "자체평가/환류", href: "/feedback", icon: RefreshCw },
 ];
 
 const USER_MGMT_ITEMS = [
