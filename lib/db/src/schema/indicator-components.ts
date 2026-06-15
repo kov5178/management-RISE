@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, real, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, real, boolean, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { indicatorsTable } from "./indicators";
@@ -20,7 +20,9 @@ export const indicatorComponentsTable = pgTable("indicator_components", {
   reviewRequired: boolean("review_required").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-});
+}, (t) => [
+  unique("uq_indicator_components_parent_component").on(t.parentIndicatorId, t.componentIndicatorId),
+]);
 
 export const insertIndicatorComponentSchema = createInsertSchema(indicatorComponentsTable).omit({
   id: true,
