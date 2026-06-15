@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, and, sql } from "drizzle-orm";
-import { db, indicatorResultsTable, indicatorTargetsTable, indicatorsTable } from "@workspace/db";
+import { db, indicatorResultsTable, indicatorsTable } from "@workspace/db";
 import {
   CreateResultBody,
   UpdateResultBody,
@@ -15,41 +15,34 @@ import {
   SubmitResultResponse,
 } from "@workspace/api-zod";
 import { serialize } from "../lib/serialize.js";
+import {
+  calculateProgress,
+  getIndicatorEntryMode,
+  getTargetValue,
+  mergeMonthlyValues,
+  monthlyKeys,
+  recalculateParentResult,
+  sumMonthlyValues,
+  type MonthlyKey,
+} from "../lib/indicator-calculation.js";
 
 const router: IRouter = Router();
 
-const monthlyKeys = [
-  "marValue",
-  "aprValue",
-  "mayValue",
-  "junValue",
-  "julValue",
-  "augValue",
-  "sepValue",
-  "octValue",
-  "novValue",
-  "decValue",
-  "janValue",
-  "febValue",
-] as const;
-
-type MonthlyKey = (typeof monthlyKeys)[number];
-
-function sumMonthlyValues(values: Partial<Record<MonthlyKey, number | null | undefined>>): number {
-  return monthlyKeys.reduce((total, key) => total + Number(values[key] ?? 0), 0);
+async function recalculateParentIfNeeded(indicatorId: number, year: number): Promise<void> {
+  const [indicator] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, indicatorId));
+  if (indicator?.parentId) {
+    await recalculateParentResult(indicator.parentId, year);
+  }
 }
 
-function calculateProgress(actualTotal: number | null, targetValue: number | null): number | null {
-  if (actualTotal == null || targetValue == null || targetValue === 0) return null;
-  return Math.round((actualTotal / targetValue) * 1000) / 10;
-}
-
-async function getTargetValue(indicatorId: number, year: number): Promise<number | null> {
-  const [target] = await db
-    .select()
-    .from(indicatorTargetsTable)
-    .where(and(eq(indicatorTargetsTable.indicatorId, indicatorId), eq(indicatorTargetsTable.year, year)));
-  return target?.targetValue ?? null;
+async function assertCanSaveResult(indicatorId: number): Promise<void> {
+  const { indicator, children, canDirectInput } = await getIndicatorEntryMode(indicatorId);
+  if (!indicator) {
+    throw new Error("지표를 찾을 수 없습니다.");
+  }
+  if (!canDirectInput && indicator.indicatorType === "parent" && children.length > 0) {
+    throw new Error("하위지표가 있는 상위지표는 자동산출 대상이므로 직접 입력할 수 없습니다.");
+  }
 }
 
 router.get("/results", async (req, res): Promise<void> => {
@@ -77,9 +70,10 @@ router.post("/results", async (req, res): Promise<void> => {
     return;
   }
 
-  const [detailIndicator] = await db.select().from(indicatorsTable).where(eq(indicatorsTable.id, parsed.data.indicatorId));
-  if (!detailIndicator || detailIndicator.indicatorType !== "child") {
-    res.status(400).json({ error: "하위지표에 대해서만 월별 실적을 입력할 수 있습니다." });
+  try {
+    await assertCanSaveResult(parsed.data.indicatorId);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : "실적을 저장할 수 없습니다." });
     return;
   }
 
@@ -113,6 +107,9 @@ router.post("/results", async (req, res): Promise<void> => {
       },
     })
     .returning();
+
+  await recalculateParentIfNeeded(parsed.data.indicatorId, parsed.data.year);
+
   res.status(201).json(GetResultResponse.parse(serialize(result)));
 });
 
@@ -149,9 +146,17 @@ router.patch("/results/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const mergedValues = Object.fromEntries(
-    monthlyKeys.map((key) => [key, parsed.data[key] === undefined ? existing[key] : parsed.data[key]]),
-  ) as Record<MonthlyKey, number | null | undefined>;
+  try {
+    await assertCanSaveResult(existing.indicatorId);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : "실적을 저장할 수 없습니다." });
+    return;
+  }
+
+  const mergedValues = mergeMonthlyValues(
+    Object.fromEntries(monthlyKeys.map((key) => [key, existing[key]])) as Record<MonthlyKey, number | null | undefined>,
+    parsed.data,
+  );
   const year = parsed.data.year ?? existing.year;
   const calculatedValue = sumMonthlyValues(mergedValues);
   const targetValue = await getTargetValue(existing.indicatorId, year);
@@ -162,6 +167,11 @@ router.patch("/results/:id", async (req, res): Promise<void> => {
     .set({ ...parsed.data, calculatedValue, progressRate, updatedAt: new Date() })
     .where(eq(indicatorResultsTable.id, params.data.id))
     .returning();
+
+  await recalculateParentIfNeeded(existing.indicatorId, existing.year);
+  if (year !== existing.year) {
+    await recalculateParentIfNeeded(existing.indicatorId, year);
+  }
 
   res.json(UpdateResultResponse.parse(serialize(result)));
 });
@@ -177,6 +187,9 @@ router.delete("/results/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "실적을 찾을 수 없습니다." });
     return;
   }
+
+  await recalculateParentIfNeeded(result.indicatorId, result.year);
+
   res.sendStatus(204);
 });
 
