@@ -15,6 +15,13 @@ import {
 import { serialize } from "../lib/serialize.js";
 
 const router: IRouter = Router();
+const allowedTaskStatuses = new Set(["active", "completed", "planned"]);
+
+function parseOptionalProjectId(body: unknown): number | undefined {
+  if (!body || typeof body !== "object" || !("projectId" in body)) return undefined;
+  const value = Number((body as { projectId?: unknown }).projectId);
+  return Number.isInteger(value) && value > 0 ? value : NaN;
+}
 
 router.get("/tasks", async (req, res): Promise<void> => {
   const query = ListTasksQueryParams.safeParse(req.query);
@@ -65,9 +72,24 @@ router.patch("/tasks/:id", async (req, res): Promise<void> => {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
+
+  const projectId = parseOptionalProjectId(req.body);
+  if (Number.isNaN(projectId)) {
+    res.status(400).json({ error: "유효한 소속 프로젝트를 선택해주세요." });
+    return;
+  }
+  if (parsed.data.status && !allowedTaskStatuses.has(parsed.data.status)) {
+    res.status(400).json({ error: "상태는 active, completed, planned 중 하나여야 합니다." });
+    return;
+  }
+
   const [task] = await db
     .update(tasksTable)
-    .set({ ...parsed.data, updatedAt: new Date() })
+    .set({
+      ...parsed.data,
+      ...(projectId !== undefined ? { projectId } : {}),
+      updatedAt: new Date(),
+    })
     .where(eq(tasksTable.id, params.data.id))
     .returning();
   if (!task) {
