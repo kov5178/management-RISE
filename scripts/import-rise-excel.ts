@@ -1,9 +1,9 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readFile } from "node:fs/promises";
-import { eq } from "drizzle-orm";
 import {
   db,
+  eq,
   pool,
   projectsTable,
   tasksTable,
